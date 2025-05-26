@@ -1,4 +1,4 @@
-package site.festifriends.config;
+package site.festifriends.common.config;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
