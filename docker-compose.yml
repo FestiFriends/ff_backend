@@ -1,0 +1,10 @@
+services:
+  database:
+    container_name: ff-db
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: ff
+      TZ: Asia/Seoul
+    ports:
+      - "3311:3306"
