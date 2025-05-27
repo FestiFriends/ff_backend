@@ -27,8 +27,8 @@ public class ResponseWrapper<T> {
         return new ResponseWrapper<>(status.value(), message, data);
     }
 
-    public static <T> ResponseWrapper<T> error(HttpStatus status, String message) {
-        return new ResponseWrapper<>(status.value(), message, null);
+    public static <T> ResponseWrapper<T> error(ErrorCode errorCode) {
+        return new ResponseWrapper<>(errorCode.getStatus().value(), errorCode.getMessage(), null);
     }
 
 }
