@@ -11,6 +11,8 @@ import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
@@ -19,6 +21,8 @@ import site.festifriends.entity.enums.Gender;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "member")
 public class Member extends SoftDeleteEntity {
@@ -63,4 +67,12 @@ public class Member extends SoftDeleteEntity {
     @Column(name = "social_id", nullable = false)
     @Comment("소셜 ID")
     private String socialId;
+
+    @Column(name = "refresh_token")
+    @Comment("리프레시 토큰")
+    private String refreshToken;
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
 }
