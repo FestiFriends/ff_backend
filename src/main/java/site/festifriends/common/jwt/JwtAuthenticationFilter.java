@@ -26,8 +26,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
 
-        log.info("uri: {}", request.getRequestURI());
-
         String accessToken = extractAccessToken(request);
 
         if (accessToken != null && !accessToken.isEmpty()) {
