@@ -1,6 +1,21 @@
 spring:
   application:
     name: FestiFriends
+  jpa:
+    show-sql: true
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+        format_sql: true
+    open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
 
 springdoc:
   default-consumes-media-type: application/json;charset=UTF-8
@@ -13,3 +28,34 @@ springdoc:
   api-docs:
     groups:
       enabled: true
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
+
+jwt:
+  access:
+    secret: ${JWT_ACCESS_SECRET}
+    expiration: 3600000 # 1시간
+  refresh:
+    secret: ${JWT_REFRESH_SECRET}
+    expiration: 604800000 # 1주일
+
+---
+spring:
+  profiles:
+    active: prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+---
+spring:
+  profiles:
+    active: local
+  datasource:
+    url: jdbc:mysql://localhost:3311/ff
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
