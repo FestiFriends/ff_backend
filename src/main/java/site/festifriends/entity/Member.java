@@ -67,4 +67,12 @@ public class Member extends SoftDeleteEntity {
     @Column(name = "social_id", nullable = false)
     @Comment("소셜 ID")
     private String socialId;
+
+    @Column(name = "refresh_token")
+    @Comment("리프레시 토큰")
+    private String refreshToken;
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
 }
