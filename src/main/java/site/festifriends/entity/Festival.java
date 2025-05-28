@@ -6,12 +6,16 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
@@ -23,6 +27,11 @@ import site.festifriends.entity.enums.FestivalState;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "festival")
 public class Festival extends SoftDeleteEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "festival_id", nullable = false)
+    private Long id;
 
     @Column(name = "title", nullable = false)
     @Comment("공연 제목")
@@ -62,4 +71,17 @@ public class Festival extends SoftDeleteEntity {
     @Column(name = "visit", nullable = false)
     @Comment("내한 여부")
     private Boolean visit;
+
+    @Builder
+    public Festival(String title, String posterUrl, Date startDate, Date endDate, String location, 
+                   Integer price, FestivalState state, Boolean visit) {
+        this.title = title;
+        this.posterUrl = posterUrl;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.location = location;
+        this.price = price;
+        this.state = state;
+        this.visit = visit;
+    }
 }
