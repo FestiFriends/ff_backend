@@ -7,6 +7,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -14,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
@@ -27,6 +31,11 @@ import site.festifriends.entity.enums.GroupCategory;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "party")
 public class Party extends SoftDeleteEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "party_id", nullable = false)
+    private Long id;
 
     @Column(name = "title", nullable = false)
     @Comment("모임 이름")
@@ -77,4 +86,18 @@ public class Party extends SoftDeleteEntity {
     @JoinColumn(name = "festival_id")
     @Comment("관련 공연")
     private Festival festival;
+
+    @Builder
+    public Party(String title, Gender genderType, AgeRange ageRange, GroupCategory gatherType, 
+                LocalDateTime gatherDate, String location, Integer count, String introduction, Festival festival) {
+        this.title = title;
+        this.genderType = genderType;
+        this.ageRange = ageRange;
+        this.gatherType = gatherType;
+        this.gatherDate = gatherDate;
+        this.location = location;
+        this.count = count;
+        this.introduction = introduction;
+        this.festival = festival;
+    }
 }

@@ -7,12 +7,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
@@ -24,6 +28,11 @@ import site.festifriends.entity.enums.ReviewTag;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "review")
 public class Review extends SoftDeleteEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id", nullable = false)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", nullable = false)
@@ -54,4 +63,16 @@ public class Review extends SoftDeleteEntity {
     @Column(name = "tag")
     @Comment("리뷰 태그")
     private List<ReviewTag> tags = new ArrayList<>();
+
+    @Builder
+    public Review(Member reviewer, Member reviewee, Party party, String content, Double score, List<ReviewTag> tags) {
+        this.reviewer = reviewer;
+        this.reviewee = reviewee;
+        this.party = party;
+        this.content = content;
+        this.score = score;
+        if (tags != null) {
+            this.tags = tags;
+        }
+    }
 }

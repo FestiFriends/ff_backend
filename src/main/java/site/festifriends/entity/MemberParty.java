@@ -5,11 +5,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
@@ -22,6 +26,11 @@ import site.festifriends.entity.enums.Role;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "member_party")
 public class MemberParty extends SoftDeleteEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_party_id", nullable = false)
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -48,6 +57,19 @@ public class MemberParty extends SoftDeleteEntity {
     @Column(name = "joined_at")
     @Comment("가입 일시")
     private LocalDateTime joinedAt;
+
+    @Builder
+    public MemberParty(Member member, Party party, Role role, ApplicationStatus status, String applicationText) {
+        this.member = member;
+        this.party = party;
+        this.role = role;
+        this.status = status;
+        this.applicationText = applicationText;
+    }
+
+    public MemberParty(Member member, Party party, Role role, ApplicationStatus status) {
+        this(member, party, role, status, null);
+    }
 
     /**
      * 모임 가입 승인
