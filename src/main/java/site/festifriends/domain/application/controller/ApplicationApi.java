@@ -14,6 +14,7 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationListResponse;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
+import site.festifriends.domain.application.dto.AppliedListResponse;
 
 @Tag(name = "신청서 관리", description = "모임 신청서 관련 API")
 public interface ApplicationApi {
@@ -29,6 +30,23 @@ public interface ApplicationApi {
         }
     )
     ResponseEntity<CursorResponseWrapper<ApplicationListResponse>> getApplications(
+            @AuthenticationPrincipal Long memberId,
+            @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
+            @RequestParam(required = false) Long cursorId,
+            @Parameter(description = "한 번에 가져올 신청서 개수, 기본값 20")
+            @RequestParam(defaultValue = "20") int size
+    );
+
+    @Operation(
+        summary = "내가 신청한 모임 목록 조회",
+        description = "내가 신청한 모임 목록을 Slice 기반 커서 페이지네이션으로 조회합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "신청한 모임 목록 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        }
+    )
+    ResponseEntity<CursorResponseWrapper<AppliedListResponse>> getAppliedApplications(
             @AuthenticationPrincipal Long memberId,
             @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
             @RequestParam(required = false) Long cursorId,

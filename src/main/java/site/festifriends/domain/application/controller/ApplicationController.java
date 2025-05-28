@@ -15,6 +15,7 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationListResponse;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
+import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.service.ApplicationService;
 
 @RestController
@@ -33,6 +34,19 @@ public class ApplicationController implements ApplicationApi {
     ) {
         CursorResponseWrapper<ApplicationListResponse> response = 
                 applicationService.getApplicationsWithSlice(memberId, cursorId, size);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/applied")
+    public ResponseEntity<CursorResponseWrapper<AppliedListResponse>> getAppliedApplications(
+            @AuthenticationPrincipal Long memberId,
+            @RequestParam(required = false) Long cursorId,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        CursorResponseWrapper<AppliedListResponse> response = 
+                applicationService.getAppliedApplicationsWithSlice(memberId, cursorId, size);
         
         return ResponseEntity.ok(response);
     }
