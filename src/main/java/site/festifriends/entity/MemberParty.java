@@ -41,6 +41,10 @@ public class MemberParty extends SoftDeleteEntity {
     @Comment("신청 상태(대기중/승인됨/거절됨/취소됨)")
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
+     @Column(name = "application_text", length = 150)
+     @Comment("신청 내용")
+     private String applicationText;
+
     @Column(name = "joined_at")
     @Comment("가입 일시")
     private LocalDateTime joinedAt;
