@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import site.festifriends.common.ResponseWrapper;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.AuthInfo;
 import site.festifriends.domain.auth.AuthResponse;
 import site.festifriends.domain.auth.RefreshTokenCookieFactory;
