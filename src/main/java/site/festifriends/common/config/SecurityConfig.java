@@ -10,14 +10,22 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import site.festifriends.common.jwt.JwtAccessDeniedHandler;
+import site.festifriends.common.jwt.JwtAuthenticationEntryPoint;
+import site.festifriends.common.jwt.JwtAuthenticationFilter;
+import site.festifriends.common.jwt.JwtExceptionFilter;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtExceptionFilter jwtExceptionFilter;
 
     private final String[] readOnlyUrl = {
         "/favicon.ico",
@@ -36,11 +44,17 @@ public class SecurityConfig {
             .cors(cors -> corsConfigurationSource())
             .sessionManagement(sessionManagement ->
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class)
             .authorizeHttpRequests(authorizeHttpRequests ->
                 authorizeHttpRequests
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers(HttpMethod.GET, readOnlyUrl).permitAll()
-                    .anyRequest().authenticated());
+                    .anyRequest().authenticated())
+            .exceptionHandling(exception ->
+                exception
+                    .accessDeniedHandler(new JwtAccessDeniedHandler())
+                    .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 
         return http.build();
     }

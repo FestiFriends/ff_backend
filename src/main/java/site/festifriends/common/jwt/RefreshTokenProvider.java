@@ -77,4 +77,15 @@ public class RefreshTokenProvider implements JwtTokenProvider {
             .getPayload()
             .getExpiration();
     }
+
+    @Override
+    public String getTokenType(String token) {
+        return Jwts
+            .parser()
+            .verifyWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .get("tokenType", String.class);
+    }
 }

@@ -11,4 +11,6 @@ public interface JwtTokenProvider {
     String getSubject(String token);
 
     Date getExpiration(String token);
+
+    String getTokenType(String token);
 }
