@@ -1,4 +1,4 @@
-package site.festifriends.common;
+package site.festifriends.common.exception;
 
 import lombok.AccessLevel;
 import lombok.Getter;

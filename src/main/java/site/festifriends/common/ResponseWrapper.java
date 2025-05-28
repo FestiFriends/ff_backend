@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
+import site.festifriends.common.exception.ErrorCode;
 
 @Getter
 @JsonInclude(Include.NON_NULL)
