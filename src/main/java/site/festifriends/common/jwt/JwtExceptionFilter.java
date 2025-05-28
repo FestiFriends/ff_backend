@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.filter.OncePerRequestFilter;
 import site.festifriends.common.exception.ErrorCode;
-import site.festifriends.common.ResponseWrapper;
+import site.festifriends.common.response.ResponseWrapper;
 
 @Slf4j
 @RequiredArgsConstructor
