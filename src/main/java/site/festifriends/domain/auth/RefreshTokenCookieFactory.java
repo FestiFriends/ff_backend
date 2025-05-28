@@ -13,7 +13,7 @@ public class RefreshTokenCookieFactory {
             .httpOnly(true)
             .secure(true)
             .path("/")
-            .maxAge(60 * 60)
+            .maxAge(60 * 60 * 24 * 7)
             .sameSite("None")
             .build();
     }
