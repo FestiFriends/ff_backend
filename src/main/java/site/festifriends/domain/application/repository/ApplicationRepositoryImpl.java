@@ -75,6 +75,24 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
         return new SliceImpl<>(results, pageable, hasNext);
     }
 
+    @Override
+    public boolean existsByPartyIdAndMemberIdAndRole(Long partyId, Long memberId, Role role) {
+        QMemberParty mp = QMemberParty.memberParty;
+        
+        Integer count = queryFactory
+            .selectOne()
+            .from(mp)
+            .where(
+                mp.party.id.eq(partyId),
+                mp.member.id.eq(memberId),
+                mp.role.eq(role),
+                mp.deleted.isNull()
+            )
+            .fetchFirst();
+            
+        return count != null;
+    }
+
     private BooleanExpression cursorIdLt(Long cursorId, QMemberParty memberParty) {
         return cursorId != null ? memberParty.id.lt(cursorId) : null;
     }
