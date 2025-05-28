@@ -19,6 +19,13 @@ import site.festifriends.common.response.ResponseWrapper;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BusinessException.class)
+    protected ResponseEntity<ResponseWrapper<?>> handleBusinessException(BusinessException e) {
+        log.warn("handleBusinessException : {}", e.getMessage());
+        return ResponseEntity.status(e.getErrorCode().getStatus())
+                .body(ResponseWrapper.error(e.getErrorCode(), e.getMessage()));
+    }
+
     @ExceptionHandler({
         MethodArgumentNotValidException.class,
         MissingServletRequestParameterException.class,

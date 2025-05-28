@@ -42,6 +42,10 @@ public class ResponseWrapper<T> extends BaseResponseWrapper<T> {
         return new ResponseWrapper<>(errorCode.getStatus().value(), errorCode.getMessage(), null);
     }
 
+    public static <T> ResponseWrapper<T> error(ErrorCode errorCode, String message) {
+        return new ResponseWrapper<>(errorCode.getStatus().value(), message, null);
+    }
+
     public static <T> ResponseWrapper<T> error(HttpStatus status, String message) {
         return new ResponseWrapper<>(status, message, null);
     }

@@ -6,11 +6,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.festifriends.common.exception.BusinessException;
+import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationListResponse;
+import site.festifriends.domain.application.dto.ApplicationStatusRequest;
+import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.MemberParty;
+import site.festifriends.entity.enums.ApplicationStatus;
+import site.festifriends.entity.enums.Role;
 
 import java.util.List;
 import java.util.Map;
@@ -27,59 +34,60 @@ public class ApplicationService {
     /**
      * 신청서 목록 조회
      */
-    public CursorResponseWrapper<ApplicationListResponse> getApplicationsWithSlice(Long hostId, Long cursorId, int size) {
+    public CursorResponseWrapper<ApplicationListResponse> getApplicationsWithSlice(Long hostId, Long cursorId,
+        int size) {
         Pageable pageable = PageRequest.of(0, size);
         Slice<MemberParty> slice = applicationRepository.findApplicationsWithSlice(hostId, cursorId, pageable);
-        
+
         List<MemberParty> applications = slice.getContent();
-        
+
         if (applications.isEmpty()) {
             return CursorResponseWrapper.empty("모임 신청서 목록이 정상적으로 조회되었습니다.");
         }
 
         // 신청자들의 평점 조회
         List<Long> memberIds = applications.stream()
-                .map(app -> app.getMember().getId())
-                .distinct()
-                .collect(Collectors.toList());
+            .map(app -> app.getMember().getId())
+            .distinct()
+            .collect(Collectors.toList());
 
         Map<Long, Double> ratingMap = reviewRepository.findAverageRatingsByMemberIds(memberIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        result -> (Long) result.get("memberId"),
-                        result -> (Double) result.get("avgRating")
-                ));
+            .stream()
+            .collect(Collectors.toMap(
+                result -> (Long) result.get("memberId"),
+                result -> (Double) result.get("avgRating")
+            ));
 
         // 모임별로 그룹화
         Map<Long, List<MemberParty>> groupedByParty = applications.stream()
-                .collect(Collectors.groupingBy(app -> app.getParty().getId()));
+            .collect(Collectors.groupingBy(app -> app.getParty().getId()));
 
         List<ApplicationListResponse> responses = groupedByParty.entrySet().stream()
-                .map(entry -> {
-                    List<MemberParty> partyApplications = entry.getValue();
-                    MemberParty firstApp = partyApplications.get(0);
-                    
-                    List<ApplicationListResponse.ApplicationInfo> applicationInfos = partyApplications.stream()
-                            .map(app -> ApplicationListResponse.ApplicationInfo.builder()
-                                    .applicationId(app.getId().toString())
-                                    .userId(app.getMember().getId().toString())
-                                    .nickname(app.getMember().getNickname())
-                                    .rating(ratingMap.getOrDefault(app.getMember().getId(), 0.0))
-                                    .gender(app.getMember().getGender())
-                                    .age(app.getMember().getAge())
-                                    .applicationText(app.getApplicationText())
-                                    .createdAt(app.getCreatedAt())
-                                    .build())
-                            .collect(Collectors.toList());
+            .map(entry -> {
+                List<MemberParty> partyApplications = entry.getValue();
+                MemberParty firstApp = partyApplications.get(0);
 
-                    return ApplicationListResponse.builder()
-                            .groupId(firstApp.getParty().getId().toString())
-                            .groupName(firstApp.getParty().getTitle())
-                            .poster(firstApp.getParty().getFestival().getPosterUrl())
-                            .applications(applicationInfos)
-                            .build();
-                })
-                .collect(Collectors.toList());
+                List<ApplicationListResponse.ApplicationInfo> applicationInfos = partyApplications.stream()
+                    .map(app -> ApplicationListResponse.ApplicationInfo.builder()
+                        .applicationId(app.getId().toString())
+                        .userId(app.getMember().getId().toString())
+                        .nickname(app.getMember().getNickname())
+                        .rating(ratingMap.getOrDefault(app.getMember().getId(), 0.0))
+                        .gender(app.getMember().getGender())
+                        .age(app.getMember().getAge())
+                        .applicationText(app.getApplicationText())
+                        .createdAt(app.getCreatedAt())
+                        .build())
+                    .collect(Collectors.toList());
+
+                return ApplicationListResponse.builder()
+                    .groupId(firstApp.getParty().getId().toString())
+                    .groupName(firstApp.getParty().getTitle())
+                    .poster(firstApp.getParty().getFestival().getPosterUrl())
+                    .applications(applicationInfos)
+                    .build();
+            })
+            .collect(Collectors.toList());
 
         // 다음 커서 ID 계산
         Long nextCursorId = null;
@@ -89,10 +97,60 @@ public class ApplicationService {
         }
 
         return CursorResponseWrapper.success(
-                "모임 신청서 목록이 정상적으로 조회되었습니다.",
-                responses,
-                nextCursorId,
-                slice.hasNext()
+            "모임 신청서 목록이 정상적으로 조회되었습니다.",
+            responses,
+            nextCursorId,
+            slice.hasNext()
         );
+    }
+
+    /**
+     * 모임 신청서 수락/거절
+     */
+    @Transactional
+    public ResponseWrapper<ApplicationStatusResponse> updateApplicationStatus(
+        Long hostId,
+        Long applicationId,
+        ApplicationStatusRequest request
+    ) {
+        MemberParty application = applicationRepository.findById(applicationId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신청서를 찾을 수 없습니다."));
+
+        validateHostPermission(hostId, application);
+
+        if (application.getStatus() != ApplicationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "처리할 수 없는 신청서 상태입니다.");
+        }
+
+        String status = request.getStatus();
+        String message;
+
+        if ("accept".equals(status)) {
+            application.approve();
+            message = "모임 가입 신청을 수락하였습니다";
+        } else if ("reject".equals(status)) {
+            application.reject();
+            message = "모임 가입 신청을 거절하였습니다";
+        } else {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 상태 값입니다.");
+        }
+
+        ApplicationStatusResponse response = ApplicationStatusResponse.builder()
+            .result(true)
+            .build();
+
+        return ResponseWrapper.success(message, response);
+    }
+
+    private void validateHostPermission(Long hostId, MemberParty application) {
+        boolean isHost = applicationRepository.existsByPartyIdAndMemberIdAndRole(
+            application.getParty().getId(),
+            hostId,
+            Role.HOST
+        );
+
+        if (!isHost) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "모임 방장만 신청서를 처리할 수 있습니다.");
+        }
     }
 } 

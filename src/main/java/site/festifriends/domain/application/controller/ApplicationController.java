@@ -4,11 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import site.festifriends.common.response.CursorResponseWrapper;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationListResponse;
+import site.festifriends.domain.application.dto.ApplicationStatusRequest;
+import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.service.ApplicationService;
 
 @RestController
@@ -27,6 +33,19 @@ public class ApplicationController implements ApplicationApi {
     ) {
         CursorResponseWrapper<ApplicationListResponse> response = 
                 applicationService.getApplicationsWithSlice(memberId, cursorId, size);
+        
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @PatchMapping("/{applicationId}")
+    public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> updateApplicationStatus(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable Long applicationId,
+            @RequestBody ApplicationStatusRequest request
+    ) {
+        ResponseWrapper<ApplicationStatusResponse> response = 
+                applicationService.updateApplicationStatus(memberId, applicationId, request);
         
         return ResponseEntity.ok(response);
     }
