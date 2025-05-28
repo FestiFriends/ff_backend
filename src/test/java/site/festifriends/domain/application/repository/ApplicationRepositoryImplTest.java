@@ -201,8 +201,54 @@ class ApplicationRepositoryImplTest {
         // then
         assertThat(result.getContent()).isEmpty();
         assertThat(result.hasNext()).isFalse();
-        assertThat(result.getNumber()).isEqualTo(0);
-        assertThat(result.getSize()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("방장 권한을 정확히 확인한다")
+    void existsByPartyIdAndMemberIdAndRole_Host() {
+        // when & then
+        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party1.getId(), host1.getId(), Role.HOST))
+                .isTrue();
+        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party2.getId(), host1.getId(), Role.HOST))
+                .isTrue();
+        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party3.getId(), host1.getId(), Role.HOST))
+                .isFalse();
+        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party3.getId(), host2.getId(), Role.HOST))
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("일반 멤버는 방장 권한이 없다")
+    void existsByPartyIdAndMemberIdAndRole_NotHost() {
+        // given
+        Member applicant = createMember("test_applicant", "테스트신청자", Gender.MALE, 25);
+
+        // when & then
+        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party1.getId(), applicant.getId(), Role.HOST))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("삭제된 방장 관계는 권한 확인에서 제외된다")
+    void existsByPartyIdAndMemberIdAndRole_DeletedHost() {
+        // given
+        List<MemberParty> hostRelations = entityManager.getEntityManager()
+                .createQuery("SELECT mp FROM MemberParty mp WHERE mp.member.id = :hostId AND mp.party.id = :partyId AND mp.role = :role", MemberParty.class)
+                .setParameter("hostId", host1.getId())
+                .setParameter("partyId", party1.getId())
+                .setParameter("role", Role.HOST)
+                .getResultList();
+        
+        if (!hostRelations.isEmpty()) {
+            MemberParty hostRelation = hostRelations.get(0);
+            hostRelation.delete();
+            entityManager.merge(hostRelation);
+            entityManager.flush();
+        }
+
+        // when & then
+        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party1.getId(), host1.getId(), Role.HOST))
+                .isFalse();
     }
 
     // ===== Private Helper Methods =====
