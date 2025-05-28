@@ -1,13 +1,19 @@
 package site.festifriends.domain.application.repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 import site.festifriends.entity.MemberParty;
+import site.festifriends.entity.QMember;
+import site.festifriends.entity.QMemberParty;
+import site.festifriends.entity.QParty;
+import site.festifriends.entity.QFestival;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
 
@@ -17,50 +23,59 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
 
-    private final EntityManager entityManager;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public Slice<MemberParty> findApplicationsWithSlice(Long hostId, Long cursorId, Pageable pageable) {
-        StringBuilder jpql = new StringBuilder();
-        jpql.append("SELECT mp FROM MemberParty mp ")
-            .append("JOIN FETCH mp.member m ")
-            .append("JOIN FETCH mp.party p ")
-            .append("JOIN FETCH p.festival f ")
-            .append("WHERE mp.party.id IN (")
-            .append("    SELECT host.party.id FROM MemberParty host ")
-            .append("    WHERE host.member.id = :hostId ")
-            .append("    AND host.role = :role ")
-            .append("    AND host.deleted IS NULL")
-            .append(") ")
-            .append("AND mp.status = :status ")
-            .append("AND mp.deleted IS NULL ");
+        QMemberParty mp = QMemberParty.memberParty;
+        QMemberParty host = new QMemberParty("host");
+        QMember m = QMember.member;
+        QParty p = QParty.party;
+        QFestival f = QFestival.festival;
 
-        if (cursorId != null) {
-            jpql.append("AND mp.id < :cursorId ");
-        }
+        BooleanExpression hostPartiesCondition = mp.party.id.in(
+            JPAExpressions.select(host.party.id)
+                .from(host)
+                .where(
+                    host.member.id.eq(hostId),
+                    host.role.eq(Role.HOST),
+                    host.deleted.isNull()
+                )
+        );
 
-        jpql.append("ORDER BY mp.id DESC");
+        BooleanExpression statusCondition = mp.status.eq(ApplicationStatus.PENDING);
+        BooleanExpression notDeletedCondition = mp.deleted.isNull();
 
-        TypedQuery<MemberParty> query = entityManager.createQuery(jpql.toString(), MemberParty.class);
-        query.setParameter("hostId", hostId);
-        query.setParameter("role", Role.HOST);
-        query.setParameter("status", ApplicationStatus.PENDING);
+        BooleanExpression cursorCondition = cursorIdLt(cursorId, mp);
 
-        if (cursorId != null) {
-            query.setParameter("cursorId", cursorId);
-        }
+        JPAQuery<MemberParty> query = queryFactory
+            .selectFrom(mp)
+            .join(mp.member, m).fetchJoin()
+            .join(mp.party, p).fetchJoin()
+            .join(p.festival, f).fetchJoin()
+            .where(
+                hostPartiesCondition,
+                statusCondition,
+                notDeletedCondition,
+                cursorCondition
+            )
+            .orderBy(mp.id.desc());
 
         // Slice는 size + 1 개를 조회해서 hasNext를 판단
         int size = pageable.getPageSize();
-        query.setMaxResults(size + 1);
-
-        List<MemberParty> results = query.getResultList();
+        List<MemberParty> results = query
+            .limit(size + 1)
+            .fetch();
 
         boolean hasNext = results.size() > size;
         if (hasNext) {
-            results = results.subList(0, size); // 마지막 하나 제거
+            results = results.subList(0, size);
         }
 
         return new SliceImpl<>(results, pageable, hasNext);
     }
-} 
+
+    private BooleanExpression cursorIdLt(Long cursorId, QMemberParty memberParty) {
+        return cursorId != null ? memberParty.id.lt(cursorId) : null;
+    }
+}
