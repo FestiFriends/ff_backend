@@ -18,6 +18,8 @@ import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -73,6 +75,67 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
         }
 
         return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
+    public Slice<MemberParty> findAppliedApplicationsWithSlice(Long memberId, Long cursorId, Pageable pageable) {
+        QMemberParty mp = QMemberParty.memberParty;
+        QMember m = QMember.member;
+        QParty p = QParty.party;
+        QFestival f = QFestival.festival;
+
+        BooleanExpression memberCondition = mp.member.id.eq(memberId);
+        BooleanExpression notHostCondition = mp.role.ne(Role.HOST);
+        BooleanExpression notDeletedCondition = mp.deleted.isNull();
+        BooleanExpression cursorCondition = cursorIdLt(cursorId, mp);
+
+        JPAQuery<MemberParty> query = queryFactory
+            .selectFrom(mp)
+            .join(mp.member, m).fetchJoin()
+            .join(mp.party, p).fetchJoin()
+            .join(p.festival, f).fetchJoin()
+            .where(
+                memberCondition,
+                notHostCondition,
+                notDeletedCondition,
+                cursorCondition
+            )
+            .orderBy(mp.id.desc());
+
+        // Slice는 size + 1 개를 조회해서 hasNext를 판단
+        int size = pageable.getPageSize();
+        List<MemberParty> results = query
+            .limit(size + 1)
+            .fetch();
+
+        boolean hasNext = results.size() > size;
+        if (hasNext) {
+            results = results.subList(0, size);
+        }
+
+        return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
+    public Map<Long, MemberParty> findHostsByPartyIds(List<Long> partyIds) {
+        QMemberParty mp = QMemberParty.memberParty;
+        QMember m = QMember.member;
+
+        List<MemberParty> hosts = queryFactory
+            .selectFrom(mp)
+            .join(mp.member, m).fetchJoin()
+            .where(
+                mp.party.id.in(partyIds),
+                mp.role.eq(Role.HOST),
+                mp.deleted.isNull()
+            )
+            .fetch();
+
+        return hosts.stream()
+            .collect(Collectors.toMap(
+                host -> host.getParty().getId(),
+                host -> host
+            ));
     }
 
     @Override

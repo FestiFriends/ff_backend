@@ -15,6 +15,7 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationListResponse;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
+import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.service.ApplicationService;
 
 @RestController
@@ -27,26 +28,39 @@ public class ApplicationController implements ApplicationApi {
     @Override
     @GetMapping("/applications")
     public ResponseEntity<CursorResponseWrapper<ApplicationListResponse>> getApplications(
-            @AuthenticationPrincipal Long memberId,
-            @RequestParam(required = false) Long cursorId,
-            @RequestParam(defaultValue = "20") int size
+        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size
     ) {
-        CursorResponseWrapper<ApplicationListResponse> response = 
-                applicationService.getApplicationsWithSlice(memberId, cursorId, size);
-        
+        CursorResponseWrapper<ApplicationListResponse> response =
+            applicationService.getApplicationsWithSlice(memberId, cursorId, size);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/applied")
+    public ResponseEntity<CursorResponseWrapper<AppliedListResponse>> getAppliedApplications(
+        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        CursorResponseWrapper<AppliedListResponse> response =
+            applicationService.getAppliedApplicationsWithSlice(memberId, cursorId, size);
+
         return ResponseEntity.ok(response);
     }
 
     @Override
     @PatchMapping("/{applicationId}")
     public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> updateApplicationStatus(
-            @AuthenticationPrincipal Long memberId,
-            @PathVariable Long applicationId,
-            @RequestBody ApplicationStatusRequest request
+        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @PathVariable Long applicationId,
+        @RequestBody ApplicationStatusRequest request
     ) {
-        ResponseWrapper<ApplicationStatusResponse> response = 
-                applicationService.updateApplicationStatus(memberId, applicationId, request);
-        
+        ResponseWrapper<ApplicationStatusResponse> response =
+            applicationService.updateApplicationStatus(memberId, applicationId, request);
+
         return ResponseEntity.ok(response);
     }
 } 

@@ -13,6 +13,7 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationListResponse;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
+import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.MemberParty;
@@ -98,6 +99,78 @@ public class ApplicationService {
 
         return CursorResponseWrapper.success(
             "모임 신청서 목록이 정상적으로 조회되었습니다.",
+            responses,
+            nextCursorId,
+            slice.hasNext()
+        );
+    }
+
+    /**
+     * 내가 신청한 모임 목록 조회
+     */
+    public CursorResponseWrapper<AppliedListResponse> getAppliedApplicationsWithSlice(Long memberId, Long cursorId,
+        int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        Slice<MemberParty> slice = applicationRepository.findAppliedApplicationsWithSlice(memberId, cursorId, pageable);
+
+        List<MemberParty> applications = slice.getContent();
+
+        if (applications.isEmpty()) {
+            return CursorResponseWrapper.empty("신청서 목록이 정상적으로 조회되었습니다.");
+        }
+
+        // 파티별 방장 정보 조회
+        List<Long> partyIds = applications.stream()
+            .map(app -> app.getParty().getId())
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, MemberParty> hostInfoMap = applicationRepository.findHostsByPartyIds(partyIds);
+
+        // 방장들의 평점 조회
+        List<Long> hostIds = hostInfoMap.values().stream()
+            .map(host -> host.getMember().getId())
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, Double> hostRatingMap = reviewRepository.findAverageRatingsByMemberIds(hostIds)
+            .stream()
+            .collect(Collectors.toMap(
+                result -> (Long) result.get("memberId"),
+                result -> (Double) result.get("avgRating")
+            ));
+
+        List<AppliedListResponse> responses = applications.stream()
+            .map(app -> {
+                MemberParty hostInfo = hostInfoMap.get(app.getParty().getId());
+                String hostNickname = hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음";
+                Long hostId = hostInfo != null ? hostInfo.getMember().getId() : null;
+
+                return AppliedListResponse.builder()
+                    .applicationId(app.getId().toString())
+                    .performanceId(app.getParty().getFestival().getId().toString())
+                    .poster(app.getParty().getFestival().getPosterUrl())
+                    .groupId(app.getParty().getId().toString())
+                    .groupName(app.getParty().getTitle())
+                    .leaderNickname(hostNickname)
+                    .leaderRating(hostRatingMap.getOrDefault(hostId, 0.0))
+                    .gender(app.getParty().getGenderType())
+                    .applicationText(app.getApplicationText())
+                    .createdAt(app.getCreatedAt())
+                    .status(app.getStatus())
+                    .build();
+            })
+            .collect(Collectors.toList());
+
+        // 다음 커서 ID 계산
+        Long nextCursorId = null;
+        if (slice.hasNext() && !applications.isEmpty()) {
+            MemberParty lastApplication = applications.get(applications.size() - 1);
+            nextCursorId = lastApplication.getId();
+        }
+
+        return CursorResponseWrapper.success(
+            "신청서 목록이 정상적으로 조회되었습니다.",
             responses,
             nextCursorId,
             slice.hasNext()
