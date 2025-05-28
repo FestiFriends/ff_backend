@@ -42,7 +42,7 @@ public class AccessTokenProvider implements JwtTokenProvider {
     }
 
     @Override
-    public Boolean validateToken(String token) {
+    public boolean validateToken(String token) {
         try {
             Jwts
                 .parser()
