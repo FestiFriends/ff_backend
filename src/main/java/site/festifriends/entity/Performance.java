@@ -118,7 +118,7 @@ public class Performance extends SoftDeleteEntity {
     @CollectionTable(name = "performance_time", joinColumns = @JoinColumn(name = "performance_id"))
     @Column(name = "time")
     @Comment("공연 시간")
-    private List<String> time = new ArrayList<>();
+    private List<LocalDateTime> time = new ArrayList<>();
 
     @OneToMany(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true)
     @Comment("소개 이미지 목록")
@@ -129,7 +129,7 @@ public class Performance extends SoftDeleteEntity {
         List<String> cast, List<String> crew, String runtime, String age,
         List<String> productionCompany, List<String> agency, List<String> host,
         List<String> organizer, List<String> price, String poster,
-        PerformanceState state, String visit, List<String> time) {
+        PerformanceState state, String visit, List<LocalDateTime> time) {
         this.title = title;
         this.startDate = startDate;
         this.endDate = endDate;
