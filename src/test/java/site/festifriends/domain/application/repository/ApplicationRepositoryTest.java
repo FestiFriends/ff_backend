@@ -175,4 +175,112 @@ class ApplicationRepositoryTest {
         // then
         assertThat(isHost).isFalse();
     }
+
+    @Test
+    @DisplayName("신청서 ID로 신청서를 조회한다")
+    void findById_Success() {
+        // given
+        MemberParty application = MemberParty.builder()
+                .member(applicant)
+                .party(party)
+                .role(Role.MEMBER)
+                .status(ApplicationStatus.ACCEPTED)
+                .applicationText("확정 테스트용 신청서")
+                .build();
+        MemberParty savedApplication = entityManager.persistAndFlush(application);
+        entityManager.clear();
+
+        // when
+        MemberParty foundApplication = applicationRepository.findById(savedApplication.getId()).orElse(null);
+
+        // then
+        assertThat(foundApplication).isNotNull();
+        assertThat(foundApplication.getId()).isEqualTo(savedApplication.getId());
+        assertThat(foundApplication.getMember().getId()).isEqualTo(applicant.getId());
+        assertThat(foundApplication.getStatus()).isEqualTo(ApplicationStatus.ACCEPTED);
+        assertThat(foundApplication.getApplicationText()).isEqualTo("확정 테스트용 신청서");
+    }
+
+    @Test
+    @DisplayName("신청서 상태를 CONFIRMED로 변경한다")
+    void updateApplicationStatusToConfirmed_Success() {
+        // given
+        MemberParty application = MemberParty.builder()
+                .member(applicant)
+                .party(party)
+                .role(Role.MEMBER)
+                .status(ApplicationStatus.ACCEPTED)
+                .applicationText("확정할 신청서")
+                .build();
+        MemberParty savedApplication = entityManager.persistAndFlush(application);
+        entityManager.clear();
+
+        // when
+        MemberParty foundApplication = applicationRepository.findById(savedApplication.getId()).orElse(null);
+        assertThat(foundApplication).isNotNull();
+        
+        foundApplication.confirm();
+        entityManager.persistAndFlush(foundApplication);
+        entityManager.clear();
+
+        // then
+        MemberParty confirmedApplication = applicationRepository.findById(savedApplication.getId()).orElse(null);
+        assertThat(confirmedApplication).isNotNull();
+        assertThat(confirmedApplication.getStatus()).isEqualTo(ApplicationStatus.CONFIRMED);
+    }
+
+    @Test
+    @DisplayName("신청자 본인의 신청서인지 확인한다")
+    void validateApplicantOwnership_Success() {
+        // given
+        MemberParty application = MemberParty.builder()
+                .member(applicant)
+                .party(party)
+                .role(Role.MEMBER)
+                .status(ApplicationStatus.ACCEPTED)
+                .applicationText("본인 확인용 신청서")
+                .build();
+        MemberParty savedApplication = entityManager.persistAndFlush(application);
+        entityManager.clear();
+
+        // when
+        MemberParty foundApplication = applicationRepository.findById(savedApplication.getId()).orElse(null);
+
+        // then
+        assertThat(foundApplication).isNotNull();
+        assertThat(foundApplication.getMember().getId()).isEqualTo(applicant.getId());
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 신청서는 본인이 아니다")
+    void validateApplicantOwnership_NotOwner() {
+        // given
+        Member anotherMember = Member.builder()
+                .socialId("another1")
+                .nickname("다른사용자")
+                .email("another@test.com")
+                .age(30)
+                .gender(Gender.MALE)
+                .profileImageUrl("https://example.com/another.jpg")
+                .build();
+        entityManager.persistAndFlush(anotherMember);
+
+        MemberParty application = MemberParty.builder()
+                .member(applicant)
+                .party(party)
+                .role(Role.MEMBER)
+                .status(ApplicationStatus.ACCEPTED)
+                .applicationText("다른 사용자 확인용 신청서")
+                .build();
+        MemberParty savedApplication = entityManager.persistAndFlush(application);
+        entityManager.clear();
+
+        // when
+        MemberParty foundApplication = applicationRepository.findById(savedApplication.getId()).orElse(null);
+
+        // then
+        assertThat(foundApplication).isNotNull();
+        assertThat(foundApplication.getMember().getId()).isNotEqualTo(anotherMember.getId());
+        assertThat(foundApplication.getMember().getId()).isEqualTo(applicant.getId());
+    }
 } 
