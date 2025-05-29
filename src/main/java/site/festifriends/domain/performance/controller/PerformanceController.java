@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
 import site.festifriends.domain.performance.service.PerformanceService;
@@ -19,10 +21,15 @@ public class PerformanceController implements PerformanceApi {
 
     @Override
     @GetMapping
-    public ResponseEntity<PerformanceSearchResponse> searchPerformances(
-            @ModelAttribute PerformanceSearchRequest request
-    ) {
+    public ResponseEntity<PerformanceSearchResponse> searchPerformances(PerformanceSearchRequest request) {
         PerformanceSearchResponse response = performanceService.searchPerformances(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/{performanceId}")
+    public ResponseEntity<PerformanceResponse> getPerformanceDetail(@PathVariable Long performanceId) {
+        PerformanceResponse response = performanceService.getPerformanceDetail(performanceId);
         return ResponseEntity.ok(response);
     }
 } 
