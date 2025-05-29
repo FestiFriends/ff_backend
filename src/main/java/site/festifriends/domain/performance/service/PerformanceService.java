@@ -6,6 +6,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.festifriends.common.exception.BusinessException;
+import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
@@ -13,6 +15,7 @@ import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.entity.Performance;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,9 +45,7 @@ public class PerformanceService {
         // 각 공연별 모임 개수 조회
         Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(performanceIds);
 
-        // 지연 로딩되는 컬렉션들을 미리 초기화
         performances.forEach(performance -> {
-            // 컬렉션 초기화 (Hibernate 세션 내에서 강제 로딩)
             performance.getCast().size();
             performance.getCrew().size();
             performance.getProductionCompany().size();
@@ -56,17 +57,15 @@ public class PerformanceService {
             performance.getImgs().size();
         });
 
-        // Performance 엔티티를 PerformanceResponse로 변환
         List<PerformanceResponse> performanceResponses = performances.stream()
                 .map(performance -> convertToResponse(performance, groupCountMap))
                 .collect(Collectors.toList());
 
-        // 모임 개수 정렬이 필요한 경우 서비스 레벨에서 정렬
         if ("group_count_desc".equals(request.getSort())) {
             performanceResponses.sort((a, b) -> {
                 int countCompare = Integer.compare(b.getGroupCount(), a.getGroupCount());
                 if (countCompare == 0) {
-                    return a.getTitle().compareTo(b.getTitle()); // 동일한 모임 개수일 때는 제목순
+                    return a.getTitle().compareTo(b.getTitle());
                 }
                 return countCompare;
             });
@@ -74,7 +73,7 @@ public class PerformanceService {
             performanceResponses.sort((a, b) -> {
                 int countCompare = Integer.compare(a.getGroupCount(), b.getGroupCount());
                 if (countCompare == 0) {
-                    return a.getTitle().compareTo(b.getTitle()); // 동일한 모임 개수일 때는 제목순
+                    return a.getTitle().compareTo(b.getTitle());
                 }
                 return countCompare;
             });
@@ -93,8 +92,31 @@ public class PerformanceService {
                 .build();
     }
 
+    /**
+     * 공연 상세 정보 조회
+     */
+    public PerformanceResponse getPerformanceDetail(Long performanceId) {
+        Performance performance = performanceRepository.findById(performanceId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공연을 찾을 수 없습니다."));
+
+        performance.getCast().size();
+        performance.getCrew().size();
+        performance.getProductionCompany().size();
+        performance.getAgency().size();
+        performance.getHost().size();
+        performance.getOrganizer().size();
+        performance.getPrice().size();
+        performance.getTime().size();
+        performance.getImgs().size();
+
+        // 해당 공연의 모임 개수 조회
+        Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(
+                Collections.singletonList(performanceId));
+
+        return convertToResponse(performance, groupCountMap);
+    }
+
     private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap) {
-        // 이미지 목록 변환
         List<PerformanceResponse.PerformanceImage> images = performance.getImgs().stream()
                 .map(img -> PerformanceResponse.PerformanceImage.builder()
                         .id(img.getId().toString())
@@ -103,7 +125,6 @@ public class PerformanceService {
                         .build())
                 .collect(Collectors.toList());
 
-        // 공연 시간 목록을 String으로 변환
         List<String> timeStrings = performance.getTime().stream()
                 .map(time -> time.format(ISO_FORMATTER))
                 .collect(Collectors.toList());

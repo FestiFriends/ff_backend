@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
 
@@ -36,5 +38,14 @@ public interface PerformanceApi {
     @GetMapping
     ResponseEntity<PerformanceSearchResponse> searchPerformances(
             @Parameter(description = "검색 조건") PerformanceSearchRequest request
+    );
+
+    @Operation(
+            summary = "공연 상세 조회",
+            description = "공연 ID로 공연 상세 정보를 조회합니다."
+    )
+    @GetMapping("/{performanceId}")
+    ResponseEntity<PerformanceResponse> getPerformanceDetail(
+            @Parameter(description = "공연 ID") @PathVariable Long performanceId
     );
 }
