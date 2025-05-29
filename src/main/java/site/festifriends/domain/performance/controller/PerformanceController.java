@@ -19,9 +19,8 @@ public class PerformanceController implements PerformanceApi {
 
     @Override
     @GetMapping
-    public ResponseEntity<PerformanceSearchResponse> searchPerformances(
-            @ModelAttribute PerformanceSearchRequest request
-    ) {
+    public ResponseEntity<PerformanceSearchResponse> searchPerformances(PerformanceSearchRequest request) {
+
         PerformanceSearchResponse response = performanceService.searchPerformances(request);
         return ResponseEntity.ok(response);
     }
