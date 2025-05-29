@@ -16,6 +16,7 @@ import site.festifriends.domain.application.dto.ApplicationListResponse;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
+import site.festifriends.domain.application.dto.JoinedGroupResponse;
 import site.festifriends.domain.application.service.ApplicationService;
 
 @RestController
@@ -47,6 +48,19 @@ public class ApplicationController implements ApplicationApi {
     ) {
         CursorResponseWrapper<AppliedListResponse> response =
             applicationService.getAppliedApplicationsWithSlice(memberId, cursorId, size);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/joined")
+    public ResponseEntity<CursorResponseWrapper<JoinedGroupResponse>> getJoinedGroups(
+        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        CursorResponseWrapper<JoinedGroupResponse> response =
+            applicationService.getJoinedGroupsWithSlice(memberId, cursorId, size);
 
         return ResponseEntity.ok(response);
     }

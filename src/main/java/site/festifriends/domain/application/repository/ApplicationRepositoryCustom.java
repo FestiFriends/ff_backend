@@ -14,7 +14,11 @@ public interface ApplicationRepositoryCustom {
     
     Slice<MemberParty> findAppliedApplicationsWithSlice(Long memberId, Long cursorId, Pageable pageable);
     
+    Slice<MemberParty> findJoinedGroupsWithSlice(Long memberId, Long cursorId, Pageable pageable);
+    
     Map<Long, MemberParty> findHostsByPartyIds(List<Long> partyIds);
+    
+    Map<Long, Long> findConfirmedMemberCountsByPartyIds(List<Long> partyIds);
     
     boolean existsByPartyIdAndMemberIdAndRole(Long partyId, Long memberId, Role role);
 } 

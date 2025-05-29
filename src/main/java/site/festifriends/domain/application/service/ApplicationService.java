@@ -14,12 +14,16 @@ import site.festifriends.domain.application.dto.ApplicationListResponse;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
+import site.festifriends.domain.application.dto.JoinedGroupResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.MemberParty;
+import site.festifriends.entity.Party;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
+import site.festifriends.entity.enums.AgeRange;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -175,6 +179,118 @@ public class ApplicationService {
             nextCursorId,
             slice.hasNext()
         );
+    }
+
+    /**
+     * 참가 중인 모임 목록 조회
+     */
+    public CursorResponseWrapper<JoinedGroupResponse> getJoinedGroupsWithSlice(Long memberId, Long cursorId, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        Slice<MemberParty> slice = applicationRepository.findJoinedGroupsWithSlice(memberId, cursorId, pageable);
+
+        List<MemberParty> joinedGroups = slice.getContent();
+
+        if (joinedGroups.isEmpty()) {
+            return CursorResponseWrapper.empty("참가 중인 모임 목록이 정상적으로 조회되었습니다.");
+        }
+
+        // 파티별 방장 정보 조회
+        List<Long> partyIds = joinedGroups.stream()
+            .map(app -> app.getParty().getId())
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, MemberParty> hostInfoMap = applicationRepository.findHostsByPartyIds(partyIds);
+
+        // 방장들의 평점 조회
+        List<Long> hostIds = hostInfoMap.values().stream()
+            .map(host -> host.getMember().getId())
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, Double> hostRatingMap = reviewRepository.findAverageRatingsByMemberIds(hostIds)
+            .stream()
+            .collect(Collectors.toMap(
+                result -> (Long) result.get("memberId"),
+                result -> (Double) result.get("avgRating")
+            ));
+
+        // 각 모임의 현재 참가자 수 조회 (CONFIRMED 상태인 멤버 수)
+        Map<Long, Long> memberCountMap = applicationRepository.findConfirmedMemberCountsByPartyIds(partyIds);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+        List<JoinedGroupResponse> responses = joinedGroups.stream()
+            .map(app -> {
+                Party party = app.getParty();
+                MemberParty hostInfo = hostInfoMap.get(party.getId());
+                
+                // 연령대에서 시작/끝 나이 계산
+                int[] ageRange = getAgeRangeFromEnum(party.getAgeRange());
+
+                return JoinedGroupResponse.builder()
+                    .id(party.getId().toString())
+                    .performance(JoinedGroupResponse.Performance.builder()
+                        .id(party.getFestival().getId().toString())
+                        .poster(party.getFestival().getPosterUrl())
+                        .build())
+                    .title(party.getTitle())
+                    .category(party.getGatherType())
+                    .gender(party.getGenderType())
+                    .startAge(ageRange[0])
+                    .endAge(ageRange[1])
+                    .location(party.getLocation())
+                    .startDate(party.getGatherDate().format(formatter))
+                    .endDate(party.getGatherDate().format(formatter)) // 모임은 단일 날짜이므로 같은 값
+                    .memberCount(memberCountMap.getOrDefault(party.getId(), 0L).intValue())
+                    .maxMembers(party.getCount())
+                    .description(party.getIntroduction())
+                    .hashtag(party.getHashTags())
+                    .host(JoinedGroupResponse.Host.builder()
+                        .id(hostInfo != null ? hostInfo.getMember().getId().toString() : "")
+                        .name(hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음")
+                        .rating(hostRatingMap.getOrDefault(
+                            hostInfo != null ? hostInfo.getMember().getId() : null, 0.0))
+                        .build())
+                    .build();
+            })
+            .collect(Collectors.toList());
+
+        // 다음 커서 ID 계산
+        Long nextCursorId = null;
+        if (slice.hasNext() && !joinedGroups.isEmpty()) {
+            MemberParty lastGroup = joinedGroups.get(joinedGroups.size() - 1);
+            nextCursorId = lastGroup.getId();
+        }
+
+        return CursorResponseWrapper.success(
+            "참가 중인 모임 목록이 정상적으로 조회되었습니다.",
+            responses,
+            nextCursorId,
+            slice.hasNext()
+        );
+    }
+
+    /**
+     * AgeRange enum에서 시작/끝 나이를 계산하는 유틸리티 메서드
+     */
+    private int[] getAgeRangeFromEnum(AgeRange ageRange) {
+        switch (ageRange) {
+            case TEENS:
+                return new int[]{10, 19};
+            case TWENTIES:
+                return new int[]{20, 29};
+            case THIRTIES:
+                return new int[]{30, 39};
+            case FORTIES:
+                return new int[]{40, 49};
+            case FIFTIES:
+                return new int[]{50, 59};
+            case SIXTIES_PLUS:
+                return new int[]{60, 99};
+            default:
+                return new int[]{0, 99};
+        }
     }
 
     /**

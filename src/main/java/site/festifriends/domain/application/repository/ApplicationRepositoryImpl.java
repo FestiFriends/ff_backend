@@ -119,6 +119,45 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
     }
 
     @Override
+    public Slice<MemberParty> findJoinedGroupsWithSlice(Long memberId, Long cursorId, Pageable pageable) {
+        QMemberParty mp = QMemberParty.memberParty;
+        QMember m = QMember.member;
+        QParty p = QParty.party;
+        QFestival f = QFestival.festival;
+
+        BooleanExpression memberCondition = mp.member.id.eq(memberId);
+        BooleanExpression confirmedCondition = mp.status.eq(ApplicationStatus.CONFIRMED);
+        BooleanExpression notDeletedCondition = mp.deleted.isNull();
+        BooleanExpression cursorCondition = cursorIdLt(cursorId, mp);
+
+        JPAQuery<MemberParty> query = queryFactory
+            .selectFrom(mp)
+            .join(mp.member, m).fetchJoin()
+            .join(mp.party, p).fetchJoin()
+            .join(p.festival, f).fetchJoin()
+            .where(
+                memberCondition,
+                confirmedCondition,
+                notDeletedCondition,
+                cursorCondition
+            )
+            .orderBy(mp.id.desc());
+
+        // Slice는 size + 1 개를 조회해서 hasNext를 판단
+        int size = pageable.getPageSize();
+        List<MemberParty> results = query
+            .limit(size + 1)
+            .fetch();
+
+        boolean hasNext = results.size() > size;
+        if (hasNext) {
+            results = results.subList(0, size);
+        }
+
+        return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
     public Map<Long, MemberParty> findHostsByPartyIds(List<Long> partyIds) {
         QMemberParty mp = QMemberParty.memberParty;
         QMember m = QMember.member;
@@ -137,6 +176,31 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
             .collect(Collectors.toMap(
                 host -> host.getParty().getId(),
                 host -> host
+            ));
+    }
+
+    @Override
+    public Map<Long, Long> findConfirmedMemberCountsByPartyIds(List<Long> partyIds) {
+        QMemberParty mp = QMemberParty.memberParty;
+
+        List<Object[]> results = queryFactory
+            .select(mp.party.id, mp.count())
+            .from(mp)
+            .where(
+                mp.party.id.in(partyIds),
+                mp.status.eq(ApplicationStatus.CONFIRMED),
+                mp.deleted.isNull()
+            )
+            .groupBy(mp.party.id)
+            .fetch()
+            .stream()
+            .map(tuple -> new Object[]{tuple.get(mp.party.id), tuple.get(mp.count())})
+            .collect(Collectors.toList());
+
+        return results.stream()
+            .collect(Collectors.toMap(
+                result -> (Long) result[0],
+                result -> (Long) result[1]
             ));
     }
 
