@@ -1,0 +1,282 @@
+package site.festifriends.domain.application.repository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.test.context.ActiveProfiles;
+import site.festifriends.common.config.AuditConfig;
+import site.festifriends.common.config.QueryDslConfig;
+import site.festifriends.entity.Festival;
+import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberParty;
+import site.festifriends.entity.Party;
+import site.festifriends.entity.enums.AgeRange;
+import site.festifriends.entity.enums.ApplicationStatus;
+import site.festifriends.entity.enums.FestivalState;
+import site.festifriends.entity.enums.Gender;
+import site.festifriends.entity.enums.GroupCategory;
+import site.festifriends.entity.enums.Role;
+
+@DataJpaTest
+@Import({QueryDslConfig.class, AuditConfig.class})
+@ActiveProfiles("test")
+class ApplicationRepositoryJoinedTest {
+
+    @Autowired
+    private TestEntityManager entityManager;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
+    private Member member1;
+    private Member member2;
+    private Member host1;
+    private Member host2;
+    private Festival festival1;
+    private Festival festival2;
+    private Party party1;
+    private Party party2;
+    private Party party3;
+
+    @BeforeEach
+    void setUp() {
+        // 멤버들 생성
+        member1 = createMember("member1", "참가자1", Gender.FEMALE, 25);
+        member2 = createMember("member2", "참가자2", Gender.MALE, 30);
+        host1 = createMember("host1", "호스트1", Gender.FEMALE, 28);
+        host2 = createMember("host2", "호스트2", Gender.MALE, 32);
+
+        // 페스티벌 생성
+        festival1 = createFestival("테스트 콘서트 1", "테스트 공연장 1");
+        festival2 = createFestival("테스트 콘서트 2", "테스트 공연장 2");
+
+        // 모임 생성
+        party1 = createParty("첫번째 모임", festival1, host1);
+        party2 = createParty("두번째 모임", festival1, host1);
+        party3 = createParty("세번째 모임", festival2, host2);
+
+        // 호스트 관계 생성
+        createHostRelation(host1, party1);
+        createHostRelation(host1, party2);
+        createHostRelation(host2, party3);
+
+        // 참가 확정된 모임들 생성 (CONFIRMED 상태)
+        createConfirmedMembership(member1, party1, "첫번째 모임 참가 확정");
+        createConfirmedMembership(member1, party2, "두번째 모임 참가 확정");
+        createConfirmedMembership(member2, party1, "첫번째 모임 참가 확정");
+
+        // 다른 상태들도 생성 (테스트 검증용)
+        createApplication(member1, party3, "세번째 모임 신청", ApplicationStatus.PENDING);
+        createApplication(member2, party2, "두번째 모임 신청", ApplicationStatus.ACCEPTED);
+        createApplication(member2, party3, "세번째 모임 신청", ApplicationStatus.REJECTED);
+
+        entityManager.flush();
+        entityManager.clear();
+    }
+
+    @Test
+    @DisplayName("참가 중인 모임 목록을 조회한다 - CONFIRMED 상태만")
+    void findJoinedGroupsWithSlice_Success() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        // when
+        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.hasNext()).isFalse();
+
+        List<MemberParty> joinedGroups = result.getContent();
+        assertThat(joinedGroups).allMatch(mp -> mp.getStatus() == ApplicationStatus.CONFIRMED);
+        assertThat(joinedGroups).allMatch(mp -> mp.getMember().getId().equals(member1.getId()));
+
+        // 모임 정보 확인
+        List<String> partyTitles = joinedGroups.stream()
+            .map(mp -> mp.getParty().getTitle())
+            .toList();
+        assertThat(partyTitles).containsExactlyInAnyOrder("첫번째 모임", "두번째 모임");
+    }
+
+    @Test
+    @DisplayName("참가 중인 모임이 없는 경우 빈 결과를 반환한다")
+    void findJoinedGroupsWithSlice_EmptyResult() {
+        // given
+        Member newMember = createMember("newMember", "새로운멤버", Gender.MALE, 25);
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        // when
+        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(newMember.getId(), null, pageable);
+
+        // then
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.hasNext()).isFalse();
+    }
+
+    @Test
+    @DisplayName("커서 기반 페이지네이션이 정상 동작한다")
+    void findJoinedGroupsWithSlice_CursorPagination() {
+        // given
+        // 추가 참가 확정 모임들 생성
+        Party party4 = createParty("네번째 모임", festival2, host2);
+        createHostRelation(host2, party4);
+        createConfirmedMembership(member1, party4, "네번째 모임 참가 확정");
+
+        Party party5 = createParty("다섯번째 모임", festival1, host1);
+        createHostRelation(host1, party5);
+        createConfirmedMembership(member1, party5, "다섯번째 모임 참가 확정");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        PageRequest pageable = PageRequest.of(0, 2);
+
+        // when - 첫 번째 페이지
+        Slice<MemberParty> firstPage = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
+
+        // then - 첫 번째 페이지 검증
+        assertThat(firstPage.getContent()).hasSize(2);
+        assertThat(firstPage.hasNext()).isTrue();
+
+        // when - 두 번째 페이지 (커서 사용)
+        Long cursorId = firstPage.getContent().get(firstPage.getContent().size() - 1).getId();
+        Slice<MemberParty> secondPage = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), cursorId, pageable);
+
+        // then - 두 번째 페이지 검증
+        assertThat(secondPage.getContent()).hasSize(2);
+        assertThat(secondPage.hasNext()).isFalse();
+
+        // 전체 결과 검증
+        List<MemberParty> allResults = new ArrayList<>(firstPage.getContent());
+        allResults.addAll(secondPage.getContent());
+        assertThat(allResults).hasSize(4);
+        assertThat(allResults).allMatch(mp -> mp.getStatus() == ApplicationStatus.CONFIRMED);
+    }
+
+    @Test
+    @DisplayName("삭제된 모임은 조회되지 않는다")
+    void findJoinedGroupsWithSlice_ExcludeDeleted() {
+        // given
+        MemberParty confirmedMembership = createConfirmedMembership(member2, party3, "삭제될 모임 참가");
+        confirmedMembership.delete(); // soft delete
+        entityManager.persistAndFlush(confirmedMembership);
+        entityManager.clear();
+
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        // when
+        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(member2.getId(), null, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(1); // 삭제된 것 제외하고 1개만
+        assertThat(result.getContent().get(0).getParty().getTitle()).isEqualTo("첫번째 모임");
+    }
+
+    @Test
+    @DisplayName("페스티벌 정보가 함께 조회된다")
+    void findJoinedGroupsWithSlice_WithFestivalInfo() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 10);
+
+        // when
+        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+        
+        for (MemberParty memberParty : result.getContent()) {
+            assertThat(memberParty.getParty().getFestival()).isNotNull();
+            assertThat(memberParty.getParty().getFestival().getTitle()).isNotBlank();
+            assertThat(memberParty.getParty().getFestival().getPosterUrl()).isNotBlank();
+        }
+    }
+
+    private Member createMember(String socialId, String nickname, Gender gender, int age) {
+        Member member = Member.builder()
+            .socialId(socialId)
+            .nickname(nickname)
+            .email(socialId + "@test.com")
+            .profileImageUrl("http://test.com/profile.jpg")
+            .age(age)
+            .gender(gender)
+            .introduction("테스트 소개")
+            .build();
+        return entityManager.persistAndFlush(member);
+    }
+
+    private Festival createFestival(String title, String location) {
+        Date startDate = new Date();
+        Date endDate = new Date();
+        Festival festival = Festival.builder()
+            .title(title)
+            .posterUrl("http://test.com/poster.jpg")
+            .startDate(startDate)
+            .endDate(endDate)
+            .location(location)
+            .price(50000)
+            .state(FestivalState.UPCOMING)
+            .visit(false)
+            .build();
+        return entityManager.persistAndFlush(festival);
+    }
+
+    private Party createParty(String title, Festival festival, Member host) {
+        LocalDateTime gatherDate = LocalDateTime.now().plusDays(1);
+        Party party = Party.builder()
+            .title(title)
+            .genderType(Gender.ALL)
+            .ageRange(AgeRange.TWENTIES)
+            .gatherType(GroupCategory.COMPANION)
+            .gatherDate(gatherDate)
+            .location("테스트 장소")
+            .count(4)
+            .introduction(title + " 소개")
+            .festival(festival)
+            .build();
+        return entityManager.persistAndFlush(party);
+    }
+
+    private void createHostRelation(Member host, Party party) {
+        MemberParty hostRelation = MemberParty.builder()
+            .member(host)
+            .party(party)
+            .role(Role.HOST)
+            .status(ApplicationStatus.ACCEPTED)
+            .build();
+        entityManager.persistAndFlush(hostRelation);
+    }
+
+    private MemberParty createConfirmedMembership(Member member, Party party, String applicationText) {
+        MemberParty membership = MemberParty.builder()
+            .member(member)
+            .party(party)
+            .role(Role.MEMBER)
+            .status(ApplicationStatus.CONFIRMED)
+            .applicationText(applicationText)
+            .build();
+        return entityManager.persistAndFlush(membership);
+    }
+
+    private void createApplication(Member member, Party party, String applicationText, ApplicationStatus status) {
+        MemberParty application = MemberParty.builder()
+            .member(member)
+            .party(party)
+            .role(Role.MEMBER)
+            .status(status)
+            .applicationText(applicationText)
+            .build();
+        entityManager.persistAndFlush(application);
+    }
+} 
