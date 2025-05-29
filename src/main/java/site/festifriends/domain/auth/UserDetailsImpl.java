@@ -10,14 +10,16 @@ import site.festifriends.entity.Member;
 @Getter
 public class UserDetailsImpl implements UserDetails {
 
-    private final Member member;
+    private final Long memberId;
+    private final String nickname;
 
-    public UserDetailsImpl(Member member) {
-        this.member = member;
+    public UserDetailsImpl(Long memberId, String nickname) {
+        this.memberId = memberId;
+        this.nickname = nickname;
     }
 
     public static UserDetailsImpl of(Member member) {
-        return new UserDetailsImpl(member);
+        return new UserDetailsImpl(member.getId(), member.getNickname());
     }
 
     @Override
@@ -32,6 +34,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getUsername() {
-        return member.getNickname();
+        return this.nickname;
     }
 }

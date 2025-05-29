@@ -6,7 +6,7 @@ public interface JwtTokenProvider {
 
     String generateToken(Long memberId);
 
-    Boolean validateToken(String token);
+    boolean validateToken(String token);
 
     String getSubject(String token);
 
