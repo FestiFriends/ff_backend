@@ -87,6 +87,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
         BooleanExpression memberCondition = mp.member.id.eq(memberId);
         BooleanExpression notHostCondition = mp.role.ne(Role.HOST);
         BooleanExpression notDeletedCondition = mp.deleted.isNull();
+        BooleanExpression notConfirmedCondition = mp.status.ne(ApplicationStatus.CONFIRMED);
         BooleanExpression cursorCondition = cursorIdLt(cursorId, mp);
 
         JPAQuery<MemberParty> query = queryFactory
@@ -98,6 +99,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
                 memberCondition,
                 notHostCondition,
                 notDeletedCondition,
+                notConfirmedCondition,
                 cursorCondition
             )
             .orderBy(mp.id.desc());
@@ -141,7 +143,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
     @Override
     public boolean existsByPartyIdAndMemberIdAndRole(Long partyId, Long memberId, Role role) {
         QMemberParty mp = QMemberParty.memberParty;
-        
+
         Integer count = queryFactory
             .selectOne()
             .from(mp)
@@ -152,7 +154,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
                 mp.deleted.isNull()
             )
             .fetchFirst();
-            
+
         return count != null;
     }
 

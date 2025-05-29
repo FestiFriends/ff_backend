@@ -97,7 +97,7 @@ class ApplicationRepositoryTest {
                 .member(host)
                 .party(party)
                 .role(Role.HOST)
-                .status(ApplicationStatus.APPROVED)
+                .status(ApplicationStatus.ACCEPTED)
                 .build();
         entityManager.persistAndFlush(hostMemberParty);
 

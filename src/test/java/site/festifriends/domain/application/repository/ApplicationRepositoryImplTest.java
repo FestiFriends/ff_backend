@@ -74,7 +74,7 @@ class ApplicationRepositoryImplTest {
         createApplication(applicant4, party3, "세번째 모임에 신청합니다!", ApplicationStatus.PENDING);
 
         // 다른 상태의 신청서들 (필터링 테스트용)
-        createApplication(applicant1, party2, "승인된 신청서", ApplicationStatus.APPROVED);
+        createApplication(applicant1, party2, "승인된 신청서", ApplicationStatus.ACCEPTED);
         createApplication(applicant2, party2, "거절된 신청서", ApplicationStatus.REJECTED);
 
         entityManager.flush();
@@ -238,7 +238,7 @@ class ApplicationRepositoryImplTest {
                 .setParameter("partyId", party1.getId())
                 .setParameter("role", Role.HOST)
                 .getResultList();
-        
+
         if (!hostRelations.isEmpty()) {
             MemberParty hostRelation = hostRelations.get(0);
             hostRelation.delete();
@@ -303,7 +303,7 @@ class ApplicationRepositoryImplTest {
             .member(host)
             .party(party)
             .role(Role.HOST)
-            .status(ApplicationStatus.APPROVED)
+            .status(ApplicationStatus.ACCEPTED)
             .build();
         entityManager.persistAndFlush(hostRelation);
     }

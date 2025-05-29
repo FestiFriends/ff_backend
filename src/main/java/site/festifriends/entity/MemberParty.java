@@ -47,7 +47,7 @@ public class MemberParty extends SoftDeleteEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    @Comment("신청 상태(대기중/승인됨/거절됨/취소됨)")
+    @Comment("신청 상태(대기/수락/거절/확정)")
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
      @Column(name = "application_text", length = 150)
@@ -75,7 +75,7 @@ public class MemberParty extends SoftDeleteEntity {
      * 모임 가입 승인
      */
     public void approve() {
-        this.status = ApplicationStatus.APPROVED;
+        this.status = ApplicationStatus.ACCEPTED;
         this.joinedAt = LocalDateTime.now();
     }
 
@@ -87,9 +87,16 @@ public class MemberParty extends SoftDeleteEntity {
     }
 
     /**
-     * 모임 가입 취소
+     * 모임 가입 취소 (신청자가 가입 거절)
      */
     public void cancel() {
-        this.status = ApplicationStatus.CANCELLED;
+        this.status = ApplicationStatus.REJECTED;
+    }
+
+    /**
+     * 모임 가입 확정 (신청자가 확정)
+     */
+    public void confirm() {
+        this.status = ApplicationStatus.CONFIRMED;
     }
 }

@@ -95,7 +95,7 @@ class ApplicationServiceTest {
         assertThat(response.isSuccess()).isTrue();
         assertThat(response.getMessage()).isEqualTo("모임 가입 신청을 수락하였습니다");
         assertThat(response.getData().getResult()).isTrue();
-        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(application.getStatus()).isEqualTo(ApplicationStatus.ACCEPTED);
     }
 
     @Test
@@ -162,7 +162,7 @@ class ApplicationServiceTest {
                 .member(applicant)
                 .party(party)
                 .role(Role.MEMBER)
-                .status(ApplicationStatus.APPROVED) // 이미 승인된 상태
+                .status(ApplicationStatus.ACCEPTED) // 이미 승인된 상태
                 .applicationText("참여하고 싶습니다!")
                 .build();
 
