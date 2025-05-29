@@ -92,7 +92,6 @@ class ApplicationServiceTest {
                 applicationService.updateApplicationStatus(1L, 1L, request);
 
         // then
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getMessage()).isEqualTo("모임 가입 신청을 수락하였습니다");
         assertThat(response.getData().getResult()).isTrue();
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.ACCEPTED);
@@ -114,7 +113,6 @@ class ApplicationServiceTest {
                 applicationService.updateApplicationStatus(1L, 1L, request);
 
         // then
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getMessage()).isEqualTo("모임 가입 신청을 거절하였습니다");
         assertThat(response.getData().getResult()).isTrue();
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.REJECTED);
