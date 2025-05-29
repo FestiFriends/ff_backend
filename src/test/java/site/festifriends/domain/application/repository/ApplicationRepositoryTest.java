@@ -3,7 +3,6 @@ package site.festifriends.domain.application.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,15 +17,14 @@ import org.springframework.data.domain.Slice;
 import org.springframework.test.context.ActiveProfiles;
 import site.festifriends.common.config.AuditConfig;
 import site.festifriends.common.config.QueryDslConfig;
-import site.festifriends.entity.Festival;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
-import site.festifriends.entity.enums.AgeRange;
+import site.festifriends.entity.Performance;
 import site.festifriends.entity.enums.ApplicationStatus;
-import site.festifriends.entity.enums.FestivalState;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.GroupCategory;
+import site.festifriends.entity.enums.PerformanceState;
 import site.festifriends.entity.enums.Role;
 
 @DataJpaTest
@@ -43,7 +41,7 @@ class ApplicationRepositoryTest {
     private Member host;
     private Member applicant;
     private Group group;
-    private Festival festival;
+    private Performance performance;
 
     @BeforeEach
     void setUp() {
@@ -67,17 +65,17 @@ class ApplicationRepositoryTest {
                 .build();
         entityManager.persistAndFlush(applicant);
 
-        festival = Festival.builder()
+        performance = Performance.builder()
                 .title("테스트 페스티벌")
-                .posterUrl("https://example.com/poster.jpg")
-                .startDate(new Date())
-                .endDate(new Date())
+                .poster("https://example.com/poster.jpg")
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusDays(3))
                 .location("서울시 강남구")
-                .price(50000)
-                .state(FestivalState.UPCOMING)
-                .visit(true)
+                .price(List.of("50000"))
+                .state(PerformanceState.UPCOMING)
+                .visit("true")
                 .build();
-        entityManager.persistAndFlush(festival);
+        entityManager.persistAndFlush(performance);
 
         group = Group.builder()
                 .title("테스트 모임")
@@ -90,7 +88,7 @@ class ApplicationRepositoryTest {
                 .location("서울시 강남구")
                 .count(4)
                 .introduction("함께 페스티벌을 즐겨요!")
-                .festival(festival)
+                .performance(performance)
                 .build();
         entityManager.persistAndFlush(group);
 

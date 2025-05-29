@@ -1,5 +1,9 @@
 package site.festifriends.domain.group.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,14 +17,15 @@ import org.springframework.data.domain.Slice;
 import org.springframework.test.context.ActiveProfiles;
 import site.festifriends.common.config.AuditConfig;
 import site.festifriends.common.config.QueryDslConfig;
-import site.festifriends.entity.*;
-import site.festifriends.entity.enums.*;
-
-import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
+import site.festifriends.entity.Group;
+import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberGroup;
+import site.festifriends.entity.Performance;
+import site.festifriends.entity.enums.ApplicationStatus;
+import site.festifriends.entity.enums.Gender;
+import site.festifriends.entity.enums.GroupCategory;
+import site.festifriends.entity.enums.PerformanceState;
+import site.festifriends.entity.enums.Role;
 
 @DataJpaTest
 @Import({QueryDslConfig.class, AuditConfig.class})
@@ -35,8 +40,8 @@ class MemberGroupRepositoryImplTest {
 
     private Member host1;
     private Member host2;
-    private Festival festival1;
-    private Festival festival2;
+    private Performance performance1;
+    private Performance performance2;
     private Group group1;
     private Group group2;
     private Group group3;
@@ -47,14 +52,14 @@ class MemberGroupRepositoryImplTest {
         host1 = createMember("host1", "테스트호스트1", Gender.MALE, 25);
         host2 = createMember("host2", "테스트호스트2", Gender.FEMALE, 30);
 
-        // 페스티벌 생성
-        festival1 = createFestival("테스트 콘서트", "테스트 공연장");
-        festival2 = createFestival("다른 콘서트", "다른 공연장");
+        // 공연 생성
+        performance1 = createPerformance("테스트 콘서트", "테스트 공연장");
+        performance2 = createPerformance("다른 콘서트", "다른 공연장");
 
         // 모임 생성
-        group1 = createGroup("첫번째 모임", festival1);
-        group2 = createGroup("두번째 모임", festival1);
-        group3 = createGroup("세번째 모임", festival2);
+        group1 = createGroup("첫번째 모임", performance1);
+        group2 = createGroup("두번째 모임", performance1);
+        group3 = createGroup("세번째 모임", performance2);
 
         // 호스트 관계 생성
         createHostRelation(host1, group1);
@@ -106,7 +111,7 @@ class MemberGroupRepositoryImplTest {
         // 연관 엔티티들이 페치조인으로 로딩되어야 함
         assertThat(applications.get(0).getMember()).isNotNull();
         assertThat(applications.get(0).getGroup()).isNotNull();
-        assertThat(applications.get(0).getGroup().getFestival()).isNotNull();
+        assertThat(applications.get(0).getGroup().getPerformance()).isNotNull();
     }
 
     @Test
@@ -266,23 +271,23 @@ class MemberGroupRepositoryImplTest {
         return entityManager.persistAndFlush(member);
     }
 
-    private Festival createFestival(String title, String location) {
-        Date startDate = new Date();
-        Date endDate = new Date();
-        Festival festival = Festival.builder()
+    private Performance createPerformance(String title, String location) {
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = LocalDateTime.now().plusDays(3);
+        Performance performance = Performance.builder()
             .title(title)
-            .posterUrl("http://test.com/poster.jpg")
+            .poster("http://test.com/poster.jpg")
             .startDate(startDate)
             .endDate(endDate)
             .location(location)
-            .price(50000)
-            .state(FestivalState.UPCOMING)
-            .visit(false)
+            .price(List.of("50000"))
+            .state(PerformanceState.UPCOMING)
+            .visit("false")
             .build();
-        return entityManager.persistAndFlush(festival);
+        return entityManager.persistAndFlush(performance);
     }
 
-    private Group createGroup(String title, Festival festival) {
+    private Group createGroup(String title, Performance performance) {
         LocalDateTime startDate = LocalDateTime.now().plusDays(1);
         LocalDateTime endDate = LocalDateTime.now().plusDays(2);
         Group group = Group.builder()
@@ -296,7 +301,7 @@ class MemberGroupRepositoryImplTest {
             .location("테스트 장소")
             .count(4)
             .introduction(title + " 소개")
-            .festival(festival)
+            .performance(performance)
             .build();
         return entityManager.persistAndFlush(group);
     }

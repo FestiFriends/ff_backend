@@ -20,10 +20,10 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
-import site.festifriends.entity.Festival;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
+import site.festifriends.entity.Performance;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.Role;
@@ -60,7 +60,7 @@ class ApplicationServiceTest {
                 .gender(Gender.FEMALE)
                 .build();
 
-        Festival festival = Festival.builder()
+        Performance performance = Performance.builder()
                 .title("테스트 페스티벌")
                 .build();
 

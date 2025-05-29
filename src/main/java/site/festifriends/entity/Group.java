@@ -89,14 +89,14 @@ public class Group extends SoftDeleteEntity {
     private String announcement;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "festival_id")
+    @JoinColumn(name = "performance_id")
     @Comment("관련 공연")
-    private Festival festival;
+    private Performance performance;
 
     @Builder
     public Group(String title, Gender genderType, Integer startAge, Integer endAge, GroupCategory gatherType, 
                 LocalDateTime startDate, LocalDateTime endDate, String location, Integer count, 
-                String introduction, Festival festival) {
+                String introduction, Performance performance) {
         this.title = title;
         this.genderType = genderType;
         this.startAge = startAge;
@@ -107,6 +107,6 @@ public class Group extends SoftDeleteEntity {
         this.location = location;
         this.count = count;
         this.introduction = introduction;
-        this.festival = festival;
+        this.performance = performance;
     }
 }

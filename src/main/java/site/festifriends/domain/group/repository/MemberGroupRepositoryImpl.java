@@ -13,7 +13,7 @@ import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.QMember;
 import site.festifriends.entity.QMemberGroup;
 import site.festifriends.entity.QGroup;
-import site.festifriends.entity.QFestival;
+import site.festifriends.entity.QPerformance;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
 
@@ -33,7 +33,7 @@ public class MemberGroupRepositoryImpl implements MemberGroupRepositoryCustom {
         QMemberGroup host = new QMemberGroup("host");
         QMember m = QMember.member;
         QGroup g = QGroup.group;
-        QFestival f = QFestival.festival;
+        QPerformance p = QPerformance.performance;
 
         BooleanExpression hostGroupsCondition = mg.group.id.in(
             JPAExpressions.select(host.group.id)
@@ -54,7 +54,7 @@ public class MemberGroupRepositoryImpl implements MemberGroupRepositoryCustom {
             .selectFrom(mg)
             .join(mg.member, m).fetchJoin()
             .join(mg.group, g).fetchJoin()
-            .join(g.festival, f).fetchJoin()
+            .join(g.performance, p).fetchJoin()
             .where(
                 hostGroupsCondition,
                 statusCondition,
@@ -82,7 +82,7 @@ public class MemberGroupRepositoryImpl implements MemberGroupRepositoryCustom {
         QMemberGroup mg = QMemberGroup.memberGroup;
         QMember m = QMember.member;
         QGroup g = QGroup.group;
-        QFestival f = QFestival.festival;
+        QPerformance f = QPerformance.performance;
 
         BooleanExpression memberCondition = mg.member.id.eq(memberId);
         BooleanExpression notHostCondition = mg.role.ne(Role.HOST);
@@ -94,7 +94,7 @@ public class MemberGroupRepositoryImpl implements MemberGroupRepositoryCustom {
             .selectFrom(mg)
             .join(mg.member, m).fetchJoin()
             .join(mg.group, g).fetchJoin()
-            .join(g.festival, f).fetchJoin()
+            .join(g.performance, f).fetchJoin()
             .where(
                 memberCondition,
                 notHostCondition,
@@ -123,7 +123,7 @@ public class MemberGroupRepositoryImpl implements MemberGroupRepositoryCustom {
         QMemberGroup mg = QMemberGroup.memberGroup;
         QMember m = QMember.member;
         QGroup g = QGroup.group;
-        QFestival f = QFestival.festival;
+        QPerformance f = QPerformance.performance;
 
         BooleanExpression memberCondition = mg.member.id.eq(memberId);
         BooleanExpression confirmedCondition = mg.status.eq(ApplicationStatus.CONFIRMED);
@@ -134,7 +134,7 @@ public class MemberGroupRepositoryImpl implements MemberGroupRepositoryCustom {
             .selectFrom(mg)
             .join(mg.member, m).fetchJoin()
             .join(mg.group, g).fetchJoin()
-            .join(g.festival, f).fetchJoin()
+            .join(g.performance, f).fetchJoin()
             .where(
                 memberCondition,
                 confirmedCondition,

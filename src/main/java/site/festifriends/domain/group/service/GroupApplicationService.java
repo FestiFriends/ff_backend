@@ -1,5 +1,9 @@
 package site.festifriends.domain.group.service;
 
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,11 +25,6 @@ import site.festifriends.entity.Group;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
-
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,7 +86,7 @@ public class GroupApplicationService {
                 return ApplicationListResponse.builder()
                     .groupId(firstApp.getGroup().getId().toString())
                     .groupName(firstApp.getGroup().getTitle())
-                    .poster(firstApp.getGroup().getFestival().getPosterUrl())
+                    .poster(firstApp.getGroup().getPerformance().getPoster())
                     .applications(applicationInfos)
                     .build();
             })
@@ -144,8 +143,8 @@ public class GroupApplicationService {
                     .applicationId(app.getId().toString())
                     .groupId(group.getId().toString())
                     .groupName(group.getTitle())
-                    .performanceId(group.getFestival().getId().toString())
-                    .poster(group.getFestival().getPosterUrl())
+                    .performanceId(group.getPerformance().getId().toString())
+                    .poster(group.getPerformance().getPoster())
                     .leaderNickname(host != null ? host.getMember().getNickname() : null)
                     .leaderRating(0.0) // TODO: Get actual rating
                     .gender(group.getGenderType())
@@ -204,8 +203,8 @@ public class GroupApplicationService {
                 Long confirmedCount = confirmedCountMap.getOrDefault(group.getId(), 0L);
 
                 JoinedGroupResponse.Performance performance = JoinedGroupResponse.Performance.builder()
-                    .id(group.getFestival().getId().toString())
-                    .poster(group.getFestival().getPosterUrl())
+                    .id(group.getPerformance().getId().toString())
+                    .poster(group.getPerformance().getPoster())
                     .build();
 
                 JoinedGroupResponse.Host hostInfo = JoinedGroupResponse.Host.builder()

@@ -1,5 +1,9 @@
 package site.festifriends.domain.application.service;
 
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,14 +23,9 @@ import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.MemberGroup;
+import site.festifriends.entity.enums.AgeRange;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
-import site.festifriends.entity.enums.AgeRange;
-
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -88,7 +87,7 @@ public class ApplicationService {
                 return ApplicationListResponse.builder()
                     .groupId(firstApp.getGroup().getId().toString())
                     .groupName(firstApp.getGroup().getTitle())
-                    .poster(firstApp.getGroup().getFestival().getPosterUrl())
+                    .poster(firstApp.getGroup().getPerformance().getPoster())
                     .applications(applicationInfos)
                     .build();
             })
@@ -152,8 +151,8 @@ public class ApplicationService {
 
                 return AppliedListResponse.builder()
                     .applicationId(app.getId().toString())
-                    .performanceId(app.getGroup().getFestival().getId().toString())
-                    .poster(app.getGroup().getFestival().getPosterUrl())
+                    .performanceId(app.getGroup().getPerformance().getId().toString())
+                    .poster(app.getGroup().getPerformance().getPoster())
                     .groupId(app.getGroup().getId().toString())
                     .groupName(app.getGroup().getTitle())
                     .leaderNickname(hostNickname)
@@ -231,8 +230,8 @@ public class ApplicationService {
                 return JoinedGroupResponse.builder()
                     .id(group.getId().toString())
                     .performance(JoinedGroupResponse.Performance.builder()
-                        .id(group.getFestival().getId().toString())
-                        .poster(group.getFestival().getPosterUrl())
+                        .id(group.getPerformance().getId().toString())
+                        .poster(group.getPerformance().getPoster())
                         .build())
                     .title(group.getTitle())
                     .category(group.getGatherType())

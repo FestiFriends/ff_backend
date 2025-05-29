@@ -13,29 +13,36 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Comment;
 import site.festifriends.common.model.BaseEntity;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "festival_bookmark")
-public class FestivalBookmark extends BaseEntity {
+@Table(name = "performance_image")
+public class PerformanceImage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "festival_bookmark_id", nullable = false)
+    @Column(name = "performance_image_id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "festival_id", nullable = false)
-    private Festival festival;
+    @JoinColumn(name = "performance_id", nullable = false)
+    private Performance performance;
+
+    @Column(name = "src", nullable = false)
+    @Comment("소개 이미지 URL")
+    private String src;
+
+    @Column(name = "alt")
+    @Comment("소개 이미지 설명")
+    private String alt;
 
     @Builder
-    public FestivalBookmark(Member member, Festival festival) {
-        this.member = member;
-        this.festival = festival;
+    public PerformanceImage(Performance performance, String src, String alt) {
+        this.performance = performance;
+        this.src = src;
+        this.alt = alt;
     }
 }

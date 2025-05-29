@@ -4,6 +4,9 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -13,13 +16,9 @@ import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.QGroup;
 import site.festifriends.entity.QMember;
 import site.festifriends.entity.QMemberGroup;
-import site.festifriends.entity.QFestival;
+import site.festifriends.entity.QPerformance;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,7 +32,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
         QMemberGroup host = new QMemberGroup("host");
         QMember m = QMember.member;
         QGroup g = QGroup.group;
-        QFestival f = QFestival.festival;
+        QPerformance p = QPerformance.performance;
 
         BooleanExpression hostGroupsCondition = mg.group.id.in(
             JPAExpressions.select(host.group.id)
@@ -54,7 +53,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
             .selectFrom(mg)
             .join(mg.member, m).fetchJoin()
             .join(mg.group, g).fetchJoin()
-            .join(g.festival, f).fetchJoin()
+            .join(g.performance, p).fetchJoin()
             .where(
                 hostGroupsCondition,
                 statusCondition,
@@ -82,7 +81,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
         QMemberGroup mg = QMemberGroup.memberGroup;
         QMember m = QMember.member;
         QGroup g = QGroup.group;
-        QFestival f = QFestival.festival;
+        QPerformance p = QPerformance.performance;
 
         BooleanExpression memberCondition = mg.member.id.eq(memberId);
         BooleanExpression notHostCondition = mg.role.ne(Role.HOST);
@@ -94,7 +93,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
             .selectFrom(mg)
             .join(mg.member, m).fetchJoin()
             .join(mg.group, g).fetchJoin()
-            .join(g.festival, f).fetchJoin()
+            .join(g.performance, p).fetchJoin()
             .where(
                 memberCondition,
                 notHostCondition,
@@ -123,7 +122,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
         QMemberGroup mg = QMemberGroup.memberGroup;
         QMember m = QMember.member;
         QGroup g = QGroup.group;
-        QFestival f = QFestival.festival;
+        QPerformance p = QPerformance.performance;
 
         BooleanExpression memberCondition = mg.member.id.eq(memberId);
         BooleanExpression confirmedCondition = mg.status.eq(ApplicationStatus.CONFIRMED);
@@ -134,7 +133,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
             .selectFrom(mg)
             .join(mg.member, m).fetchJoin()
             .join(mg.group, g).fetchJoin()
-            .join(g.festival, f).fetchJoin()
+            .join(g.performance, p).fetchJoin()
             .where(
                 memberCondition,
                 confirmedCondition,
