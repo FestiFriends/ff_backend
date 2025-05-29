@@ -18,6 +18,7 @@ import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.dto.JoinedGroupResponse;
 import site.festifriends.domain.application.service.ApplicationService;
+import site.festifriends.domain.auth.UserDetailsImpl;
 
 @RestController
 @RequestMapping("/api/v1/managements")
@@ -29,12 +30,12 @@ public class ApplicationController implements ApplicationApi {
     @Override
     @GetMapping("/applications")
     public ResponseEntity<CursorResponseWrapper<ApplicationListResponse>> getApplications(
-        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @AuthenticationPrincipal UserDetailsImpl user,
         @RequestParam(required = false) Long cursorId,
         @RequestParam(defaultValue = "20") int size
     ) {
         CursorResponseWrapper<ApplicationListResponse> response =
-            applicationService.getApplicationsWithSlice(memberId, cursorId, size);
+            applicationService.getApplicationsWithSlice(user.getMemberId(), cursorId, size);
 
         return ResponseEntity.ok(response);
     }
@@ -42,12 +43,12 @@ public class ApplicationController implements ApplicationApi {
     @Override
     @GetMapping("/applied")
     public ResponseEntity<CursorResponseWrapper<AppliedListResponse>> getAppliedApplications(
-        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @AuthenticationPrincipal UserDetailsImpl user,
         @RequestParam(required = false) Long cursorId,
         @RequestParam(defaultValue = "20") int size
     ) {
         CursorResponseWrapper<AppliedListResponse> response =
-            applicationService.getAppliedApplicationsWithSlice(memberId, cursorId, size);
+            applicationService.getAppliedApplicationsWithSlice(user.getMemberId(), cursorId, size);
 
         return ResponseEntity.ok(response);
     }
@@ -55,12 +56,12 @@ public class ApplicationController implements ApplicationApi {
     @Override
     @GetMapping("/joined")
     public ResponseEntity<CursorResponseWrapper<JoinedGroupResponse>> getJoinedGroups(
-        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @AuthenticationPrincipal UserDetailsImpl user,
         @RequestParam(required = false) Long cursorId,
         @RequestParam(defaultValue = "20") int size
     ) {
         CursorResponseWrapper<JoinedGroupResponse> response =
-            applicationService.getJoinedGroupsWithSlice(memberId, cursorId, size);
+            applicationService.getJoinedGroupsWithSlice(user.getMemberId(), cursorId, size);
 
         return ResponseEntity.ok(response);
     }
@@ -68,12 +69,12 @@ public class ApplicationController implements ApplicationApi {
     @Override
     @PatchMapping("/{applicationId}")
     public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> updateApplicationStatus(
-        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long applicationId,
         @RequestBody ApplicationStatusRequest request
     ) {
         ResponseWrapper<ApplicationStatusResponse> response =
-            applicationService.updateApplicationStatus(memberId, applicationId, request);
+            applicationService.updateApplicationStatus(user.getMemberId(), applicationId, request);
 
         return ResponseEntity.ok(response);
     }
@@ -81,11 +82,11 @@ public class ApplicationController implements ApplicationApi {
     @Override
     @PatchMapping("/applied/{applicationId}")
     public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> confirmApplication(
-        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long applicationId
     ) {
         ResponseWrapper<ApplicationStatusResponse> response =
-            applicationService.confirmApplication(memberId, applicationId);
+            applicationService.confirmApplication(user.getMemberId(), applicationId);
 
         return ResponseEntity.ok(response);
     }
