@@ -72,4 +72,22 @@ public interface ApplicationApi {
             @PathVariable Long applicationId,
             @RequestBody ApplicationStatusRequest request
     );
+
+    @Operation(
+        summary = "모임 가입 확정",
+        description = "신청자가 수락된 모임 가입을 확정합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "모임 가입 확정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "권한이 없는 사용자 (신청자만 가능)"),
+            @ApiResponse(responseCode = "404", description = "신청서를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        }
+    )
+    ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> confirmApplication(
+            @AuthenticationPrincipal Long memberId,
+            @Parameter(description = "신청서 ID")
+            @PathVariable Long applicationId
+    );
 } 

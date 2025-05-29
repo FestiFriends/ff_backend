@@ -63,4 +63,16 @@ public class ApplicationController implements ApplicationApi {
 
         return ResponseEntity.ok(response);
     }
+
+    @Override
+    @PatchMapping("/applied/{applicationId}")
+    public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> confirmApplication(
+        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @PathVariable Long applicationId
+    ) {
+        ResponseWrapper<ApplicationStatusResponse> response =
+            applicationService.confirmApplication(memberId, applicationId);
+
+        return ResponseEntity.ok(response);
+    }
 } 

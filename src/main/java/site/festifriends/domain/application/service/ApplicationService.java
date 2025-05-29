@@ -215,6 +215,32 @@ public class ApplicationService {
         return ResponseWrapper.success(message, response);
     }
 
+    /**
+     * 모임 가입 확정
+     */
+    @Transactional
+    public ResponseWrapper<ApplicationStatusResponse> confirmApplication(
+        Long memberId,
+        Long applicationId
+    ) {
+        MemberParty application = applicationRepository.findById(applicationId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신청서를 찾을 수 없습니다."));
+
+        validateApplicantPermission(memberId, application);
+
+        if (application.getStatus() != ApplicationStatus.ACCEPTED) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "수락된 신청서만 확정할 수 있습니다.");
+        }
+
+        application.confirm();
+
+        ApplicationStatusResponse response = ApplicationStatusResponse.builder()
+            .result(true)
+            .build();
+
+        return ResponseWrapper.success("모임 가입을 확정하였습니다", response);
+    }
+
     private void validateHostPermission(Long hostId, MemberParty application) {
         boolean isHost = applicationRepository.existsByPartyIdAndMemberIdAndRole(
             application.getParty().getId(),
@@ -224,6 +250,12 @@ public class ApplicationService {
 
         if (!isHost) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "모임 방장만 신청서를 처리할 수 있습니다.");
+        }
+    }
+
+    private void validateApplicantPermission(Long memberId, MemberParty application) {
+        if (!application.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 신청서만 확정할 수 있습니다.");
         }
     }
 } 
