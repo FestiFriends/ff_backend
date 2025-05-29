@@ -1,5 +1,9 @@
 package site.festifriends.domain.application.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,14 +17,15 @@ import org.springframework.data.domain.Slice;
 import org.springframework.test.context.ActiveProfiles;
 import site.festifriends.common.config.AuditConfig;
 import site.festifriends.common.config.QueryDslConfig;
-import site.festifriends.entity.*;
-import site.festifriends.entity.enums.*;
-
-import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.*;
+import site.festifriends.entity.Group;
+import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberGroup;
+import site.festifriends.entity.Performance;
+import site.festifriends.entity.enums.ApplicationStatus;
+import site.festifriends.entity.enums.Gender;
+import site.festifriends.entity.enums.GroupCategory;
+import site.festifriends.entity.enums.PerformanceState;
+import site.festifriends.entity.enums.Role;
 
 @DataJpaTest
 @Import({QueryDslConfig.class, AuditConfig.class})
@@ -35,11 +40,11 @@ class ApplicationRepositoryImplTest {
 
     private Member host1;
     private Member host2;
-    private Festival festival1;
-    private Festival festival2;
-    private Party party1;
-    private Party party2;
-    private Party party3;
+    private Performance performance1;
+    private Performance performance2;
+    private Group group1;
+    private Group group2;
+    private Group group3;
 
     @BeforeEach
     void setUp() {
@@ -47,19 +52,19 @@ class ApplicationRepositoryImplTest {
         host1 = createMember("host1", "테스트호스트1", Gender.MALE, 25);
         host2 = createMember("host2", "테스트호스트2", Gender.FEMALE, 30);
 
-        // 페스티벌 생성
-        festival1 = createFestival("테스트 콘서트", "테스트 공연장");
-        festival2 = createFestival("다른 콘서트", "다른 공연장");
+        // 공연 생성
+        performance1 = createPerformance("테스트 콘서트", "테스트 공연장");
+        performance2 = createPerformance("다른 콘서트", "다른 공연장");
 
         // 모임 생성
-        party1 = createParty("첫번째 모임", festival1);
-        party2 = createParty("두번째 모임", festival1);
-        party3 = createParty("세번째 모임", festival2);
+        group1 = createGroup("첫번째 모임", performance1);
+        group2 = createGroup("두번째 모임", performance1);
+        group3 = createGroup("세번째 모임", performance2);
 
         // 호스트 관계 생성
-        createHostRelation(host1, party1);
-        createHostRelation(host1, party2);
-        createHostRelation(host2, party3);
+        createHostRelation(host1, group1);
+        createHostRelation(host1, group2);
+        createHostRelation(host2, group3);
 
         // 신청자들과 신청서 생성
         Member applicant1 = createMember("applicant1", "신청자1", Gender.FEMALE, 23);
@@ -68,14 +73,14 @@ class ApplicationRepositoryImplTest {
         Member applicant4 = createMember("applicant4", "신청자4", Gender.MALE, 26);
 
         // PENDING 상태 신청서들
-        createApplication(applicant1, party1, "첫번째 모임에 신청합니다!", ApplicationStatus.PENDING);
-        createApplication(applicant2, party1, "두번째 신청자입니다!", ApplicationStatus.PENDING);
-        createApplication(applicant3, party2, "두번째 모임에 참여하고 싶어요!", ApplicationStatus.PENDING);
-        createApplication(applicant4, party3, "세번째 모임에 신청합니다!", ApplicationStatus.PENDING);
+        createApplication(applicant1, group1, "첫번째 모임에 신청합니다!", ApplicationStatus.PENDING);
+        createApplication(applicant2, group1, "두번째 신청자입니다!", ApplicationStatus.PENDING);
+        createApplication(applicant3, group2, "두번째 모임에 참여하고 싶어요!", ApplicationStatus.PENDING);
+        createApplication(applicant4, group3, "세번째 모임에 신청합니다!", ApplicationStatus.PENDING);
 
         // 다른 상태의 신청서들 (필터링 테스트용)
-        createApplication(applicant1, party2, "승인된 신청서", ApplicationStatus.APPROVED);
-        createApplication(applicant2, party2, "거절된 신청서", ApplicationStatus.REJECTED);
+        createApplication(applicant1, group2, "승인된 신청서", ApplicationStatus.ACCEPTED);
+        createApplication(applicant2, group2, "거절된 신청서", ApplicationStatus.REJECTED);
 
         entityManager.flush();
         entityManager.clear();
@@ -88,13 +93,13 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).hasSize(3);
         assertThat(result.hasNext()).isFalse();
 
-        List<MemberParty> applications = result.getContent();
+        List<MemberGroup> applications = result.getContent();
 
         // ID 내림차순으로 정렬되어야 함
         assertThat(applications.get(0).getId()).isGreaterThan(applications.get(1).getId());
@@ -105,8 +110,8 @@ class ApplicationRepositoryImplTest {
 
         // 연관 엔티티들이 페치조인으로 로딩되어야 함
         assertThat(applications.get(0).getMember()).isNotNull();
-        assertThat(applications.get(0).getParty()).isNotNull();
-        assertThat(applications.get(0).getParty().getFestival()).isNotNull();
+        assertThat(applications.get(0).getGroup()).isNotNull();
+        assertThat(applications.get(0).getGroup().getPerformance()).isNotNull();
     }
 
     @Test
@@ -116,7 +121,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 2);
 
         // when - 첫 번째 페이지 조회
-        Slice<MemberParty> firstPage = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> firstPage = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then - 첫 번째 페이지 검증
         assertThat(firstPage.getContent()).hasSize(2);
@@ -124,7 +129,7 @@ class ApplicationRepositoryImplTest {
 
         // when - 두 번째 페이지 조회 (커서 사용)
         Long cursorId = firstPage.getContent().get(1).getId();
-        Slice<MemberParty> secondPage = applicationRepository.findApplicationsWithSlice(host1.getId(), cursorId, pageable);
+        Slice<MemberGroup> secondPage = applicationRepository.findApplicationsWithSlice(host1.getId(), cursorId, pageable);
 
         // then - 두 번째 페이지 검증
         assertThat(secondPage.getContent()).hasSize(1);
@@ -139,7 +144,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then - PENDING 상태의 신청서만 조회되어야 함
         assertThat(result.getContent()).allMatch(app -> app.getStatus() == ApplicationStatus.PENDING);
@@ -150,20 +155,20 @@ class ApplicationRepositoryImplTest {
     @DisplayName("삭제된 신청서는 조회되지 않는다")
     void findApplicationsWithSlice_FilterDeleted() {
         // given
-        Slice<MemberParty> beforeDelete = applicationRepository.findApplicationsWithSlice(host1.getId(), null, PageRequest.of(0, 10));
-        MemberParty memberParty = beforeDelete.getContent().get(0);
-        memberParty.delete();
-        entityManager.merge(memberParty);
+        Slice<MemberGroup> beforeDelete = applicationRepository.findApplicationsWithSlice(host1.getId(), null, PageRequest.of(0, 10));
+        MemberGroup memberGroup = beforeDelete.getContent().get(0);
+        memberGroup.delete();
+        entityManager.merge(memberGroup);
         entityManager.flush();
 
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then - 삭제되지 않은 신청서만 조회되어야 함
         assertThat(result.getContent()).hasSize(2);
-        assertThat(result.getContent()).noneMatch(app -> app.getId().equals(memberParty.getId()));
+        assertThat(result.getContent()).noneMatch(app -> app.getId().equals(memberGroup.getId()));
     }
 
     @Test
@@ -173,8 +178,8 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> host1Result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
-        Slice<MemberParty> host2Result = applicationRepository.findApplicationsWithSlice(host2.getId(), null, pageable);
+        Slice<MemberGroup> host1Result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> host2Result = applicationRepository.findApplicationsWithSlice(host2.getId(), null, pageable);
 
         // then
         assertThat(host1Result.getContent()).hasSize(3);
@@ -182,10 +187,10 @@ class ApplicationRepositoryImplTest {
 
         // 각 호스트는 자신의 모임 신청서만 조회해야 함
         assertThat(host1Result.getContent()).allMatch(app ->
-            app.getParty().getId().equals(party1.getId()) || app.getParty().getId().equals(party2.getId()));
+            app.getGroup().getId().equals(group1.getId()) || app.getGroup().getId().equals(group2.getId()));
 
         assertThat(host2Result.getContent()).allMatch(app ->
-            app.getParty().getId().equals(party3.getId()));
+            app.getGroup().getId().equals(group3.getId()));
     }
 
     @Test
@@ -196,7 +201,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findApplicationsWithSlice(nonExistentHost.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(nonExistentHost.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).isEmpty();
@@ -207,13 +212,13 @@ class ApplicationRepositoryImplTest {
     @DisplayName("방장 권한을 정확히 확인한다")
     void existsByPartyIdAndMemberIdAndRole_Host() {
         // when & then
-        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party1.getId(), host1.getId(), Role.HOST))
+        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), host1.getId(), Role.HOST))
                 .isTrue();
-        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party2.getId(), host1.getId(), Role.HOST))
+        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group2.getId(), host1.getId(), Role.HOST))
                 .isTrue();
-        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party3.getId(), host1.getId(), Role.HOST))
+        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group3.getId(), host1.getId(), Role.HOST))
                 .isFalse();
-        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party3.getId(), host2.getId(), Role.HOST))
+        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group3.getId(), host2.getId(), Role.HOST))
                 .isTrue();
     }
 
@@ -224,7 +229,7 @@ class ApplicationRepositoryImplTest {
         Member applicant = createMember("test_applicant", "테스트신청자", Gender.MALE, 25);
 
         // when & then
-        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party1.getId(), applicant.getId(), Role.HOST))
+        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), applicant.getId(), Role.HOST))
                 .isFalse();
     }
 
@@ -232,22 +237,22 @@ class ApplicationRepositoryImplTest {
     @DisplayName("삭제된 방장 관계는 권한 확인에서 제외된다")
     void existsByPartyIdAndMemberIdAndRole_DeletedHost() {
         // given
-        List<MemberParty> hostRelations = entityManager.getEntityManager()
-                .createQuery("SELECT mp FROM MemberParty mp WHERE mp.member.id = :hostId AND mp.party.id = :partyId AND mp.role = :role", MemberParty.class)
+        List<MemberGroup> hostRelations = entityManager.getEntityManager()
+                .createQuery("SELECT mp FROM MemberGroup mp WHERE mp.member.id = :hostId AND mp.group.id = :partyId AND mp.role = :role", MemberGroup.class)
                 .setParameter("hostId", host1.getId())
-                .setParameter("partyId", party1.getId())
+                .setParameter("partyId", group1.getId())
                 .setParameter("role", Role.HOST)
                 .getResultList();
-        
+
         if (!hostRelations.isEmpty()) {
-            MemberParty hostRelation = hostRelations.get(0);
+            MemberGroup hostRelation = hostRelations.get(0);
             hostRelation.delete();
             entityManager.merge(hostRelation);
             entityManager.flush();
         }
 
         // when & then
-        assertThat(applicationRepository.existsByPartyIdAndMemberIdAndRole(party1.getId(), host1.getId(), Role.HOST))
+        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), host1.getId(), Role.HOST))
                 .isFalse();
     }
 
@@ -266,52 +271,54 @@ class ApplicationRepositoryImplTest {
         return entityManager.persistAndFlush(member);
     }
 
-    private Festival createFestival(String title, String location) {
-        Date startDate = new Date();
-        Date endDate = new Date();
-        Festival festival = Festival.builder()
+    private Performance createPerformance(String title, String location) {
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = LocalDateTime.now().plusDays(3);
+        Performance performance = Performance.builder()
             .title(title)
-            .posterUrl("http://test.com/poster.jpg")
+            .poster("http://test.com/poster.jpg")
             .startDate(startDate)
             .endDate(endDate)
             .location(location)
-            .price(50000)
-            .state(FestivalState.UPCOMING)
-            .visit(false)
+            .price(List.of("50000"))
+            .state(PerformanceState.UPCOMING)
+            .visit("false")
             .build();
-        return entityManager.persistAndFlush(festival);
+        return entityManager.persistAndFlush(performance);
     }
 
-    private Party createParty(String title, Festival festival) {
+    private Group createGroup(String title, Performance performance) {
         LocalDateTime gatherDate = LocalDateTime.now().plusDays(1);
-        Party party = Party.builder()
+        Group party = Group.builder()
             .title(title)
             .genderType(Gender.ALL)
-            .ageRange(AgeRange.TWENTIES)
+            .startAge(20)
+            .endAge(29)
             .gatherType(GroupCategory.COMPANION)
-            .gatherDate(gatherDate)
+            .startDate(gatherDate)
+            .endDate(gatherDate.plusDays(1))
             .location("테스트 장소")
             .count(4)
             .introduction(title + " 소개")
-            .festival(festival)
+            .performance(performance)
             .build();
         return entityManager.persistAndFlush(party);
     }
 
-    private void createHostRelation(Member host, Party party) {
-        MemberParty hostRelation = MemberParty.builder()
+    private void createHostRelation(Member host, Group group) {
+        MemberGroup hostRelation = MemberGroup.builder()
             .member(host)
-            .party(party)
+            .group(group)
             .role(Role.HOST)
-            .status(ApplicationStatus.APPROVED)
+            .status(ApplicationStatus.ACCEPTED)
             .build();
         entityManager.persistAndFlush(hostRelation);
     }
 
-    private void createApplication(Member member, Party party, String applicationText, ApplicationStatus status) {
-        MemberParty application = MemberParty.builder()
+    private void createApplication(Member member, Group group, String applicationText, ApplicationStatus status) {
+        MemberGroup application = MemberGroup.builder()
             .member(member)
-            .party(party)
+            .group(group)
             .role(Role.MEMBER)
             .status(status)
             .applicationText(applicationText)

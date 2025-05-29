@@ -16,6 +16,7 @@ import site.festifriends.domain.application.dto.ApplicationListResponse;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
+import site.festifriends.domain.application.dto.JoinedGroupResponse;
 import site.festifriends.domain.application.service.ApplicationService;
 
 @RestController
@@ -52,6 +53,19 @@ public class ApplicationController implements ApplicationApi {
     }
 
     @Override
+    @GetMapping("/joined")
+    public ResponseEntity<CursorResponseWrapper<JoinedGroupResponse>> getJoinedGroups(
+        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        CursorResponseWrapper<JoinedGroupResponse> response =
+            applicationService.getJoinedGroupsWithSlice(memberId, cursorId, size);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
     @PatchMapping("/{applicationId}")
     public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> updateApplicationStatus(
         @AuthenticationPrincipal(expression = "member.id") Long memberId,
@@ -60,6 +74,18 @@ public class ApplicationController implements ApplicationApi {
     ) {
         ResponseWrapper<ApplicationStatusResponse> response =
             applicationService.updateApplicationStatus(memberId, applicationId, request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @PatchMapping("/applied/{applicationId}")
+    public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> confirmApplication(
+        @AuthenticationPrincipal(expression = "member.id") Long memberId,
+        @PathVariable Long applicationId
+    ) {
+        ResponseWrapper<ApplicationStatusResponse> response =
+            applicationService.confirmApplication(memberId, applicationId);
 
         return ResponseEntity.ok(response);
     }

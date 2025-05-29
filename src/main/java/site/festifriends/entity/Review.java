@@ -45,9 +45,9 @@ public class Review extends SoftDeleteEntity {
     private Member reviewee;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "party_id", nullable = false)
+    @JoinColumn(name = "group_id", nullable = false)
     @Comment("관련 모임")
-    private Party party;
+    private Group group;
 
     @Column(name = "content", nullable = false)
     @Comment("리뷰 내용")
@@ -65,10 +65,10 @@ public class Review extends SoftDeleteEntity {
     private List<ReviewTag> tags = new ArrayList<>();
 
     @Builder
-    public Review(Member reviewer, Member reviewee, Party party, String content, Double score, List<ReviewTag> tags) {
+    public Review(Member reviewer, Member reviewee, Group group, String content, Double score, List<ReviewTag> tags) {
         this.reviewer = reviewer;
         this.reviewee = reviewee;
-        this.party = party;
+        this.group = group;
         this.content = content;
         this.score = score;
         if (tags != null) {

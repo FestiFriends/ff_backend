@@ -2,7 +2,7 @@ package site.festifriends.domain.application.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import site.festifriends.entity.MemberParty;
+import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.Role;
 
 import java.util.List;
@@ -10,11 +10,15 @@ import java.util.Map;
 
 public interface ApplicationRepositoryCustom {
 
-    Slice<MemberParty> findApplicationsWithSlice(Long hostId, Long cursorId, Pageable pageable);
+    Slice<MemberGroup> findApplicationsWithSlice(Long hostId, Long cursorId, Pageable pageable);
     
-    Slice<MemberParty> findAppliedApplicationsWithSlice(Long memberId, Long cursorId, Pageable pageable);
+    Slice<MemberGroup> findAppliedApplicationsWithSlice(Long memberId, Long cursorId, Pageable pageable);
     
-    Map<Long, MemberParty> findHostsByPartyIds(List<Long> partyIds);
+    Slice<MemberGroup> findJoinedGroupsWithSlice(Long memberId, Long cursorId, Pageable pageable);
     
-    boolean existsByPartyIdAndMemberIdAndRole(Long partyId, Long memberId, Role role);
+    Map<Long, MemberGroup> findHostsByGroupIds(List<Long> groupIds);
+    
+    Map<Long, Long> findConfirmedMemberCountsByGroupIds(List<Long> groupIds);
+    
+    boolean existsByGroupIdAndMemberIdAndRole(Long groupId, Long memberId, Role role);
 } 

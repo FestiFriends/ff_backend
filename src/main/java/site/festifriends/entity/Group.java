@@ -22,19 +22,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
 import site.festifriends.common.model.SoftDeleteEntity;
-import site.festifriends.entity.enums.AgeRange;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.GroupCategory;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "party")
-public class Party extends SoftDeleteEntity {
+@Table(name = "groups")
+public class Group extends SoftDeleteEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "party_id", nullable = false)
+    @Column(name = "group_id", nullable = false)
     private Long id;
 
     @Column(name = "title", nullable = false)
@@ -46,19 +45,26 @@ public class Party extends SoftDeleteEntity {
     @Comment("모임 성별 구분(남자/여자/혼성)")
     private Gender genderType;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "age_range", length = 20, nullable = false)
-    @Comment("모임 연령대(10대/20대/30대/40대/50대/60대 이상)")
-    private AgeRange ageRange;
+    @Column(name = "start_age", nullable = false)
+    @Comment("연령대 (시작)")
+    private Integer startAge;
+
+    @Column(name = "end_age", nullable = false)
+    @Comment("연령대 (끝)")
+    private Integer endAge;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "gather_type", length = 20, nullable = false)
     @Comment("모임 방식(동행/탑승/숙박)")
     private GroupCategory gatherType;
 
-    @Column(name = "gather_date", nullable = false)
-    @Comment("모임 날짜")
-    private LocalDateTime gatherDate;
+    @Column(name = "start_date", nullable = false)
+    @Comment("모임 시작 날짜")
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date", nullable = false)
+    @Comment("모임 종료 날짜")
+    private LocalDateTime endDate;
 
     @Column(name = "location", nullable = false)
     @Comment("모임 장소")
@@ -73,7 +79,7 @@ public class Party extends SoftDeleteEntity {
     private String introduction;
 
     @ElementCollection
-    @CollectionTable(name = "party_hash_tags", joinColumns = @JoinColumn(name = "party_id"))
+    @CollectionTable(name = "group_hash_tags", joinColumns = @JoinColumn(name = "group_id"))
     @Column(name = "hash_tag")
     @Comment("모임 해시태그")
     private List<String> hashTags = new ArrayList<>();
@@ -83,21 +89,24 @@ public class Party extends SoftDeleteEntity {
     private String announcement;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "festival_id")
+    @JoinColumn(name = "performance_id")
     @Comment("관련 공연")
-    private Festival festival;
+    private Performance performance;
 
     @Builder
-    public Party(String title, Gender genderType, AgeRange ageRange, GroupCategory gatherType, 
-                LocalDateTime gatherDate, String location, Integer count, String introduction, Festival festival) {
+    public Group(String title, Gender genderType, Integer startAge, Integer endAge, GroupCategory gatherType, 
+                LocalDateTime startDate, LocalDateTime endDate, String location, Integer count, 
+                String introduction, Performance performance) {
         this.title = title;
         this.genderType = genderType;
-        this.ageRange = ageRange;
+        this.startAge = startAge;
+        this.endAge = endAge;
         this.gatherType = gatherType;
-        this.gatherDate = gatherDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
         this.location = location;
         this.count = count;
         this.introduction = introduction;
-        this.festival = festival;
+        this.performance = performance;
     }
 }

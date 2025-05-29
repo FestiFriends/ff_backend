@@ -60,12 +60,14 @@ public class Member extends SoftDeleteEntity {
     @Comment("유저 자기소개")
     private String introduction;
 
+    @Builder.Default
     @ElementCollection
     @CollectionTable(name = "member_tags", joinColumns = @JoinColumn(name = "member_id"))
     @Column(name = "tag")
     @Comment("유저 태그")
     private List<String> tags = new ArrayList<>();
 
+    @Builder.Default
     @ElementCollection
     @CollectionTable(name = "member_sns", joinColumns = @JoinColumn(name = "member_id"))
     @Column(name = "sns_link")

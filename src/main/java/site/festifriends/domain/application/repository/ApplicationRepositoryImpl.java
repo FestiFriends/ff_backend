@@ -4,39 +4,38 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
-import site.festifriends.entity.MemberParty;
+import site.festifriends.entity.MemberGroup;
+import site.festifriends.entity.QGroup;
 import site.festifriends.entity.QMember;
-import site.festifriends.entity.QMemberParty;
-import site.festifriends.entity.QParty;
-import site.festifriends.entity.QFestival;
+import site.festifriends.entity.QMemberGroup;
+import site.festifriends.entity.QPerformance;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @Repository
 @RequiredArgsConstructor
-public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
+public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Slice<MemberParty> findApplicationsWithSlice(Long hostId, Long cursorId, Pageable pageable) {
-        QMemberParty mp = QMemberParty.memberParty;
-        QMemberParty host = new QMemberParty("host");
+    public Slice<MemberGroup> findApplicationsWithSlice(Long hostId, Long cursorId, Pageable pageable) {
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMemberGroup host = new QMemberGroup("host");
         QMember m = QMember.member;
-        QParty p = QParty.party;
-        QFestival f = QFestival.festival;
+        QGroup g = QGroup.group;
+        QPerformance p = QPerformance.performance;
 
-        BooleanExpression hostPartiesCondition = mp.party.id.in(
-            JPAExpressions.select(host.party.id)
+        BooleanExpression hostGroupsCondition = mg.group.id.in(
+            JPAExpressions.select(host.group.id)
                 .from(host)
                 .where(
                     host.member.id.eq(hostId),
@@ -45,27 +44,27 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
                 )
         );
 
-        BooleanExpression statusCondition = mp.status.eq(ApplicationStatus.PENDING);
-        BooleanExpression notDeletedCondition = mp.deleted.isNull();
+        BooleanExpression statusCondition = mg.status.eq(ApplicationStatus.PENDING);
+        BooleanExpression notDeletedCondition = mg.deleted.isNull();
 
-        BooleanExpression cursorCondition = cursorIdLt(cursorId, mp);
+        BooleanExpression cursorCondition = cursorIdLt(cursorId, mg);
 
-        JPAQuery<MemberParty> query = queryFactory
-            .selectFrom(mp)
-            .join(mp.member, m).fetchJoin()
-            .join(mp.party, p).fetchJoin()
-            .join(p.festival, f).fetchJoin()
+        JPAQuery<MemberGroup> query = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .join(mg.group, g).fetchJoin()
+            .join(g.performance, p).fetchJoin()
             .where(
-                hostPartiesCondition,
+                hostGroupsCondition,
                 statusCondition,
                 notDeletedCondition,
                 cursorCondition
             )
-            .orderBy(mp.id.desc());
+            .orderBy(mg.id.desc());
 
         // Slice는 size + 1 개를 조회해서 hasNext를 판단
         int size = pageable.getPageSize();
-        List<MemberParty> results = query
+        List<MemberGroup> results = query
             .limit(size + 1)
             .fetch();
 
@@ -78,33 +77,35 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
     }
 
     @Override
-    public Slice<MemberParty> findAppliedApplicationsWithSlice(Long memberId, Long cursorId, Pageable pageable) {
-        QMemberParty mp = QMemberParty.memberParty;
+    public Slice<MemberGroup> findAppliedApplicationsWithSlice(Long memberId, Long cursorId, Pageable pageable) {
+        QMemberGroup mg = QMemberGroup.memberGroup;
         QMember m = QMember.member;
-        QParty p = QParty.party;
-        QFestival f = QFestival.festival;
+        QGroup g = QGroup.group;
+        QPerformance p = QPerformance.performance;
 
-        BooleanExpression memberCondition = mp.member.id.eq(memberId);
-        BooleanExpression notHostCondition = mp.role.ne(Role.HOST);
-        BooleanExpression notDeletedCondition = mp.deleted.isNull();
-        BooleanExpression cursorCondition = cursorIdLt(cursorId, mp);
+        BooleanExpression memberCondition = mg.member.id.eq(memberId);
+        BooleanExpression notHostCondition = mg.role.ne(Role.HOST);
+        BooleanExpression notDeletedCondition = mg.deleted.isNull();
+        BooleanExpression notConfirmedCondition = mg.status.ne(ApplicationStatus.CONFIRMED);
+        BooleanExpression cursorCondition = cursorIdLt(cursorId, mg);
 
-        JPAQuery<MemberParty> query = queryFactory
-            .selectFrom(mp)
-            .join(mp.member, m).fetchJoin()
-            .join(mp.party, p).fetchJoin()
-            .join(p.festival, f).fetchJoin()
+        JPAQuery<MemberGroup> query = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .join(mg.group, g).fetchJoin()
+            .join(g.performance, p).fetchJoin()
             .where(
                 memberCondition,
                 notHostCondition,
                 notDeletedCondition,
+                notConfirmedCondition,
                 cursorCondition
             )
-            .orderBy(mp.id.desc());
+            .orderBy(mg.id.desc());
 
         // Slice는 size + 1 개를 조회해서 hasNext를 판단
         int size = pageable.getPageSize();
-        List<MemberParty> results = query
+        List<MemberGroup> results = query
             .limit(size + 1)
             .fetch();
 
@@ -117,46 +118,110 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
     }
 
     @Override
-    public Map<Long, MemberParty> findHostsByPartyIds(List<Long> partyIds) {
-        QMemberParty mp = QMemberParty.memberParty;
+    public Slice<MemberGroup> findJoinedGroupsWithSlice(Long memberId, Long cursorId, Pageable pageable) {
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+        QGroup g = QGroup.group;
+        QPerformance p = QPerformance.performance;
+
+        BooleanExpression memberCondition = mg.member.id.eq(memberId);
+        BooleanExpression confirmedCondition = mg.status.eq(ApplicationStatus.CONFIRMED);
+        BooleanExpression notDeletedCondition = mg.deleted.isNull();
+        BooleanExpression cursorCondition = cursorIdLt(cursorId, mg);
+
+        JPAQuery<MemberGroup> query = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .join(mg.group, g).fetchJoin()
+            .join(g.performance, p).fetchJoin()
+            .where(
+                memberCondition,
+                confirmedCondition,
+                notDeletedCondition,
+                cursorCondition
+            )
+            .orderBy(mg.id.desc());
+
+        // Slice는 size + 1 개를 조회해서 hasNext를 판단
+        int size = pageable.getPageSize();
+        List<MemberGroup> results = query
+            .limit(size + 1)
+            .fetch();
+
+        boolean hasNext = results.size() > size;
+        if (hasNext) {
+            results = results.subList(0, size);
+        }
+
+        return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
+    public Map<Long, MemberGroup> findHostsByGroupIds(List<Long> groupIds) {
+        QMemberGroup mg = QMemberGroup.memberGroup;
         QMember m = QMember.member;
 
-        List<MemberParty> hosts = queryFactory
-            .selectFrom(mp)
-            .join(mp.member, m).fetchJoin()
+        List<MemberGroup> hosts = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
             .where(
-                mp.party.id.in(partyIds),
-                mp.role.eq(Role.HOST),
-                mp.deleted.isNull()
+                mg.group.id.in(groupIds),
+                mg.role.eq(Role.HOST),
+                mg.deleted.isNull()
             )
             .fetch();
 
         return hosts.stream()
             .collect(Collectors.toMap(
-                host -> host.getParty().getId(),
+                host -> host.getGroup().getId(),
                 host -> host
             ));
     }
 
     @Override
-    public boolean existsByPartyIdAndMemberIdAndRole(Long partyId, Long memberId, Role role) {
-        QMemberParty mp = QMemberParty.memberParty;
-        
+    public Map<Long, Long> findConfirmedMemberCountsByGroupIds(List<Long> groupIds) {
+        QMemberGroup mg = QMemberGroup.memberGroup;
+
+        List<Object[]> results = queryFactory
+            .select(mg.group.id, mg.count())
+            .from(mg)
+            .where(
+                mg.group.id.in(groupIds),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .groupBy(mg.group.id)
+            .fetch()
+            .stream()
+            .map(tuple -> new Object[]{tuple.get(mg.group.id), tuple.get(mg.count())})
+            .collect(Collectors.toList());
+
+        return results.stream()
+            .collect(Collectors.toMap(
+                result -> (Long) result[0],
+                result -> (Long) result[1]
+            ));
+    }
+
+    @Override
+    public boolean existsByGroupIdAndMemberIdAndRole(Long groupId, Long memberId, Role role) {
+        QMemberGroup mg = QMemberGroup.memberGroup;
+
         Integer count = queryFactory
             .selectOne()
-            .from(mp)
+            .from(mg)
             .where(
-                mp.party.id.eq(partyId),
-                mp.member.id.eq(memberId),
-                mp.role.eq(role),
-                mp.deleted.isNull()
+                mg.group.id.eq(groupId),
+                mg.member.id.eq(memberId),
+                mg.role.eq(role),
+                mg.deleted.isNull()
             )
             .fetchFirst();
-            
+
         return count != null;
     }
 
-    private BooleanExpression cursorIdLt(Long cursorId, QMemberParty memberParty) {
-        return cursorId != null ? memberParty.id.lt(cursorId) : null;
+    private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
+        return cursorId != null ? memberGroup.id.lt(cursorId) : null;
     }
 }
