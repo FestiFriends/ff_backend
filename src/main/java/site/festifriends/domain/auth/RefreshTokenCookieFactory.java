@@ -14,7 +14,7 @@ public class RefreshTokenCookieFactory {
             .secure(false)
             .path("/")
             .maxAge(60 * 60 * 24 * 7)
-            .sameSite("None")
+            .sameSite("Lax")
             .build();
     }
 }
