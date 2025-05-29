@@ -1,4 +1,4 @@
-package site.festifriends.domain.application.repository;
+package site.festifriends.domain.group.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -8,7 +8,7 @@ import site.festifriends.entity.enums.Role;
 import java.util.List;
 import java.util.Map;
 
-public interface ApplicationRepositoryCustom {
+public interface MemberGroupRepositoryCustom {
 
     Slice<MemberGroup> findApplicationsWithSlice(Long hostId, Long cursorId, Pageable pageable);
     
@@ -21,4 +21,4 @@ public interface ApplicationRepositoryCustom {
     Map<Long, Long> findConfirmedMemberCountsByGroupIds(List<Long> groupIds);
     
     boolean existsByGroupIdAndMemberIdAndRole(Long groupId, Long memberId, Role role);
-} 
+}

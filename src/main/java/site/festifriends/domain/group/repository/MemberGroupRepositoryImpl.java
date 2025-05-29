@@ -1,4 +1,4 @@
-package site.festifriends.domain.application.repository;
+package site.festifriends.domain.group.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
@@ -10,9 +10,9 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 import site.festifriends.entity.MemberGroup;
-import site.festifriends.entity.QGroup;
 import site.festifriends.entity.QMember;
 import site.festifriends.entity.QMemberGroup;
+import site.festifriends.entity.QGroup;
 import site.festifriends.entity.QFestival;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
-public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
+public class MemberGroupRepositoryImpl implements MemberGroupRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
@@ -208,7 +208,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
     public boolean existsByGroupIdAndMemberIdAndRole(Long groupId, Long memberId, Role role) {
         QMemberGroup mg = QMemberGroup.memberGroup;
 
-        Integer count = queryFactory
+        return queryFactory
             .selectOne()
             .from(mg)
             .where(
@@ -217,12 +217,13 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
                 mg.role.eq(role),
                 mg.deleted.isNull()
             )
-            .fetchFirst();
-
-        return count != null;
+            .fetchFirst() != null;
     }
 
-    private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
-        return cursorId != null ? memberGroup.id.lt(cursorId) : null;
+    private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup mg) {
+        if (cursorId == null) {
+            return null;
+        }
+        return mg.id.lt(cursorId);
     }
 }

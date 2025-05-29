@@ -19,9 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 import site.festifriends.common.config.AuditConfig;
 import site.festifriends.common.config.QueryDslConfig;
 import site.festifriends.entity.Festival;
+import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
-import site.festifriends.entity.MemberParty;
-import site.festifriends.entity.Party;
+import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.AgeRange;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.FestivalState;
@@ -46,9 +46,9 @@ class ApplicationRepositoryJoinedTest {
     private Member host2;
     private Festival festival1;
     private Festival festival2;
-    private Party party1;
-    private Party party2;
-    private Party party3;
+    private Group group1;
+    private Group group2;
+    private Group group3;
 
     @BeforeEach
     void setUp() {
@@ -63,24 +63,24 @@ class ApplicationRepositoryJoinedTest {
         festival2 = createFestival("테스트 콘서트 2", "테스트 공연장 2");
 
         // 모임 생성
-        party1 = createParty("첫번째 모임", festival1, host1);
-        party2 = createParty("두번째 모임", festival1, host1);
-        party3 = createParty("세번째 모임", festival2, host2);
+        group1 = createGroup("첫번째 모임", festival1, host1);
+        group2 = createGroup("두번째 모임", festival1, host1);
+        group3 = createGroup("세번째 모임", festival2, host2);
 
         // 호스트 관계 생성
-        createHostRelation(host1, party1);
-        createHostRelation(host1, party2);
-        createHostRelation(host2, party3);
+        createHostRelation(host1, group1);
+        createHostRelation(host1, group2);
+        createHostRelation(host2, group3);
 
         // 참가 확정된 모임들 생성 (CONFIRMED 상태)
-        createConfirmedMembership(member1, party1, "첫번째 모임 참가 확정");
-        createConfirmedMembership(member1, party2, "두번째 모임 참가 확정");
-        createConfirmedMembership(member2, party1, "첫번째 모임 참가 확정");
+        createConfirmedMembership(member1, group1, "첫번째 모임 참가 확정");
+        createConfirmedMembership(member1, group2, "두번째 모임 참가 확정");
+        createConfirmedMembership(member2, group1, "첫번째 모임 참가 확정");
 
         // 다른 상태들도 생성 (테스트 검증용)
-        createApplication(member1, party3, "세번째 모임 신청", ApplicationStatus.PENDING);
-        createApplication(member2, party2, "두번째 모임 신청", ApplicationStatus.ACCEPTED);
-        createApplication(member2, party3, "세번째 모임 신청", ApplicationStatus.REJECTED);
+        createApplication(member1, group3, "세번째 모임 신청", ApplicationStatus.PENDING);
+        createApplication(member2, group2, "두번째 모임 신청", ApplicationStatus.ACCEPTED);
+        createApplication(member2, group3, "세번째 모임 신청", ApplicationStatus.REJECTED);
 
         entityManager.flush();
         entityManager.clear();
@@ -93,19 +93,19 @@ class ApplicationRepositoryJoinedTest {
         PageRequest pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).hasSize(2);
         assertThat(result.hasNext()).isFalse();
 
-        List<MemberParty> joinedGroups = result.getContent();
+        List<MemberGroup> joinedGroups = result.getContent();
         assertThat(joinedGroups).allMatch(mp -> mp.getStatus() == ApplicationStatus.CONFIRMED);
         assertThat(joinedGroups).allMatch(mp -> mp.getMember().getId().equals(member1.getId()));
 
         // 모임 정보 확인
         List<String> partyTitles = joinedGroups.stream()
-            .map(mp -> mp.getParty().getTitle())
+            .map(mp -> mp.getGroup().getTitle())
             .toList();
         assertThat(partyTitles).containsExactlyInAnyOrder("첫번째 모임", "두번째 모임");
     }
@@ -118,7 +118,7 @@ class ApplicationRepositoryJoinedTest {
         PageRequest pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(newMember.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findJoinedGroupsWithSlice(newMember.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).isEmpty();
@@ -130,13 +130,13 @@ class ApplicationRepositoryJoinedTest {
     void findJoinedGroupsWithSlice_CursorPagination() {
         // given
         // 추가 참가 확정 모임들 생성
-        Party party4 = createParty("네번째 모임", festival2, host2);
-        createHostRelation(host2, party4);
-        createConfirmedMembership(member1, party4, "네번째 모임 참가 확정");
+        Group group4 = createGroup("네번째 모임", festival2, host2);
+        createHostRelation(host2, group4);
+        createConfirmedMembership(member1, group4, "네번째 모임 참가 확정");
 
-        Party party5 = createParty("다섯번째 모임", festival1, host1);
-        createHostRelation(host1, party5);
-        createConfirmedMembership(member1, party5, "다섯번째 모임 참가 확정");
+        Group group5 = createGroup("다섯번째 모임", festival1, host1);
+        createHostRelation(host1, group5);
+        createConfirmedMembership(member1, group5, "다섯번째 모임 참가 확정");
 
         entityManager.flush();
         entityManager.clear();
@@ -144,7 +144,7 @@ class ApplicationRepositoryJoinedTest {
         PageRequest pageable = PageRequest.of(0, 2);
 
         // when - 첫 번째 페이지
-        Slice<MemberParty> firstPage = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
+        Slice<MemberGroup> firstPage = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
 
         // then - 첫 번째 페이지 검증
         assertThat(firstPage.getContent()).hasSize(2);
@@ -152,14 +152,14 @@ class ApplicationRepositoryJoinedTest {
 
         // when - 두 번째 페이지 (커서 사용)
         Long cursorId = firstPage.getContent().get(firstPage.getContent().size() - 1).getId();
-        Slice<MemberParty> secondPage = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), cursorId, pageable);
+        Slice<MemberGroup> secondPage = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), cursorId, pageable);
 
         // then - 두 번째 페이지 검증
         assertThat(secondPage.getContent()).hasSize(2);
         assertThat(secondPage.hasNext()).isFalse();
 
         // 전체 결과 검증
-        List<MemberParty> allResults = new ArrayList<>(firstPage.getContent());
+        List<MemberGroup> allResults = new ArrayList<>(firstPage.getContent());
         allResults.addAll(secondPage.getContent());
         assertThat(allResults).hasSize(4);
         assertThat(allResults).allMatch(mp -> mp.getStatus() == ApplicationStatus.CONFIRMED);
@@ -169,7 +169,7 @@ class ApplicationRepositoryJoinedTest {
     @DisplayName("삭제된 모임은 조회되지 않는다")
     void findJoinedGroupsWithSlice_ExcludeDeleted() {
         // given
-        MemberParty confirmedMembership = createConfirmedMembership(member2, party3, "삭제될 모임 참가");
+        MemberGroup confirmedMembership = createConfirmedMembership(member2, group3, "삭제될 모임 참가");
         confirmedMembership.delete(); // soft delete
         entityManager.persistAndFlush(confirmedMembership);
         entityManager.clear();
@@ -177,11 +177,11 @@ class ApplicationRepositoryJoinedTest {
         PageRequest pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(member2.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findJoinedGroupsWithSlice(member2.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).hasSize(1); // 삭제된 것 제외하고 1개만
-        assertThat(result.getContent().get(0).getParty().getTitle()).isEqualTo("첫번째 모임");
+        assertThat(result.getContent().get(0).getGroup().getTitle()).isEqualTo("첫번째 모임");
     }
 
     @Test
@@ -191,15 +191,15 @@ class ApplicationRepositoryJoinedTest {
         PageRequest pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberParty> result = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
+        Slice<MemberGroup> result = applicationRepository.findJoinedGroupsWithSlice(member1.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).hasSize(2);
-        
-        for (MemberParty memberParty : result.getContent()) {
-            assertThat(memberParty.getParty().getFestival()).isNotNull();
-            assertThat(memberParty.getParty().getFestival().getTitle()).isNotBlank();
-            assertThat(memberParty.getParty().getFestival().getPosterUrl()).isNotBlank();
+
+        for (MemberGroup memberGroup : result.getContent()) {
+            assertThat(memberGroup.getGroup().getFestival()).isNotNull();
+            assertThat(memberGroup.getGroup().getFestival().getTitle()).isNotBlank();
+            assertThat(memberGroup.getGroup().getFestival().getPosterUrl()).isNotBlank();
         }
     }
 
@@ -232,14 +232,16 @@ class ApplicationRepositoryJoinedTest {
         return entityManager.persistAndFlush(festival);
     }
 
-    private Party createParty(String title, Festival festival, Member host) {
+    private Group createGroup(String title, Festival festival, Member host) {
         LocalDateTime gatherDate = LocalDateTime.now().plusDays(1);
-        Party party = Party.builder()
+        Group party = Group.builder()
             .title(title)
             .genderType(Gender.ALL)
-            .ageRange(AgeRange.TWENTIES)
+            .startAge(20)
+            .endAge(29)
             .gatherType(GroupCategory.COMPANION)
-            .gatherDate(gatherDate)
+            .startDate(gatherDate)
+            .endDate(gatherDate.plusDays(1))
             .location("테스트 장소")
             .count(4)
             .introduction(title + " 소개")
@@ -248,20 +250,20 @@ class ApplicationRepositoryJoinedTest {
         return entityManager.persistAndFlush(party);
     }
 
-    private void createHostRelation(Member host, Party party) {
-        MemberParty hostRelation = MemberParty.builder()
+    private void createHostRelation(Member host, Group group) {
+        MemberGroup hostRelation = MemberGroup.builder()
             .member(host)
-            .party(party)
+            .group(group)
             .role(Role.HOST)
             .status(ApplicationStatus.ACCEPTED)
             .build();
         entityManager.persistAndFlush(hostRelation);
     }
 
-    private MemberParty createConfirmedMembership(Member member, Party party, String applicationText) {
-        MemberParty membership = MemberParty.builder()
+    private MemberGroup createConfirmedMembership(Member member, Group group, String applicationText) {
+        MemberGroup membership = MemberGroup.builder()
             .member(member)
-            .party(party)
+            .group(group)
             .role(Role.MEMBER)
             .status(ApplicationStatus.CONFIRMED)
             .applicationText(applicationText)
@@ -269,10 +271,10 @@ class ApplicationRepositoryJoinedTest {
         return entityManager.persistAndFlush(membership);
     }
 
-    private void createApplication(Member member, Party party, String applicationText, ApplicationStatus status) {
-        MemberParty application = MemberParty.builder()
+    private void createApplication(Member member, Group party, String applicationText, ApplicationStatus status) {
+        MemberGroup application = MemberGroup.builder()
             .member(member)
-            .party(party)
+            .group(party)
             .role(Role.MEMBER)
             .status(status)
             .applicationText(applicationText)

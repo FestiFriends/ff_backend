@@ -1,4 +1,4 @@
-package site.festifriends.domain.application.service;
+package site.festifriends.domain.group.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -15,13 +15,12 @@ import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.dto.JoinedGroupResponse;
-import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.group.repository.MemberGroupRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Role;
-import site.festifriends.entity.enums.AgeRange;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -31,9 +30,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ApplicationService {
+public class GroupApplicationService {
 
-    private final ApplicationRepository applicationRepository;
+    private final MemberGroupRepository memberGroupRepository;
     private final ReviewRepository reviewRepository;
 
     /**
@@ -42,7 +41,7 @@ public class ApplicationService {
     public CursorResponseWrapper<ApplicationListResponse> getApplicationsWithSlice(Long hostId, Long cursorId,
         int size) {
         Pageable pageable = PageRequest.of(0, size);
-        Slice<MemberGroup> slice = applicationRepository.findApplicationsWithSlice(hostId, cursorId, pageable);
+        Slice<MemberGroup> slice = memberGroupRepository.findApplicationsWithSlice(hostId, cursorId, pageable);
 
         List<MemberGroup> applications = slice.getContent();
 
@@ -110,58 +109,49 @@ public class ApplicationService {
     }
 
     /**
-     * 내가 신청한 모임 목록 조회
+     * 신청한 모임 목록 조회
      */
-    public CursorResponseWrapper<AppliedListResponse> getAppliedApplicationsWithSlice(Long memberId, Long cursorId,
+    public CursorResponseWrapper<AppliedListResponse> getAppliedGroupsWithSlice(Long memberId, Long cursorId,
         int size) {
         Pageable pageable = PageRequest.of(0, size);
-        Slice<MemberGroup> slice = applicationRepository.findAppliedApplicationsWithSlice(memberId, cursorId, pageable);
+        Slice<MemberGroup> slice = memberGroupRepository.findAppliedApplicationsWithSlice(memberId, cursorId, pageable);
 
         List<MemberGroup> applications = slice.getContent();
 
         if (applications.isEmpty()) {
-            return CursorResponseWrapper.empty("신청서 목록이 정상적으로 조회되었습니다.");
+            return CursorResponseWrapper.empty("신청한 모임 목록이 정상적으로 조회되었습니다.");
         }
 
-        // 모임별 방장 정보 조회
+        // 모임 ID 목록 추출
         List<Long> groupIds = applications.stream()
             .map(app -> app.getGroup().getId())
-            .distinct()
             .collect(Collectors.toList());
 
-        Map<Long, MemberGroup> hostInfoMap = applicationRepository.findHostsByGroupIds(groupIds);
+        // 모임별 방장 정보 조회
+        Map<Long, MemberGroup> hostMap = memberGroupRepository.findHostsByGroupIds(groupIds);
 
-        // 방장들의 평점 조회
-        List<Long> hostIds = hostInfoMap.values().stream()
-            .map(host -> host.getMember().getId())
-            .distinct()
-            .collect(Collectors.toList());
+        // 모임별 확정 인원 수 조회
+        Map<Long, Long> confirmedCountMap = memberGroupRepository.findConfirmedMemberCountsByGroupIds(groupIds);
 
-        Map<Long, Double> hostRatingMap = reviewRepository.findAverageRatingsByMemberIds(hostIds)
-            .stream()
-            .collect(Collectors.toMap(
-                result -> (Long) result.get("memberId"),
-                result -> (Double) result.get("avgRating")
-            ));
-
+        // 응답 생성
         List<AppliedListResponse> responses = applications.stream()
             .map(app -> {
-                MemberGroup hostInfo = hostInfoMap.get(app.getGroup().getId());
-                String hostNickname = hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음";
-                Long hostId = hostInfo != null ? hostInfo.getMember().getId() : null;
+                Group group = app.getGroup();
+                MemberGroup host = hostMap.get(group.getId());
+                Long confirmedCount = confirmedCountMap.getOrDefault(group.getId(), 0L);
 
                 return AppliedListResponse.builder()
                     .applicationId(app.getId().toString())
-                    .performanceId(app.getGroup().getFestival().getId().toString())
-                    .poster(app.getGroup().getFestival().getPosterUrl())
-                    .groupId(app.getGroup().getId().toString())
-                    .groupName(app.getGroup().getTitle())
-                    .leaderNickname(hostNickname)
-                    .leaderRating(hostRatingMap.getOrDefault(hostId, 0.0))
-                    .gender(app.getGroup().getGenderType())
+                    .groupId(group.getId().toString())
+                    .groupName(group.getTitle())
+                    .performanceId(group.getFestival().getId().toString())
+                    .poster(group.getFestival().getPosterUrl())
+                    .leaderNickname(host != null ? host.getMember().getNickname() : null)
+                    .leaderRating(0.0) // TODO: Get actual rating
+                    .gender(group.getGenderType())
                     .applicationText(app.getApplicationText())
-                    .createdAt(app.getCreatedAt())
                     .status(app.getStatus())
+                    .createdAt(app.getCreatedAt())
                     .build();
             })
             .collect(Collectors.toList());
@@ -174,7 +164,7 @@ public class ApplicationService {
         }
 
         return CursorResponseWrapper.success(
-            "신청서 목록이 정상적으로 조회되었습니다.",
+            "신청한 모임 목록이 정상적으로 조회되었습니다.",
             responses,
             nextCursorId,
             slice.hasNext()
@@ -184,9 +174,10 @@ public class ApplicationService {
     /**
      * 참가 중인 모임 목록 조회
      */
-    public CursorResponseWrapper<JoinedGroupResponse> getJoinedGroupsWithSlice(Long memberId, Long cursorId, int size) {
+    public CursorResponseWrapper<JoinedGroupResponse> getJoinedGroupsWithSlice(Long memberId, Long cursorId,
+        int size) {
         Pageable pageable = PageRequest.of(0, size);
-        Slice<MemberGroup> slice = applicationRepository.findJoinedGroupsWithSlice(memberId, cursorId, pageable);
+        Slice<MemberGroup> slice = memberGroupRepository.findJoinedGroupsWithSlice(memberId, cursorId, pageable);
 
         List<MemberGroup> joinedGroups = slice.getContent();
 
@@ -194,64 +185,51 @@ public class ApplicationService {
             return CursorResponseWrapper.empty("참가 중인 모임 목록이 정상적으로 조회되었습니다.");
         }
 
-        // 모임별 방장 정보 조회
+        // 모임 ID 목록 추출
         List<Long> groupIds = joinedGroups.stream()
             .map(app -> app.getGroup().getId())
-            .distinct()
             .collect(Collectors.toList());
 
-        Map<Long, MemberGroup> hostInfoMap = applicationRepository.findHostsByGroupIds(groupIds);
+        // 모임별 방장 정보 조회
+        Map<Long, MemberGroup> hostMap = memberGroupRepository.findHostsByGroupIds(groupIds);
 
-        // 방장들의 평점 조회
-        List<Long> hostIds = hostInfoMap.values().stream()
-            .map(host -> host.getMember().getId())
-            .distinct()
-            .collect(Collectors.toList());
+        // 모임별 확정 인원 수 조회
+        Map<Long, Long> confirmedCountMap = memberGroupRepository.findConfirmedMemberCountsByGroupIds(groupIds);
 
-        Map<Long, Double> hostRatingMap = reviewRepository.findAverageRatingsByMemberIds(hostIds)
-            .stream()
-            .collect(Collectors.toMap(
-                result -> (Long) result.get("memberId"),
-                result -> (Double) result.get("avgRating")
-            ));
-
-        // 각 모임의 현재 참가자 수 조회 (CONFIRMED 상태인 멤버 수)
-        Map<Long, Long> memberCountMap = applicationRepository.findConfirmedMemberCountsByGroupIds(groupIds);
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
+        // 응답 생성
         List<JoinedGroupResponse> responses = joinedGroups.stream()
             .map(app -> {
                 Group group = app.getGroup();
-                MemberGroup hostInfo = hostInfoMap.get(group.getId());
+                MemberGroup host = hostMap.get(group.getId());
+                Long confirmedCount = confirmedCountMap.getOrDefault(group.getId(), 0L);
 
-                // 연령대에서 시작/끝 나이 계산
-                int[] ageRange = new int[]{group.getStartAge(), group.getEndAge()};
+                JoinedGroupResponse.Performance performance = JoinedGroupResponse.Performance.builder()
+                    .id(group.getFestival().getId().toString())
+                    .poster(group.getFestival().getPosterUrl())
+                    .build();
+
+                JoinedGroupResponse.Host hostInfo = JoinedGroupResponse.Host.builder()
+                    .id(host != null ? host.getMember().getId().toString() : null)
+                    .name(host != null ? host.getMember().getNickname() : null)
+                    .rating(0.0) // TODO: Get actual rating
+                    .build();
 
                 return JoinedGroupResponse.builder()
                     .id(group.getId().toString())
-                    .performance(JoinedGroupResponse.Performance.builder()
-                        .id(group.getFestival().getId().toString())
-                        .poster(group.getFestival().getPosterUrl())
-                        .build())
+                    .performance(performance)
                     .title(group.getTitle())
                     .category(group.getGatherType())
                     .gender(group.getGenderType())
-                    .startAge(ageRange[0])
-                    .endAge(ageRange[1])
+                    .startAge(group.getStartAge())
+                    .endAge(group.getEndAge())
                     .location(group.getLocation())
-                    .startDate(group.getStartDate().format(formatter))
-                    .endDate(group.getEndDate().format(formatter))
-                    .memberCount(memberCountMap.getOrDefault(group.getId(), 0L).intValue())
+                    .startDate(group.getStartDate().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .endDate(group.getEndDate().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .memberCount(confirmedCount.intValue())
                     .maxMembers(group.getCount())
                     .description(group.getIntroduction())
                     .hashtag(group.getHashTags())
-                    .host(JoinedGroupResponse.Host.builder()
-                        .id(hostInfo != null ? hostInfo.getMember().getId().toString() : "")
-                        .name(hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음")
-                        .rating(hostRatingMap.getOrDefault(
-                            hostInfo != null ? hostInfo.getMember().getId() : null, 0.0))
-                        .build())
+                    .host(hostInfo)
                     .build();
             })
             .collect(Collectors.toList());
@@ -272,28 +250,6 @@ public class ApplicationService {
     }
 
     /**
-     * AgeRange enum에서 시작/끝 나이를 계산하는 유틸리티 메서드
-     */
-    private int[] getAgeRangeFromEnum(AgeRange ageRange) {
-        switch (ageRange) {
-            case TEENS:
-                return new int[]{10, 19};
-            case TWENTIES:
-                return new int[]{20, 29};
-            case THIRTIES:
-                return new int[]{30, 39};
-            case FORTIES:
-                return new int[]{40, 49};
-            case FIFTIES:
-                return new int[]{50, 59};
-            case SIXTIES_PLUS:
-                return new int[]{60, 99};
-            default:
-                return new int[]{0, 99};
-        }
-    }
-
-    /**
      * 모임 신청서 수락/거절
      */
     @Transactional
@@ -302,7 +258,7 @@ public class ApplicationService {
         Long applicationId,
         ApplicationStatusRequest request
     ) {
-        MemberGroup application = applicationRepository.findById(applicationId)
+        MemberGroup application = memberGroupRepository.findById(applicationId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신청서를 찾을 수 없습니다."));
 
         validateHostPermission(hostId, application);
@@ -339,7 +295,7 @@ public class ApplicationService {
         Long memberId,
         Long applicationId
     ) {
-        MemberGroup application = applicationRepository.findById(applicationId)
+        MemberGroup application = memberGroupRepository.findById(applicationId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신청서를 찾을 수 없습니다."));
 
         validateApplicantPermission(memberId, application);
@@ -358,7 +314,7 @@ public class ApplicationService {
     }
 
     private void validateHostPermission(Long hostId, MemberGroup application) {
-        boolean isHost = applicationRepository.existsByGroupIdAndMemberIdAndRole(
+        boolean isHost = memberGroupRepository.existsByGroupIdAndMemberIdAndRole(
             application.getGroup().getId(),
             hostId,
             Role.HOST
@@ -374,4 +330,4 @@ public class ApplicationService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 신청서만 확정할 수 있습니다.");
         }
     }
-} 
+}

@@ -1,4 +1,4 @@
-package site.festifriends.domain.application.repository;
+package site.festifriends.domain.group.repository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,13 +25,13 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest
 @Import({QueryDslConfig.class, AuditConfig.class})
 @ActiveProfiles("test")
-class ApplicationRepositoryImplTest {
+class MemberGroupRepositoryImplTest {
 
     @Autowired
     private TestEntityManager entityManager;
 
     @Autowired
-    private ApplicationRepository applicationRepository;
+    private MemberGroupRepository memberGroupRepository;
 
     private Member host1;
     private Member host2;
@@ -88,7 +88,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> result = memberGroupRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).hasSize(3);
@@ -116,7 +116,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 2);
 
         // when - 첫 번째 페이지 조회
-        Slice<MemberGroup> firstPage = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> firstPage = memberGroupRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then - 첫 번째 페이지 검증
         assertThat(firstPage.getContent()).hasSize(2);
@@ -124,7 +124,7 @@ class ApplicationRepositoryImplTest {
 
         // when - 두 번째 페이지 조회 (커서 사용)
         Long cursorId = firstPage.getContent().get(1).getId();
-        Slice<MemberGroup> secondPage = applicationRepository.findApplicationsWithSlice(host1.getId(), cursorId, pageable);
+        Slice<MemberGroup> secondPage = memberGroupRepository.findApplicationsWithSlice(host1.getId(), cursorId, pageable);
 
         // then - 두 번째 페이지 검증
         assertThat(secondPage.getContent()).hasSize(1);
@@ -139,7 +139,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> result = memberGroupRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then - PENDING 상태의 신청서만 조회되어야 함
         assertThat(result.getContent()).allMatch(app -> app.getStatus() == ApplicationStatus.PENDING);
@@ -150,7 +150,7 @@ class ApplicationRepositoryImplTest {
     @DisplayName("삭제된 신청서는 조회되지 않는다")
     void findApplicationsWithSlice_FilterDeleted() {
         // given
-        Slice<MemberGroup> beforeDelete = applicationRepository.findApplicationsWithSlice(host1.getId(), null, PageRequest.of(0, 10));
+        Slice<MemberGroup> beforeDelete = memberGroupRepository.findApplicationsWithSlice(host1.getId(), null, PageRequest.of(0, 10));
         MemberGroup memberGroup = beforeDelete.getContent().get(0);
         memberGroup.delete();
         entityManager.merge(memberGroup);
@@ -159,7 +159,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> result = memberGroupRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
 
         // then - 삭제되지 않은 신청서만 조회되어야 함
         assertThat(result.getContent()).hasSize(2);
@@ -173,8 +173,8 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberGroup> host1Result = applicationRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
-        Slice<MemberGroup> host2Result = applicationRepository.findApplicationsWithSlice(host2.getId(), null, pageable);
+        Slice<MemberGroup> host1Result = memberGroupRepository.findApplicationsWithSlice(host1.getId(), null, pageable);
+        Slice<MemberGroup> host2Result = memberGroupRepository.findApplicationsWithSlice(host2.getId(), null, pageable);
 
         // then
         assertThat(host1Result.getContent()).hasSize(3);
@@ -196,7 +196,7 @@ class ApplicationRepositoryImplTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        Slice<MemberGroup> result = applicationRepository.findApplicationsWithSlice(nonExistentHost.getId(), null, pageable);
+        Slice<MemberGroup> result = memberGroupRepository.findApplicationsWithSlice(nonExistentHost.getId(), null, pageable);
 
         // then
         assertThat(result.getContent()).isEmpty();
@@ -205,37 +205,37 @@ class ApplicationRepositoryImplTest {
 
     @Test
     @DisplayName("방장 권한을 정확히 확인한다")
-    void existsByPartyIdAndMemberIdAndRole_Host() {
+    void existsByGroupIdAndMemberIdAndRole_Host() {
         // when & then
-        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), host1.getId(), Role.HOST))
+        assertThat(memberGroupRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), host1.getId(), Role.HOST))
                 .isTrue();
-        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group2.getId(), host1.getId(), Role.HOST))
+        assertThat(memberGroupRepository.existsByGroupIdAndMemberIdAndRole(group2.getId(), host1.getId(), Role.HOST))
                 .isTrue();
-        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group3.getId(), host1.getId(), Role.HOST))
+        assertThat(memberGroupRepository.existsByGroupIdAndMemberIdAndRole(group3.getId(), host1.getId(), Role.HOST))
                 .isFalse();
-        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group3.getId(), host2.getId(), Role.HOST))
+        assertThat(memberGroupRepository.existsByGroupIdAndMemberIdAndRole(group3.getId(), host2.getId(), Role.HOST))
                 .isTrue();
     }
 
     @Test
     @DisplayName("일반 멤버는 방장 권한이 없다")
-    void existsByPartyIdAndMemberIdAndRole_NotHost() {
+    void existsByGroupIdAndMemberIdAndRole_NotHost() {
         // given
         Member applicant = createMember("test_applicant", "테스트신청자", Gender.MALE, 25);
 
         // when & then
-        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), applicant.getId(), Role.HOST))
+        assertThat(memberGroupRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), applicant.getId(), Role.HOST))
                 .isFalse();
     }
 
     @Test
     @DisplayName("삭제된 방장 관계는 권한 확인에서 제외된다")
-    void existsByPartyIdAndMemberIdAndRole_DeletedHost() {
+    void existsByGroupIdAndMemberIdAndRole_DeletedHost() {
         // given
         List<MemberGroup> hostRelations = entityManager.getEntityManager()
-                .createQuery("SELECT mp FROM MemberGroup mp WHERE mp.member.id = :hostId AND mp.group.id = :partyId AND mp.role = :role", MemberGroup.class)
+                .createQuery("SELECT mg FROM MemberGroup mg WHERE mg.member.id = :hostId AND mg.group.id = :groupId AND mg.role = :role", MemberGroup.class)
                 .setParameter("hostId", host1.getId())
-                .setParameter("partyId", group1.getId())
+                .setParameter("groupId", group1.getId())
                 .setParameter("role", Role.HOST)
                 .getResultList();
 
@@ -247,7 +247,7 @@ class ApplicationRepositoryImplTest {
         }
 
         // when & then
-        assertThat(applicationRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), host1.getId(), Role.HOST))
+        assertThat(memberGroupRepository.existsByGroupIdAndMemberIdAndRole(group1.getId(), host1.getId(), Role.HOST))
                 .isFalse();
     }
 
@@ -283,21 +283,22 @@ class ApplicationRepositoryImplTest {
     }
 
     private Group createGroup(String title, Festival festival) {
-        LocalDateTime gatherDate = LocalDateTime.now().plusDays(1);
-        Group party = Group.builder()
+        LocalDateTime startDate = LocalDateTime.now().plusDays(1);
+        LocalDateTime endDate = LocalDateTime.now().plusDays(2);
+        Group group = Group.builder()
             .title(title)
             .genderType(Gender.ALL)
             .startAge(20)
             .endAge(29)
             .gatherType(GroupCategory.COMPANION)
-            .startDate(gatherDate)
-            .endDate(gatherDate.plusDays(1))
+            .startDate(startDate)
+            .endDate(endDate)
             .location("테스트 장소")
             .count(4)
             .introduction(title + " 소개")
             .festival(festival)
             .build();
-        return entityManager.persistAndFlush(party);
+        return entityManager.persistAndFlush(group);
     }
 
     private void createHostRelation(Member host, Group group) {
@@ -320,5 +321,4 @@ class ApplicationRepositoryImplTest {
             .build();
         entityManager.persistAndFlush(application);
     }
-
 }

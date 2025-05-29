@@ -21,9 +21,9 @@ import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.entity.Festival;
+import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
-import site.festifriends.entity.MemberParty;
-import site.festifriends.entity.Party;
+import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.Role;
@@ -39,8 +39,8 @@ class ApplicationServiceTest {
 
     private Member host;
     private Member applicant;
-    private Party party;
-    private MemberParty application;
+    private Group group;
+    private MemberGroup application;
 
     @BeforeEach
     void setUp() {
@@ -64,12 +64,12 @@ class ApplicationServiceTest {
                 .title("테스트 페스티벌")
                 .build();
 
-        party = mock(Party.class);
-        lenient().when(party.getId()).thenReturn(1L);
+        group = mock(Group.class);
+        lenient().when(group.getId()).thenReturn(1L);
 
-        application = MemberParty.builder()
+        application = MemberGroup.builder()
                 .member(applicant)
-                .party(party)
+                .group(group)
                 .role(Role.MEMBER)
                 .status(ApplicationStatus.PENDING)
                 .applicationText("참여하고 싶습니다!")
@@ -84,7 +84,7 @@ class ApplicationServiceTest {
         request.setStatus("accept");
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
-        given(applicationRepository.existsByPartyIdAndMemberIdAndRole(1L, 1L, Role.HOST))
+        given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
                 .willReturn(true);
 
         // when
@@ -106,7 +106,7 @@ class ApplicationServiceTest {
         request.setStatus("reject");
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
-        given(applicationRepository.existsByPartyIdAndMemberIdAndRole(1L, 1L, Role.HOST))
+        given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
                 .willReturn(true);
 
         // when
@@ -144,7 +144,7 @@ class ApplicationServiceTest {
         request.setStatus("accept");
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
-        given(applicationRepository.existsByPartyIdAndMemberIdAndRole(1L, 2L, Role.HOST))
+        given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 2L, Role.HOST))
                 .willReturn(false);
 
         // when & then
@@ -158,9 +158,9 @@ class ApplicationServiceTest {
     @DisplayName("PENDING 상태가 아닌 신청서를 처리하려고 하면 예외가 발생한다")
     void updateApplicationStatus_NotPendingStatus() {
         // given
-        application = MemberParty.builder()
+        application = MemberGroup.builder()
                 .member(applicant)
-                .party(party)
+                .group(group)
                 .role(Role.MEMBER)
                 .status(ApplicationStatus.ACCEPTED) // 이미 승인된 상태
                 .applicationText("참여하고 싶습니다!")
@@ -170,7 +170,7 @@ class ApplicationServiceTest {
         request.setStatus("accept");
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
-        given(applicationRepository.existsByPartyIdAndMemberIdAndRole(1L, 1L, Role.HOST))
+        given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
                 .willReturn(true);
 
         // when & then
@@ -188,7 +188,7 @@ class ApplicationServiceTest {
         request.setStatus("invalid");
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
-        given(applicationRepository.existsByPartyIdAndMemberIdAndRole(1L, 1L, Role.HOST))
+        given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
                 .willReturn(true);
 
         // when & then

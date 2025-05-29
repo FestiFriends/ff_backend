@@ -24,12 +24,12 @@ import site.festifriends.entity.enums.Role;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "member_party")
-public class MemberParty extends SoftDeleteEntity {
+@Table(name = "member_group")
+public class MemberGroup extends SoftDeleteEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_party_id", nullable = false)
+    @Column(name = "member_group_id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -37,8 +37,8 @@ public class MemberParty extends SoftDeleteEntity {
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "party_id", nullable = false)
-    private Party party;
+    @JoinColumn(name = "group_id", nullable = false)
+    private Group group;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
@@ -50,25 +50,25 @@ public class MemberParty extends SoftDeleteEntity {
     @Comment("신청 상태(대기/수락/거절/확정)")
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
-     @Column(name = "application_text", length = 150)
-     @Comment("신청 내용")
-     private String applicationText;
+    @Column(name = "application_text", length = 150)
+    @Comment("신청 내용")
+    private String applicationText;
 
     @Column(name = "joined_at")
     @Comment("가입 일시")
     private LocalDateTime joinedAt;
 
     @Builder
-    public MemberParty(Member member, Party party, Role role, ApplicationStatus status, String applicationText) {
+    public MemberGroup(Member member, Group group, Role role, ApplicationStatus status, String applicationText) {
         this.member = member;
-        this.party = party;
+        this.group = group;
         this.role = role;
         this.status = status;
         this.applicationText = applicationText;
     }
 
-    public MemberParty(Member member, Party party, Role role, ApplicationStatus status) {
-        this(member, party, role, status, null);
+    public MemberGroup(Member member, Group group, Role role, ApplicationStatus status) {
+        this(member, group, role, status, null);
     }
 
     /**
