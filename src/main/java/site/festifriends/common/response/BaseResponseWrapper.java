@@ -23,12 +23,4 @@ public abstract class BaseResponseWrapper<T> {
     protected BaseResponseWrapper(HttpStatus status, String message, T data) {
         this(status.value(), message, data);
     }
-
-    public boolean isSuccess() {
-        return this.code >= 200 && this.code < 300;
-    }
-
-    public boolean isError() {
-        return !isSuccess();
-    }
 } 
