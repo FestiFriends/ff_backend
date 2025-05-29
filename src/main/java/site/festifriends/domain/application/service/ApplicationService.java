@@ -1,6 +1,7 @@
 package site.festifriends.domain.application.service;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -244,7 +245,7 @@ public class ApplicationService {
                     .memberCount(memberCountMap.getOrDefault(group.getId(), 0L).intValue())
                     .maxMembers(group.getCount())
                     .description(group.getIntroduction())
-                    .hashtag(group.getHashTags())
+                    .hashtag(new ArrayList<>(group.getHashTags()))
                     .host(JoinedGroupResponse.Host.builder()
                         .id(hostInfo != null ? hostInfo.getMember().getId().toString() : "")
                         .name(hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음")

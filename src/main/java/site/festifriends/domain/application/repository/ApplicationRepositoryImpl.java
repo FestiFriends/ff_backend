@@ -4,6 +4,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +34,11 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
         QMember m = QMember.member;
         QGroup g = QGroup.group;
         QPerformance p = QPerformance.performance;
+
+        // If hostId is null, we want to return no results
+        if (hostId == null) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, false);
+        }
 
         BooleanExpression hostGroupsCondition = mg.group.id.in(
             JPAExpressions.select(host.group.id)
@@ -83,6 +89,11 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
         QGroup g = QGroup.group;
         QPerformance p = QPerformance.performance;
 
+        // If memberId is null, we want to return no results
+        if (memberId == null) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, false);
+        }
+
         BooleanExpression memberCondition = mg.member.id.eq(memberId);
         BooleanExpression notHostCondition = mg.role.ne(Role.HOST);
         BooleanExpression notDeletedCondition = mg.deleted.isNull();
@@ -123,6 +134,11 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
         QMember m = QMember.member;
         QGroup g = QGroup.group;
         QPerformance p = QPerformance.performance;
+
+        // If memberId is null, we want to return no results
+        if (memberId == null) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, false);
+        }
 
         BooleanExpression memberCondition = mg.member.id.eq(memberId);
         BooleanExpression confirmedCondition = mg.status.eq(ApplicationStatus.CONFIRMED);
@@ -205,6 +221,11 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
 
     @Override
     public boolean existsByGroupIdAndMemberIdAndRole(Long groupId, Long memberId, Role role) {
+        // If groupId or memberId is null, return false
+        if (groupId == null || memberId == null) {
+            return false;
+        }
+
         QMemberGroup mg = QMemberGroup.memberGroup;
 
         Integer count = queryFactory
@@ -222,6 +243,10 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
     }
 
     private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
-        return cursorId != null ? memberGroup.id.lt(cursorId) : null;
+        return cursorId != null ? memberGroup.id.lt(cursorId) : memberGroup.id.isNotNull();
+    }
+
+    private BooleanExpression memberIdEq(Long memberId, QMemberGroup memberGroup) {
+        return memberId != null ? memberGroup.member.id.eq(memberId) : memberGroup.id.isNull();
     }
 }

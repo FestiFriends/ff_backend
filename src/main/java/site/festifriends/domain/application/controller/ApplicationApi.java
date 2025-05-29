@@ -16,6 +16,7 @@ import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.dto.JoinedGroupResponse;
+import site.festifriends.domain.auth.UserDetailsImpl;
 
 @Tag(name = "신청서 관리", description = "모임 신청서 관련 API")
 public interface ApplicationApi {
@@ -31,11 +32,11 @@ public interface ApplicationApi {
         }
     )
     ResponseEntity<CursorResponseWrapper<ApplicationListResponse>> getApplications(
-            @AuthenticationPrincipal Long memberId,
-            @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
-            @RequestParam(required = false) Long cursorId,
-            @Parameter(description = "한 번에 가져올 신청서 개수, 기본값 20")
-            @RequestParam(defaultValue = "20") int size
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
+        @RequestParam(required = false) Long cursorId,
+        @Parameter(description = "한 번에 가져올 신청서 개수, 기본값 20")
+        @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(
@@ -48,11 +49,11 @@ public interface ApplicationApi {
         }
     )
     ResponseEntity<CursorResponseWrapper<AppliedListResponse>> getAppliedApplications(
-            @AuthenticationPrincipal Long memberId,
-            @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
-            @RequestParam(required = false) Long cursorId,
-            @Parameter(description = "한 번에 가져올 신청서 개수, 기본값 20")
-            @RequestParam(defaultValue = "20") int size
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
+        @RequestParam(required = false) Long cursorId,
+        @Parameter(description = "한 번에 가져올 신청서 개수, 기본값 20")
+        @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(
@@ -65,11 +66,11 @@ public interface ApplicationApi {
         }
     )
     ResponseEntity<CursorResponseWrapper<JoinedGroupResponse>> getJoinedGroups(
-            @AuthenticationPrincipal Long memberId,
-            @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
-            @RequestParam(required = false) Long cursorId,
-            @Parameter(description = "한 번에 가져올 모임 개수, 기본값 20")
-            @RequestParam(defaultValue = "20") int size
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "이전 응답에서 받은 커서값, 없으면 첫 페이지 조회")
+        @RequestParam(required = false) Long cursorId,
+        @Parameter(description = "한 번에 가져올 모임 개수, 기본값 20")
+        @RequestParam(defaultValue = "20") int size
     );
 
     @Operation(
@@ -85,10 +86,10 @@ public interface ApplicationApi {
         }
     )
     ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> updateApplicationStatus(
-            @AuthenticationPrincipal Long memberId,
-            @Parameter(description = "신청서 ID")
-            @PathVariable Long applicationId,
-            @RequestBody ApplicationStatusRequest request
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "신청서 ID")
+        @PathVariable Long applicationId,
+        @RequestBody ApplicationStatusRequest request
     );
 
     @Operation(
@@ -104,8 +105,8 @@ public interface ApplicationApi {
         }
     )
     ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> confirmApplication(
-            @AuthenticationPrincipal Long memberId,
-            @Parameter(description = "신청서 ID")
-            @PathVariable Long applicationId
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "신청서 ID")
+        @PathVariable Long applicationId
     );
 } 
