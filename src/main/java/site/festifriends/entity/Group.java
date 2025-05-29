@@ -28,7 +28,7 @@ import site.festifriends.entity.enums.GroupCategory;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "groups")
+@Table(name = "`groups`")
 public class Group extends SoftDeleteEntity {
 
     @Id
