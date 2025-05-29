@@ -11,7 +11,7 @@ public class RefreshTokenCookieFactory {
         return ResponseCookie
             .from("Refresh-Token", refreshToken)
             .httpOnly(true)
-            .secure(true)
+            .secure(false)
             .path("/")
             .maxAge(60 * 60 * 24 * 7)
             .sameSite("None")
