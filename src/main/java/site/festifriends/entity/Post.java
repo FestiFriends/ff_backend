@@ -131,4 +131,11 @@ public class Post extends SoftDeleteEntity {
             this.reactionCount--;
         }
     }
+
+    /**
+     * 게시글 고정 설정
+     */
+    public void setPinned(boolean isPinned) {
+        this.isPinned = isPinned;
+    }
 }
