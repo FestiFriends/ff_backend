@@ -15,8 +15,8 @@ public class AppliedListResponse {
     private String poster;
     private String groupId;
     private String groupName;
-    private String leaderNickname;
-    private Double leaderRating;
+    private String hostName;
+    private Double hostRating;
     private Gender gender;
     private String applicationText;
     private LocalDateTime createdAt;
