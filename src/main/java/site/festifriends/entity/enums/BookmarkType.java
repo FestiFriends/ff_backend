@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum BookmarkType {
-    USER("회원"),
+    MEMBER("회원"),
     PERFORMANCE("공연");
 
     private final String type;

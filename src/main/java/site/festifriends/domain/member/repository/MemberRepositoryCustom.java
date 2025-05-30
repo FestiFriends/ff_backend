@@ -1,11 +1,11 @@
 package site.festifriends.domain.member.repository;
 
 import org.springframework.data.domain.Pageable;
-import site.festifriends.common.response.CursorResponseWrapper;
-import site.festifriends.domain.member.dto.MemberDto;
+import org.springframework.data.domain.Slice;
+import site.festifriends.domain.member.dto.LikedMemberDto;
 
 public interface MemberRepositoryCustom {
 
-    CursorResponseWrapper<MemberDto> getMyLikedMembers(Long memberId, Long cursorId, Pageable pageable);
+    Slice<LikedMemberDto> getMyLikedMembers(Long memberId, Long cursorId, Pageable pageable);
 
 }
