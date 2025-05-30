@@ -2,10 +2,14 @@ package site.festifriends.domain.member.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import site.festifriends.common.jwt.TokenResolver;
+import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.auth.KakaoUserInfo;
 import site.festifriends.domain.auth.service.BlackListTokenService;
+import site.festifriends.domain.member.dto.MemberDto;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.enums.Gender;
@@ -54,4 +58,12 @@ public class MemberService {
         blackListTokenService.addBlackListToken(accessToken);
         blackListTokenService.addBlackListToken(refreshToken);
     }
+
+    public CursorResponseWrapper<MemberDto> getMyLikedMembers(Long memberId, Long cursorId, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+
+        return memberRepository.getMyLikedMembers(memberId, cursorId, pageable);
+
+    }
+
 }

@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
@@ -25,5 +27,24 @@ public class MemberController implements MemberApi {
         memberService.deleteMember(userDetails.getMemberId(), request);
 
         return ResponseEntity.ok().body(ResponseWrapper.success("회원 탈퇴가 완료되었습니다."));
+    }
+
+    @Override
+    @GetMapping("/favorites")
+    public ResponseEntity<?> getMyLikedMembers(
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(memberService.getMyLikedMembers(userDetails.getMemberId(), cursorId, size));
+    }
+
+    @Override
+    public ResponseEntity<?> getMyLikedMembersCount(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<?> getMyLikedPerformances(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return null;
     }
 }
