@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -53,12 +54,14 @@ public class Performance extends SoftDeleteEntity {
 
     @ElementCollection
     @CollectionTable(name = "performance_cast", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "cast_member")
     @Comment("공연 출연진")
     private List<String> cast = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "performance_crew", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "crew_member")
     @Comment("공연 제작진")
     private List<String> crew = new ArrayList<>();
@@ -73,30 +76,35 @@ public class Performance extends SoftDeleteEntity {
 
     @ElementCollection
     @CollectionTable(name = "performance_production_company", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "company")
     @Comment("제작사")
     private List<String> productionCompany = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "performance_agency", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "agency")
     @Comment("기획사")
     private List<String> agency = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "performance_host", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "host")
     @Comment("주최")
     private List<String> host = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "performance_organizer", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "organizer")
     @Comment("주관")
     private List<String> organizer = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "performance_price", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "price")
     @Comment("티켓 가격")
     private List<String> price = new ArrayList<>();
@@ -116,6 +124,7 @@ public class Performance extends SoftDeleteEntity {
 
     @ElementCollection
     @CollectionTable(name = "performance_time", joinColumns = @JoinColumn(name = "performance_id"))
+    @OrderColumn(name = "order_index")
     @Column(name = "time")
     @Comment("공연 시간")
     private List<LocalDateTime> time = new ArrayList<>();
