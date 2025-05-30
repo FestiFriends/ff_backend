@@ -35,7 +35,7 @@ public class MemberRepositoryTest {
     private BookmarkRepository bookmarkRepository;
 
     @Test
-    @DisplayName("내가 찜한 사용자 목록을 커서 기반으로 조회한다")
+    @DisplayName("[성공] 내가 찜한 사용자 목록 조회")
     void getMyLikedMembers_test() {
         // given
         Member member = memberRepository.save(Member.builder()
@@ -109,5 +109,65 @@ public class MemberRepositoryTest {
         assertThat(dto2.getGender()).isEqualTo("MALE");
         assertThat(dto2.getAge()).isEqualTo(20);
         assertThat(dto2.getProfileImage()).isEqualTo("https://example.com/profiles/test2.jpg");
+    }
+
+    @Test
+    @DisplayName("[성공] 내가 찜한 사용자 수 조회")
+    void getMyLikedMembersCount_test() {
+        // given
+        Member member = memberRepository.save(Member.builder()
+            .email("test1@example.com")
+            .nickname("테스트")
+            .profileImageUrl("https://example.com/profiles/test1.jpg")
+            .age(28)
+            .gender(Gender.MALE)
+            .introduction("안녕하세요.")
+            .tags(List.of("음악", "여행"))
+            .socialId("socialId1")
+            .build());
+
+        Member target1 = memberRepository.save(Member.builder()
+            .email("test2@example.com")
+            .nickname("테스트2")
+            .profileImageUrl("https://example.com/profiles/test2.jpg")
+            .age(20)
+            .gender(Gender.MALE)
+            .introduction("안녕하세요.")
+            .tags(List.of("음악", "여행"))
+            .socialId("socialId2")
+            .build());
+
+        Member target2 = memberRepository.save(Member.builder()
+            .email("test3@example.com")
+            .nickname("테스트3")
+            .profileImageUrl("https://example.com/profiles/test3.jpg")
+            .age(21)
+            .gender(Gender.MALE)
+            .introduction("안녕하세요.")
+            .tags(List.of("음악", "여행"))
+            .socialId("socialId3")
+            .build());
+
+        bookmarkRepository.save(
+            Bookmark.builder()
+                .member(member)
+                .type(BookmarkType.MEMBER)
+                .targetId(target1.getId())
+                .build()
+        );
+
+        bookmarkRepository.save(
+            Bookmark.builder()
+                .member(member)
+                .type(BookmarkType.MEMBER)
+                .targetId(target2.getId())
+                .build()
+        );
+
+        // when
+        Long count = memberRepositoryImpl.countMyLikedMembers(member.getId());
+
+        // then
+        assertThat(count).isEqualTo(2L);
     }
 }
