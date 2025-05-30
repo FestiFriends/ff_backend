@@ -54,7 +54,6 @@ public class MemberController implements MemberApi {
         @RequestParam(required = false) Long cursorId,
         @RequestParam(defaultValue = "20") int size
     ) {
-        memberService.getMyLikedPerformances(userDetails.getMemberId(), cursorId, size);
-        return null;
+        return ResponseEntity.ok(memberService.getMyLikedPerformances(userDetails.getMemberId(), cursorId, size));
     }
 }

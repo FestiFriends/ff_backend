@@ -3,6 +3,8 @@ package site.festifriends.domain.member.service;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
 import site.festifriends.domain.member.dto.LikedPerformanceResponse;
 import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.enums.Gender;
 
@@ -28,6 +31,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final BlackListTokenService blackListTokenService;
+    private final PerformanceRepository performanceRepository;
 
     public Member loginOrSignUp(KakaoUserInfo userInfo) {
 
@@ -115,6 +119,12 @@ public class MemberService {
             return CursorResponseWrapper.empty("요청이 성공적으로 처리되었습니다.");
         }
 
+        List<Long> performanceIds = slice.getContent().stream()
+            .map(LikedPerformanceDto::getId)
+            .collect(Collectors.toList());
+
+        Map<Long, Integer> groupCounts = performanceRepository.getGroupCountsByPerformanceIds(performanceIds);
+
         List<LikedPerformanceResponse> response = new ArrayList<>();
 
         for (LikedPerformanceDto likedPerformance : slice.getContent()) {
@@ -137,7 +147,8 @@ public class MemberService {
                 likedPerformance.getState(),
                 likedPerformance.getVisit(),
                 likedPerformance.getImages(),
-                likedPerformance.getTime()
+                likedPerformance.getTime(),
+                groupCounts.getOrDefault(likedPerformance.getId(), 0)
             ));
         }
 
