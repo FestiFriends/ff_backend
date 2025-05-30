@@ -15,6 +15,8 @@ import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.post.dto.PostCreateRequest;
 import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
+import site.festifriends.domain.post.dto.PostPinRequest;
+import site.festifriends.domain.post.dto.PostPinResponse;
 import site.festifriends.domain.post.dto.PostResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
@@ -127,4 +129,34 @@ public interface PostApi {
             @AuthenticationPrincipal UserDetailsImpl user,
             @Parameter(description = "모임 ID") @PathVariable Long groupId,
             @Parameter(description = "게시글 ID") @PathVariable Long postId);
+
+    @Operation(
+            summary = "모임 내 게시글 고정/해제",
+            description = """
+                    모임 내 게시글을 고정하거나 고정을 해제합니다. 해당 모임에 속한 회원이면 누구나 고정/해제할 수 있습니다.
+
+                    **요청 본문:**
+                    - isPinned: 고정 여부 (true: 고정, false: 해제)
+
+                    **응답:**
+                    - result: 성공 여부
+                    - isPinned: 변경된 고정 상태
+
+                    **참고:**
+                    - 게시글을 고정(isPinned=true)하면 같은 모임 내 기존 고정글은 자동으로 고정 해제됩니다.
+                    """,
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "게시글 고정/해제가 성공적으로 처리되었습니다."),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+                    @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+                    @ApiResponse(responseCode = "403", description = "해당 모임에 속한 회원만 게시글을 고정/해제할 수 있습니다."),
+                    @ApiResponse(responseCode = "404", description = "해당 모임 또는 게시글을 찾을 수 없습니다."),
+                    @ApiResponse(responseCode = "500", description = "서버 오류로 인해 게시글 고정/해제에 실패했습니다.")
+            }
+    )
+    ResponseEntity<ResponseWrapper<PostPinResponse>> pinPost(
+            @AuthenticationPrincipal UserDetailsImpl user,
+            @Parameter(description = "모임 ID") @PathVariable Long groupId,
+            @Parameter(description = "게시글 ID") @PathVariable Long postId,
+            @Parameter(description = "게시글 고정/해제 정보") @RequestBody PostPinRequest request);
 }

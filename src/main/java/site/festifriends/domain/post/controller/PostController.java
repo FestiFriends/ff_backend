@@ -18,6 +18,8 @@ import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.post.dto.PostCreateRequest;
 import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
+import site.festifriends.domain.post.dto.PostPinRequest;
+import site.festifriends.domain.post.dto.PostPinResponse;
 import site.festifriends.domain.post.dto.PostResponse;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
@@ -37,7 +39,8 @@ public class PostController implements PostApi {
         @PathVariable Long groupId,
         PostListRequest request
     ) {
-        CursorResponseWrapper<PostResponse> response = postService.getPostsByGroupId(groupId, user.getMemberId(), request);
+        CursorResponseWrapper<PostResponse> response = postService.getPostsByGroupId(groupId, user.getMemberId(),
+            request);
 
         return ResponseEntity.ok(response);
     }
@@ -77,5 +80,22 @@ public class PostController implements PostApi {
         PostUpdateDeleteResponse response = postService.deletePost(groupId, postId, user.getMemberId());
 
         return ResponseEntity.ok(ResponseWrapper.success("게시글이 성공적으로 삭제되었습니다.", response));
+    }
+
+    @Override
+    @PatchMapping("/{groupId}/posts/{postId}/pinned")
+    public ResponseEntity<ResponseWrapper<PostPinResponse>> pinPost(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @PathVariable Long groupId,
+        @PathVariable Long postId,
+        @RequestBody PostPinRequest request
+    ) {
+        PostPinResponse response = postService.pinPost(groupId, postId, user.getMemberId(), request);
+
+        String message = Boolean.TRUE.equals(request.getIsPinned())
+            ? "게시글이 성공적으로 고정되었습니다."
+            : "게시글 고정이 해제되었습니다.";
+
+        return ResponseEntity.ok(ResponseWrapper.success(message, response));
     }
 }
