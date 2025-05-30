@@ -6,11 +6,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -23,7 +23,9 @@ import site.festifriends.common.model.SoftDeleteEntity;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "post")
+@Table(name = "post",
+    indexes = @Index(name = "idx_post_pinned",
+        columnList = "is_pinned"))
 public class Post extends SoftDeleteEntity {
 
     @Id
@@ -73,6 +75,7 @@ public class Post extends SoftDeleteEntity {
 
     /**
      * 첨부 이미지 수 계산
+     *
      * @return 이미지 수
      */
     public int getImageCount() {
