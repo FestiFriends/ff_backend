@@ -50,6 +50,5 @@ public interface AuthApi {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
         }
     )
-    ResponseEntity<?> reissueAccessToken(@AuthenticationPrincipal UserDetailsImpl userDetails,
-        HttpServletRequest request);
+    ResponseEntity<?> reissueAccessToken(HttpServletRequest request);
 }

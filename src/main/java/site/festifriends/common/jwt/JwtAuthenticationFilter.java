@@ -6,6 +6,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,11 +25,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider accessTokenProvider;
     private final CustomUserDetailsService userDetailsService;
 
+    private final List<String> jwtIgnoreUrls = List.of("/api/v1/auth/token");
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
 
-        String accessToken = extractAccessToken(request);
+        if (shouldIgnoreRequest(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String accessToken = TokenResolver.extractAccessToken(request);
 
         if (accessToken != null && !accessToken.isEmpty()) {
             try {
@@ -43,12 +53,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private String extractAccessToken(HttpServletRequest request) {
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            return authorizationHeader.substring(7);
-        }
-        return null;
+    private boolean shouldIgnoreRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String method = request.getMethod();
+        Optional<String> judge = jwtIgnoreUrls.stream()
+            .filter(v ->
+                Pattern.matches(v.replace("**", ".*"), uri) ||
+                    Pattern.matches(v.replace("/**", ""), uri)
+            )
+            .findFirst();
+        return judge.isPresent() || "OPTIONS".equals(method);
     }
 
     private UserDetailsImpl getUserDetails(String accessToken) {
