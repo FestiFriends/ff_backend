@@ -2,6 +2,8 @@ package site.festifriends.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,29 +16,35 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.festifriends.common.model.BaseEntity;
+import site.festifriends.entity.enums.BookmarkType;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "performance_bookmark")
-public class PerformanceBookmark extends BaseEntity {
+@Table(name = "bookmark")
+public class Bookmark extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "performance_bookmark_id", nullable = false)
+    @Column(name = "bookmark_id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "performance_id", nullable = false)
-    private Performance performance;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private BookmarkType type;
+
+    @Column(name = "target_id", nullable = false)
+    private Long targetId;
 
     @Builder
-    public PerformanceBookmark(Member member, Performance performance) {
+    public Bookmark(Member member, BookmarkType type, Long targetId) {
         this.member = member;
-        this.performance = performance;
+        this.type = type;
+        this.targetId = targetId;
     }
+
 }
