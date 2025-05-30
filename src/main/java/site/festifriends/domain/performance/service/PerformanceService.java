@@ -147,7 +147,7 @@ public class PerformanceService {
                 .poster(performance.getPoster())
                 .state(performance.getState().getDescription())
                 .visit(performance.getVisit())
-                .imgs(images)
+                .images(images)
                 .time(timeStrings)
                 .groupCount(groupCountMap.getOrDefault(performance.getId(), 0L).intValue())
                 .build();

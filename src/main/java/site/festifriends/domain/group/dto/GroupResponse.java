@@ -18,14 +18,15 @@ public class GroupResponse {
     private Integer startAge;
     private Integer endAge;
     private String location;
-    private String date;
+    private String startDate;
+    private String endDate;
     private Integer memberCount;
     private Integer maxMembers;
     private List<String> hashtag;
-    
+
     @JsonProperty("isFavorite")
     private boolean isFavorite;
-    
+
     private Host host;
 
     @Getter
