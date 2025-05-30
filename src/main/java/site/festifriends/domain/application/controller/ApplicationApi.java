@@ -109,4 +109,22 @@ public interface ApplicationApi {
         @Parameter(description = "신청서 ID")
         @PathVariable Long applicationId
     );
+
+    @Operation(
+        summary = "모임 가입 신청 취소&확정안함",
+        description = "신청자가 모임 신청을 취소합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "모임 신청서 취소 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "권한이 없는 사용자 (신청자만 가능)"),
+            @ApiResponse(responseCode = "404", description = "신청서를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        }
+    )
+    ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> cancelApplication(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "신청서 ID")
+        @PathVariable Long applicationId
+    );
 } 

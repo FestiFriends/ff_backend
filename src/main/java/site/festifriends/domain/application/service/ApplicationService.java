@@ -357,6 +357,30 @@ public class ApplicationService {
         return ResponseWrapper.success("모임 가입을 확정하였습니다", response);
     }
 
+    /**
+     * 모임 신청 취소&확정안함
+     */
+    public ResponseWrapper<ApplicationStatusResponse> cancelApplication(Long memberId, Long applicationId) {
+        MemberGroup application = applicationRepository.findById(applicationId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신청서를 찾을 수 없습니다."));
+
+        validateApplicantPermission(memberId, application);
+
+        if (application.getStatus() == ApplicationStatus.PENDING) {
+            application.cancel();
+        } else if (application.getStatus() == ApplicationStatus.ACCEPTED) {
+            application.cancel();
+        } else {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "취소할 수 없는 신청서 상태입니다.");
+        }
+
+        ApplicationStatusResponse response = ApplicationStatusResponse.builder()
+            .result(true)
+            .build();
+
+        return ResponseWrapper.success("모임 가입 신청이 취소되었습니다", response);
+    }
+
     private void validateHostPermission(Long hostId, MemberGroup application) {
         boolean isHost = applicationRepository.existsByGroupIdAndMemberIdAndRole(
             application.getGroup().getId(),
@@ -374,4 +398,4 @@ public class ApplicationService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 신청서만 확정할 수 있습니다.");
         }
     }
-} 
+}
