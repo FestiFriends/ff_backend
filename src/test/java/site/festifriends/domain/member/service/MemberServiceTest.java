@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +19,10 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.member.dto.LikedMemberDto;
-import site.festifriends.domain.member.dto.MemberDto;
+import site.festifriends.domain.member.dto.LikedMemberResponse;
+import site.festifriends.domain.member.dto.LikedPerformanceDto;
+import site.festifriends.domain.member.dto.LikedPerformanceImageDto;
+import site.festifriends.domain.member.dto.LikedPerformanceResponse;
 import site.festifriends.domain.member.repository.MemberRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,7 +56,7 @@ class MemberServiceTest {
             .thenReturn(slice);
 
         // when
-        CursorResponseWrapper<MemberDto> response = memberService.getMyLikedMembers(memberId, cursorId, size);
+        CursorResponseWrapper<LikedMemberResponse> response = memberService.getMyLikedMembers(memberId, cursorId, size);
 
         // then
         assertThat(response.getData()).hasSize(size);
@@ -81,11 +85,83 @@ class MemberServiceTest {
             .thenReturn(slice);
 
         // when
-        CursorResponseWrapper<MemberDto> response = memberService.getMyLikedMembers(memberId, cursorId, size);
+        CursorResponseWrapper<LikedMemberResponse> response = memberService.getMyLikedMembers(memberId, cursorId, size);
 
         // then
         assertThat(response.getData()).hasSize(2);
         assertThat(response.getHasNext()).isFalse();
         assertThat(response.getCursorId()).isNull();
     }
+
+    @Test
+    @DisplayName("[성공] 내가 찜한 공연 목록 조회")
+    void getMyLikedPerformances() {
+        // given
+        Long memberId = 1L;
+        Long cursorId = null;
+        int size = 1;
+
+        LikedPerformanceDto performance1 = new LikedPerformanceDto(
+            1L,
+            "공연1",
+            LocalDateTime.of(2023, 10, 1, 0, 0),
+            LocalDateTime.of(2023, 10, 2, 0, 0),
+            "장소1",
+            List.of("배우1", "배우2"),
+            List.of("스태프1"),
+            "180분",
+            "만 12세 이상",
+            List.of("제작사1"),
+            List.of("기획사1"),
+            List.of("주최1"),
+            List.of("주관1"),
+            List.of("VIP 10만원"),
+            "https://example.com/performance1.jpg",
+            "UPCOMING",
+            "국내",
+            List.of(new LikedPerformanceImageDto("1", "https://example.com/img1.jpg", "이미지1")),
+            List.of(LocalDateTime.of(2023, 10, 1, 18, 0)),
+            100L // bookmarkId
+        );
+
+        LikedPerformanceDto performance2 = new LikedPerformanceDto(
+            2L,
+            "공연2",
+            LocalDateTime.of(2023, 11, 1, 0, 0),
+            LocalDateTime.of(2023, 11, 2, 0, 0),
+            "장소2",
+            List.of("배우3", "배우4"),
+            List.of("스태프2"),
+            "180분",
+            "만 12세 이상",
+            List.of("제작사2"),
+            List.of("기획사2"),
+            List.of("주최2"),
+            List.of("주관2"),
+            List.of("VIP 9만원"),
+            "https://example.com/performance2.jpg",
+            "UPCOMING",
+            "국내",
+            List.of(new LikedPerformanceImageDto("2", "https://example.com/img2.jpg", "이미지2")),
+            List.of(LocalDateTime.of(2023, 11, 1, 18, 0)),
+            101L // bookmarkId
+        );
+
+        List<LikedPerformanceDto> performanceList = Arrays.asList(performance1, performance2);
+        Slice<LikedPerformanceDto> slice = new SliceImpl<>(performanceList, PageRequest.of(0, size + 1), true);
+
+        when(memberRepository.getMyLikedPerformances(eq(memberId), eq(cursorId), any(PageRequest.class)))
+            .thenReturn(slice);
+
+        // when
+        CursorResponseWrapper<LikedPerformanceResponse> response =
+            memberService.getMyLikedPerformances(memberId, cursorId, size);
+
+        // then
+        assertThat(response.getData()).hasSize(size);
+        assertThat(response.getData().get(0).getTitle()).isEqualTo("공연1");
+        assertThat(response.getHasNext()).isTrue();
+        assertThat(response.getCursorId()).isEqualTo(101L);
+    }
+
 }
