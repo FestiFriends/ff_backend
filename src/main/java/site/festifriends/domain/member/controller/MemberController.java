@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.member.dto.MemberDto;
 import site.festifriends.domain.member.service.MemberService;
 
 @RestController
@@ -31,7 +33,7 @@ public class MemberController implements MemberApi {
 
     @Override
     @GetMapping("/favorites")
-    public ResponseEntity<?> getMyLikedMembers(
+    public ResponseEntity<CursorResponseWrapper<MemberDto>> getMyLikedMembers(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam(required = false) Long cursorId,
         @RequestParam(defaultValue = "20") int size) {
@@ -39,8 +41,10 @@ public class MemberController implements MemberApi {
     }
 
     @Override
+    @GetMapping("/favorites/count")
     public ResponseEntity<?> getMyLikedMembersCount(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return null;
+        Long count = memberService.getMyLikedMembersCount(userDetails.getMemberId());
+        return ResponseEntity.ok(ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", count));
     }
 
     @Override

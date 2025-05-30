@@ -8,4 +8,5 @@ public interface MemberRepositoryCustom {
 
     Slice<LikedMemberDto> getMyLikedMembers(Long memberId, Long cursorId, Pageable pageable);
 
+    Long countMyLikedMembers(Long memberId);
 }

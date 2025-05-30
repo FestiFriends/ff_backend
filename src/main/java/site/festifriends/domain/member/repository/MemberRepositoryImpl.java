@@ -66,4 +66,25 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
         return new SliceImpl<>(dtos, pageable, hasNext);
     }
+
+    @Override
+    public Long countMyLikedMembers(Long memberId) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM bookmark b
+            WHERE b.member_id = :memberId
+            AND b.type = 'MEMBER'
+            """;
+
+        Query query = em.createNativeQuery(sql);
+
+        query.setParameter("memberId", memberId);
+        
+        List<Long> resultList = query.getResultList();
+        if (resultList.isEmpty()) {
+            return 0L;
+        }
+
+        return resultList.get(0);
+    }
 }
