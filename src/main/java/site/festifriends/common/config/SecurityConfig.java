@@ -1,5 +1,6 @@
 package site.festifriends.common.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +27,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final ObjectMapper objectMapper;
 
     private final String[] readOnlyUrl = {
         "/favicon.ico",
@@ -56,8 +58,8 @@ public class SecurityConfig {
                     .anyRequest().authenticated())
             .exceptionHandling(exception ->
                 exception
-                    .accessDeniedHandler(new JwtAccessDeniedHandler())
-                    .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
+                    .accessDeniedHandler(new JwtAccessDeniedHandler(objectMapper))
+                    .authenticationEntryPoint(new JwtAuthenticationEntryPoint(objectMapper)));
 
         return http.build();
     }
