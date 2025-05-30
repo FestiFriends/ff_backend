@@ -232,6 +232,7 @@ public class ApplicationService {
                     .id(group.getId().toString())
                     .performance(JoinedGroupResponse.Performance.builder()
                         .id(group.getPerformance().getId().toString())
+                        .title(group.getPerformance().getTitle())
                         .poster(group.getPerformance().getPoster())
                         .build())
                     .title(group.getTitle())

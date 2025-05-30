@@ -31,6 +31,7 @@ public class JoinedGroupResponse {
     @Builder
     public static class Performance {
         private String id;
+        private String title;
         private String poster;
     }
 
