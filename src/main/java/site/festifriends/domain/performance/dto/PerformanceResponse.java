@@ -26,7 +26,7 @@ public class PerformanceResponse {
     private String poster;           // 포스터 이미지 URL
     private String state;            // 공연 상태
     private String visit;            // 내한 여부
-    private List<PerformanceImage> imgs; // 소개 이미지 목록
+    private List<PerformanceImage> images; // 소개 이미지 목록
     private List<String> time;       // 공연 시간 (ISO 8601) 배열
     private Integer groupCount;      // 모임 개수 (모임개수 정렬용)
     
