@@ -56,7 +56,7 @@ public class PostService {
         Slice<Post> postSlice = postRepository.findPostsByGroupIdWithSlice(groupId, cursorId, pageable);
 
         List<PostResponse> postResponses = postSlice.getContent().stream()
-                .map(PostResponse::from)
+                .map(post -> PostResponse.from(post, memberId))
                 .collect(Collectors.toList());
 
         if (postResponses.isEmpty()) {

@@ -23,6 +23,9 @@ public class PostResponse {
     @JsonProperty("isReported")
     private boolean isReported;
 
+    @JsonProperty("isMine")
+    private boolean isMine;
+
     private int imageCount;
     private List<PostImageResponse> images;
     private Long authorId;
@@ -32,12 +35,19 @@ public class PostResponse {
     private int reactionCount;
 
     public static PostResponse from(Post post) {
+        return from(post, null);
+    }
+
+    public static PostResponse from(Post post, Long currentUserId) {
+        boolean isMine = currentUserId != null && post.isMine(currentUserId);
+
         return PostResponse.builder()
                 .id(post.getId())
                 .groupId(post.getGroup().getId())
                 .content(post.getContent())
                 .isPinned(post.isPinned())
                 .isReported(post.isReported())
+                .isMine(isMine)
                 .imageCount(post.getImageCount())
                 .images(post.getImages().stream()
                         .map(PostImageResponse::from)
