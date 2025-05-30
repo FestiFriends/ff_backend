@@ -8,8 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import site.festifriends.common.response.CursorResponseWrapper;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.post.dto.PostCreateRequest;
+import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
 import site.festifriends.domain.post.dto.PostResponse;
 
@@ -42,4 +46,32 @@ public interface PostApi {
             @AuthenticationPrincipal UserDetailsImpl user,
             @Parameter(description = "모임 ID") @PathVariable Long groupId,
             @Parameter(description = "요청 파라미터 (cursorId, size)") @ModelAttribute PostListRequest request);
+
+    @Operation(
+            summary = "모임 내 게시글 등록",
+            description = """
+                    모임 내 게시글을 등록합니다.
+
+                    **요청 본문:**
+                    - content: 게시글 내용 (필수)
+                    - isPinned: 상단 고정 여부 (선택, 기본값 false)
+                    - images: 첨부 이미지 배열 (선택)
+
+                    **응답:**
+                    - 게시글 등록 성공 여부(result)만 반환됩니다.
+                    - isPinned가 true인 경우, 같은 모임 내 기존 고정글은 자동으로 고정 해제(isPinned=false)됩니다.
+                    """,
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "게시글이 성공적으로 등록되었습니다."),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+                    @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+                    @ApiResponse(responseCode = "403", description = "게시글 등록 권한이 없습니다."),
+                    @ApiResponse(responseCode = "404", description = "해당 모임을 찾을 수 없습니다."),
+                    @ApiResponse(responseCode = "500", description = "서버 오류로 인해 게시글 등록에 실패했습니다.")
+            }
+    )
+    ResponseEntity<ResponseWrapper<PostCreateResponse>> createPost(
+            @AuthenticationPrincipal UserDetailsImpl user,
+            @Parameter(description = "모임 ID") @PathVariable Long groupId,
+            @Parameter(description = "게시글 등록 정보") @RequestBody PostCreateRequest request);
 }
