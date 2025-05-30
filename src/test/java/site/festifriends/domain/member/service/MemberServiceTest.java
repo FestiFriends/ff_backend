@@ -24,12 +24,16 @@ import site.festifriends.domain.member.dto.LikedPerformanceDto;
 import site.festifriends.domain.member.dto.LikedPerformanceImageDto;
 import site.festifriends.domain.member.dto.LikedPerformanceResponse;
 import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.performance.repository.PerformanceRepository;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private PerformanceRepository performanceRepository;
 
     @InjectMocks
     private MemberService memberService;
@@ -162,6 +166,7 @@ class MemberServiceTest {
         assertThat(response.getData().get(0).getTitle()).isEqualTo("공연1");
         assertThat(response.getHasNext()).isTrue();
         assertThat(response.getCursorId()).isEqualTo(101L);
+        assertThat(response.getData().get(0).getGroupCount()).isEqualTo(0);
     }
 
 }
