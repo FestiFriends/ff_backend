@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class MemberDto {
+public class LikedMemberResponse {
 
     private String name;
     private String gender;

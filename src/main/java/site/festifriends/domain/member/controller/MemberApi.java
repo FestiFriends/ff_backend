@@ -55,5 +55,11 @@ public interface MemberApi {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
         }
     )
-    ResponseEntity<?> getMyLikedPerformances(@AuthenticationPrincipal UserDetailsImpl userDetails);
+    ResponseEntity<?> getMyLikedPerformances(
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @Parameter(description = "커서 Id, default는 첫번째 요소")
+        @RequestParam(required = false) Long cursorId,
+        @Parameter(description = "한 페이지당 항목 수, default는 20")
+        @RequestParam(defaultValue = "20") int size
+    );
 }

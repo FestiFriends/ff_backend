@@ -15,7 +15,9 @@ import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.auth.KakaoUserInfo;
 import site.festifriends.domain.auth.service.BlackListTokenService;
 import site.festifriends.domain.member.dto.LikedMemberDto;
-import site.festifriends.domain.member.dto.MemberDto;
+import site.festifriends.domain.member.dto.LikedMemberResponse;
+import site.festifriends.domain.member.dto.LikedPerformanceDto;
+import site.festifriends.domain.member.dto.LikedPerformanceResponse;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.enums.Gender;
@@ -63,7 +65,7 @@ public class MemberService {
         blackListTokenService.addBlackListToken(refreshToken);
     }
 
-    public CursorResponseWrapper<MemberDto> getMyLikedMembers(Long memberId, Long cursorId, int size) {
+    public CursorResponseWrapper<LikedMemberResponse> getMyLikedMembers(Long memberId, Long cursorId, int size) {
         Pageable pageable = PageRequest.of(0, size);
 
         Slice<LikedMemberDto> slice = memberRepository.getMyLikedMembers(memberId, cursorId, pageable);
@@ -72,10 +74,10 @@ public class MemberService {
             return CursorResponseWrapper.empty("요청이 성공적으로 처리되었습니다.");
         }
 
-        List<MemberDto> response = new ArrayList<>();
+        List<LikedMemberResponse> response = new ArrayList<>();
 
         for (LikedMemberDto likedMember : slice.getContent()) {
-            response.add(new MemberDto(
+            response.add(new LikedMemberResponse(
                 likedMember.getName(),
                 likedMember.getGender(),
                 likedMember.getAge(),
@@ -101,6 +103,57 @@ public class MemberService {
 
     public Long getMyLikedMembersCount(Long memberId) {
         return memberRepository.countMyLikedMembers(memberId);
+    }
+
+    public CursorResponseWrapper<LikedPerformanceResponse> getMyLikedPerformances(Long memberId, Long cursorId,
+        int size) {
+        Pageable pageable = PageRequest.of(0, size);
+
+        Slice<LikedPerformanceDto> slice = memberRepository.getMyLikedPerformances(memberId, cursorId, pageable);
+
+        if (slice.isEmpty()) {
+            return CursorResponseWrapper.empty("요청이 성공적으로 처리되었습니다.");
+        }
+
+        List<LikedPerformanceResponse> response = new ArrayList<>();
+
+        for (LikedPerformanceDto likedPerformance : slice.getContent()) {
+            response.add(new LikedPerformanceResponse(
+                likedPerformance.getId(),
+                likedPerformance.getTitle(),
+                likedPerformance.getStartDate(),
+                likedPerformance.getEndDate(),
+                likedPerformance.getLocation(),
+                likedPerformance.getCast(),
+                likedPerformance.getCrew(),
+                likedPerformance.getRuntime(),
+                likedPerformance.getAge(),
+                likedPerformance.getProductionCompany(),
+                likedPerformance.getAgency(),
+                likedPerformance.getHost(),
+                likedPerformance.getOrganizer(),
+                likedPerformance.getPrice(),
+                likedPerformance.getPoster(),
+                likedPerformance.getState(),
+                likedPerformance.getVisit(),
+                likedPerformance.getImages(),
+                likedPerformance.getTime()
+            ));
+        }
+
+        Long nextCursorId = null;
+
+        if (slice.hasNext()) {
+            response.remove(response.size() - 1);
+            nextCursorId = slice.getContent().get(size).getBookmarkId();
+        }
+
+        return CursorResponseWrapper.success(
+            "요청이 성공적으로 처리되었습니다.",
+            response,
+            nextCursorId,
+            slice.hasNext()
+        );
     }
 
     public Member getMemberById(Long memberId) {

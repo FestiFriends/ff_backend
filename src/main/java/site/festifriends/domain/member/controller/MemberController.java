@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
-import site.festifriends.domain.member.dto.MemberDto;
+import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.service.MemberService;
 
 @RestController
@@ -33,7 +33,7 @@ public class MemberController implements MemberApi {
 
     @Override
     @GetMapping("/favorites")
-    public ResponseEntity<CursorResponseWrapper<MemberDto>> getMyLikedMembers(
+    public ResponseEntity<CursorResponseWrapper<LikedMemberResponse>> getMyLikedMembers(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam(required = false) Long cursorId,
         @RequestParam(defaultValue = "20") int size) {
@@ -48,7 +48,13 @@ public class MemberController implements MemberApi {
     }
 
     @Override
-    public ResponseEntity<?> getMyLikedPerformances(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    @GetMapping("/performances/favorites")
+    public ResponseEntity<?> getMyLikedPerformances(
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        memberService.getMyLikedPerformances(userDetails.getMemberId(), cursorId, size);
         return null;
     }
 }
