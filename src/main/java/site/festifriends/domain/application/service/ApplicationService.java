@@ -80,8 +80,10 @@ public class ApplicationService {
                         .rating(ratingMap.getOrDefault(app.getMember().getId(), 0.0))
                         .gender(app.getMember().getGender())
                         .age(app.getMember().getAge())
+                        .profileImage(app.getMember().getProfileImageUrl())
                         .applicationText(app.getApplicationText())
                         .createdAt(app.getCreatedAt())
+                        .status(app.getStatus())
                         .build())
                     .collect(Collectors.toList());
 
