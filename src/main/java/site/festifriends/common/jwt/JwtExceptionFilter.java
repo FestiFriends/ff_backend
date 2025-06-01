@@ -26,7 +26,7 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             log.error("JWT Exception: {}", e.getMessage(), e);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
+            response.setContentType("application/json; charset=UTF-8");
             objectMapper.writeValue(response.getWriter(),
                 ResponseWrapper.error(ErrorCode.UNAUTHORIZED));
         }

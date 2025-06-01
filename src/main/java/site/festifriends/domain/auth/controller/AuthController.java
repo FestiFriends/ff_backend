@@ -63,8 +63,8 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping("/token")
-    public ResponseEntity<?> reissueAccessToken(UserDetailsImpl userDetails, HttpServletRequest request) {
-        AuthInfo info = authService.reissueAccessToken(userDetails.getMemberId(), request);
+    public ResponseEntity<?> reissueAccessToken(HttpServletRequest request) {
+        AuthInfo info = authService.reissueAccessToken(request);
 
         HttpHeaders headers = new HttpHeaders();
 

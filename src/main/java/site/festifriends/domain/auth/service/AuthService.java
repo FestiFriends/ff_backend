@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import site.festifriends.common.exception.BusinessException;
+import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.jwt.AccessTokenProvider;
 import site.festifriends.common.jwt.RefreshTokenProvider;
 import site.festifriends.common.jwt.TokenResolver;
@@ -42,13 +44,14 @@ public class AuthService {
         return new AuthInfo(accessToken, refreshToken, member.getGender() == Gender.ALL);
     }
 
-    public AuthInfo reissueAccessToken(Long memberId, HttpServletRequest request) {
+    public AuthInfo reissueAccessToken(HttpServletRequest request) {
         String refreshToken = TokenResolver.extractRefreshToken(request);
 
-        validateRefreshToken(refreshToken, memberId);
+        validateRefreshToken(refreshToken);
 
         blackListTokenService.addBlackListToken(refreshToken);
 
+        Long memberId = Long.valueOf(refreshTokenProvider.getSubject(refreshToken));
         String newAccessToken = accessTokenProvider.generateToken(memberId);
         String newRefreshToken = refreshTokenProvider.generateToken(memberId);
 
@@ -57,18 +60,16 @@ public class AuthService {
         return new AuthInfo(newAccessToken, newRefreshToken, false);
     }
 
-    private void validateRefreshToken(String refreshToken, Long memberId) {
+    private void validateRefreshToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new IllegalArgumentException("Refresh token is missing.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "리프레시 토큰이 존재하지 않습니다..");
         }
         if (!refreshTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("Invalid refresh token.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
         }
-        if (!refreshTokenProvider.getSubject(refreshToken).equals(memberId.toString())) {
-            throw new IllegalArgumentException("Refresh token does not match the user ID.");
-        }
+        
         if (blackListTokenService.isBlackListed(refreshToken)) {
-            throw new IllegalArgumentException("Refresh token is blacklisted.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "금지된 리프레시 토큰입니다.");
         }
     }
 
@@ -78,7 +79,7 @@ public class AuthService {
 
         if (!accessTokenProvider.getSubject(accessToken).equals(memberId.toString()) ||
             !refreshTokenProvider.getSubject(refreshToken).equals(memberId.toString())) {
-            throw new IllegalArgumentException("Access token or refresh token does not match the user ID.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "권한이 없습니다.");
         }
 
         blackListTokenService.addBlackListToken(accessToken);
