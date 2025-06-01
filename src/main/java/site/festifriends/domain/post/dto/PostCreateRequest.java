@@ -16,7 +16,7 @@ public class PostCreateRequest {
     @Getter
     @Setter
     public static class PostImageCreateRequest {
-        private String name;
-        private String url;
+        private String alt;
+        private String src;
     }
 }

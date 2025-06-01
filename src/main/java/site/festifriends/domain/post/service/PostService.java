@@ -115,8 +115,8 @@ public class PostService {
             List<PostImage> images = request.getImages().stream()
                 .map(image -> PostImage.builder()
                     .post(savedPost)
-                    .src(image.getUrl())
-                    .alt(image.getName())
+                    .src(image.getSrc())
+                    .alt(image.getAlt())
                     .build())
                 .collect(Collectors.toList());
 
@@ -163,8 +163,8 @@ public class PostService {
                 List<PostImage> images = request.getImages().stream()
                     .map(image -> PostImage.builder()
                         .post(post)
-                        .src(image.getUrl())
-                        .alt(image.getName())
+                        .src(image.getSrc())
+                        .alt(image.getAlt())
                         .build())
                     .collect(Collectors.toList());
 

@@ -16,7 +16,7 @@ public class PostUpdateRequest {
     @Getter
     @Setter
     public static class PostImageUpdateRequest {
-        private String name;
-        private String url;
+        private String alt;
+        private String src;
     }
 }
