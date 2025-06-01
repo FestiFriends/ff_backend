@@ -81,12 +81,13 @@ public class ApplicationController implements ApplicationApi {
 
     @Override
     @PatchMapping("/applied/{applicationId}")
-    public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> confirmApplication(
+    public ResponseEntity<ResponseWrapper<Void>> confirmApplication(
         @AuthenticationPrincipal UserDetailsImpl user,
-        @PathVariable Long applicationId
+        @PathVariable Long applicationId,
+        @RequestBody ApplicationStatusRequest request
     ) {
-        ResponseWrapper<ApplicationStatusResponse> response =
-            applicationService.confirmApplication(user.getMemberId(), applicationId);
+        ResponseWrapper<Void> response =
+            applicationService.confirmApplication(user.getMemberId(), applicationId, request);
 
         return ResponseEntity.ok(response);
     }

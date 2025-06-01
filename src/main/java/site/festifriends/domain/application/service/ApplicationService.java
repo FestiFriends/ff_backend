@@ -334,9 +334,10 @@ public class ApplicationService {
      * 모임 가입 확정
      */
     @Transactional
-    public ResponseWrapper<ApplicationStatusResponse> confirmApplication(
+    public ResponseWrapper<Void> confirmApplication(
         Long memberId,
-        Long applicationId
+        Long applicationId,
+        ApplicationStatusRequest request
     ) {
         MemberGroup application = applicationRepository.findById(applicationId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신청서를 찾을 수 없습니다."));
@@ -347,13 +348,14 @@ public class ApplicationService {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "수락된 신청서만 확정할 수 있습니다.");
         }
 
+        ApplicationStatus status = request.getStatus();
+        if (status != ApplicationStatus.CONFIRMED) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 상태 값입니다. CONFIRMED만 허용됩니다.");
+        }
+
         application.confirm();
 
-        ApplicationStatusResponse response = ApplicationStatusResponse.builder()
-            .result(true)
-            .build();
-
-        return ResponseWrapper.success("모임 가입을 확정하였습니다", response);
+        return ResponseWrapper.success("모임 가입을 확정하였습니다", null);
     }
 
     private void validateHostPermission(Long hostId, MemberGroup application) {
