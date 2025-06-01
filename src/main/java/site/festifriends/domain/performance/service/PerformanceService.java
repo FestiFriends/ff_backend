@@ -44,6 +44,9 @@ public class PerformanceService {
 
         // 각 공연별 모임 개수 조회
         Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(performanceIds);
+        
+        // 각 공연별 찜 개수 조회
+        Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(performanceIds);
 
         performances.forEach(performance -> {
             performance.getCast().size();
@@ -58,7 +61,7 @@ public class PerformanceService {
         });
 
         List<PerformanceResponse> performanceResponses = performances.stream()
-                .map(performance -> convertToResponse(performance, groupCountMap))
+                .map(performance -> convertToResponse(performance, groupCountMap, favoriteCountMap))
                 .collect(Collectors.toList());
 
         if ("group_count_desc".equals(request.getSort())) {
@@ -112,11 +115,15 @@ public class PerformanceService {
         // 해당 공연의 모임 개수 조회
         Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(
                 Collections.singletonList(performanceId));
+        
+        // 해당 공연의 찜 개수 조회
+        Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(
+                Collections.singletonList(performanceId));
 
-        return convertToResponse(performance, groupCountMap);
+        return convertToResponse(performance, groupCountMap, favoriteCountMap);
     }
 
-    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap) {
+    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap, Map<Long, Long> favoriteCountMap) {
         List<PerformanceResponse.PerformanceImage> images = performance.getImgs().stream()
                 .map(img -> PerformanceResponse.PerformanceImage.builder()
                         .id(img.getId().toString())
@@ -150,6 +157,7 @@ public class PerformanceService {
                 .images(images)
                 .time(timeStrings)
                 .groupCount(groupCountMap.getOrDefault(performance.getId(), 0L).intValue())
+                .favoriteCount(favoriteCountMap.getOrDefault(performance.getId(), 0L).intValue())
                 .build();
     }
 } 

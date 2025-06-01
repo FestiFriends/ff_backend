@@ -13,4 +13,6 @@ public interface PerformanceRepositoryCustom {
     Page<Performance> searchPerformancesWithPaging(PerformanceSearchRequest request, Pageable pageable);
     
     Map<Long, Long> findGroupCountsByPerformanceIds(List<Long> performanceIds);
+    
+    Map<Long, Long> findFavoriteCountsByPerformanceIds(List<Long> performanceIds);
 } 

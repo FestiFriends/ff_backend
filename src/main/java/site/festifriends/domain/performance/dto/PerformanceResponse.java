@@ -29,6 +29,7 @@ public class PerformanceResponse {
     private List<PerformanceImage> images; // 소개 이미지 목록
     private List<String> time;       // 공연 시간 (ISO 8601) 배열
     private Integer groupCount;      // 모임 개수 (모임개수 정렬용)
+    private Integer favoriteCount;   // 공연 찜 수
     
     @Getter
     @Builder
