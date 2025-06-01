@@ -75,17 +75,17 @@ public interface ApplicationApi {
 
     @Operation(
         summary = "모임 신청서 수락/거절",
-        description = "방장이 모임 가입 신청을 수락하거나 거절합니다.",
+        description = "방장이 모임 가입 신청을 수락하거나 거절합니다. 요청 시 status는 'ACCEPTED' 또는 'REJECTED'만 허용됩니다.",
         responses = {
             @ApiResponse(responseCode = "200", description = "모임 신청서 처리 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (상태값이 ACCEPTED 또는 REJECTED가 아님)"),
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
             @ApiResponse(responseCode = "403", description = "권한이 없는 사용자 (방장만 가능)"),
             @ApiResponse(responseCode = "404", description = "신청서를 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
         }
     )
-    ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> updateApplicationStatus(
+    ResponseEntity<ResponseWrapper<Void>> updateApplicationStatus(
         @AuthenticationPrincipal UserDetailsImpl user,
         @Parameter(description = "신청서 ID")
         @PathVariable Long applicationId,

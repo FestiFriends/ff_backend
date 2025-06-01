@@ -68,12 +68,12 @@ public class ApplicationController implements ApplicationApi {
 
     @Override
     @PatchMapping("/{applicationId}")
-    public ResponseEntity<ResponseWrapper<ApplicationStatusResponse>> updateApplicationStatus(
+    public ResponseEntity<ResponseWrapper<Void>> updateApplicationStatus(
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long applicationId,
         @RequestBody ApplicationStatusRequest request
     ) {
-        ResponseWrapper<ApplicationStatusResponse> response =
+        ResponseWrapper<Void> response =
             applicationService.updateApplicationStatus(user.getMemberId(), applicationId, request);
 
         return ResponseEntity.ok(response);

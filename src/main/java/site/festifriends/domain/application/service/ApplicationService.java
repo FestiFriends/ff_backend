@@ -300,7 +300,7 @@ public class ApplicationService {
      * 모임 신청서 수락/거절
      */
     @Transactional
-    public ResponseWrapper<ApplicationStatusResponse> updateApplicationStatus(
+    public ResponseWrapper<Void> updateApplicationStatus(
         Long hostId,
         Long applicationId,
         ApplicationStatusRequest request
@@ -314,24 +314,20 @@ public class ApplicationService {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "처리할 수 없는 신청서 상태입니다.");
         }
 
-        String status = request.getStatus();
+        ApplicationStatus status = request.getStatus();
         String message;
 
-        if ("accept".equals(status)) {
+        if (status == ApplicationStatus.ACCEPTED) {
             application.approve();
             message = "모임 가입 신청을 수락하였습니다";
-        } else if ("reject".equals(status)) {
+        } else if (status == ApplicationStatus.REJECTED) {
             application.reject();
             message = "모임 가입 신청을 거절하였습니다";
         } else {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 상태 값입니다.");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 상태 값입니다. ACCEPTED 또는 REJECTED만 허용됩니다.");
         }
 
-        ApplicationStatusResponse response = ApplicationStatusResponse.builder()
-            .result(true)
-            .build();
-
-        return ResponseWrapper.success(message, response);
+        return ResponseWrapper.success(message, null);
     }
 
     /**
