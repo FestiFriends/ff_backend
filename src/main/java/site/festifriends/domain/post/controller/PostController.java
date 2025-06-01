@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +16,9 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.post.dto.PostCreateRequest;
 import site.festifriends.domain.post.dto.PostCreateResponse;
+import site.festifriends.domain.post.dto.PostListCursorResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
+import site.festifriends.domain.post.dto.PostListResponse;
 import site.festifriends.domain.post.dto.PostPinRequest;
 import site.festifriends.domain.post.dto.PostPinResponse;
 import site.festifriends.domain.post.dto.PostResponse;
@@ -34,13 +35,22 @@ public class PostController implements PostApi {
 
     @Override
     @GetMapping("/{groupId}/posts")
-    public ResponseEntity<CursorResponseWrapper<PostResponse>> getPostsByGroupId(
+    public ResponseEntity<PostListCursorResponse> getPostsByGroupId(
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
         PostListRequest request
     ) {
-        CursorResponseWrapper<PostResponse> response = postService.getPostsByGroupId(groupId, user.getMemberId(),
+        CursorResponseWrapper<PostResponse> postResponse = postService.getPostsByGroupId(groupId, user.getMemberId(),
             request);
+
+        PostListResponse data = PostListResponse.of(groupId, postResponse.getData());
+
+        PostListCursorResponse response = PostListCursorResponse.success(
+            "게시글 목록 조회 성공.",
+            data,
+            postResponse.getCursorId(),
+            postResponse.getHasNext()
+        );
 
         return ResponseEntity.ok(response);
     }

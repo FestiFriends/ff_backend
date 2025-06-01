@@ -28,7 +28,7 @@ public class PostResponse {
 
     private int imageCount;
     private List<PostImageResponse> images;
-    private Long authorId;
+    private PostAuthorResponse author;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int commentCount;
@@ -42,21 +42,21 @@ public class PostResponse {
         boolean isMine = currentUserId != null && post.isMine(currentUserId);
 
         return PostResponse.builder()
-                .id(post.getId())
-                .groupId(post.getGroup().getId())
-                .content(post.getContent())
-                .isPinned(post.isPinned())
-                .isReported(post.isReported())
-                .isMine(isMine)
-                .imageCount(post.getImageCount())
-                .images(post.getImages().stream()
-                        .map(PostImageResponse::from)
-                        .collect(Collectors.toList()))
-                .authorId(post.getAuthor().getId())
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt())
-                .commentCount(post.getCommentCount())
-                .reactionCount(post.getReactionCount())
-                .build();
+            .id(post.getId())
+            .groupId(post.getGroup().getId())
+            .content(post.getContent())
+            .isPinned(post.isPinned())
+            .isReported(post.isReported())
+            .isMine(isMine)
+            .imageCount(post.getImageCount())
+            .images(post.getImages().stream()
+                .map(PostImageResponse::from)
+                .collect(Collectors.toList()))
+            .author(PostAuthorResponse.from(post.getAuthor()))
+            .createdAt(post.getCreatedAt())
+            .updatedAt(post.getUpdatedAt())
+            .commentCount(post.getCommentCount())
+            .reactionCount(post.getReactionCount())
+            .build();
     }
 }
