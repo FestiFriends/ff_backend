@@ -298,7 +298,7 @@ class PerformanceRepositoryTest {
                 .poster("https://example.com/poster.jpg")
                 .state(PerformanceState.UPCOMING)
                 .visit(visit)
-                .time(new ArrayList<>(List.of(startDate, endDate)))
+                .time(new ArrayList<>(List.of(startDate.toString(), endDate.toString())))
                 .build();
         return entityManager.persistAndFlush(performance);
     }

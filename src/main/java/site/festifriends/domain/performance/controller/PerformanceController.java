@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
@@ -28,8 +29,8 @@ public class PerformanceController implements PerformanceApi {
 
     @Override
     @GetMapping("/{performanceId}")
-    public ResponseEntity<PerformanceResponse> getPerformanceDetail(@PathVariable Long performanceId) {
-        PerformanceResponse response = performanceService.getPerformanceDetail(performanceId);
+    public ResponseEntity<ResponseWrapper<PerformanceResponse>> getPerformanceDetail(@PathVariable Long performanceId) {
+        ResponseWrapper<PerformanceResponse> response = performanceService.getPerformanceDetail(performanceId);
         return ResponseEntity.ok(response);
     }
 } 
