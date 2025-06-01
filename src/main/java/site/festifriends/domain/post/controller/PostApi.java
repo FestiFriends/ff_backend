@@ -16,7 +16,6 @@ import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListCursorResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
 import site.festifriends.domain.post.dto.PostPinRequest;
-import site.festifriends.domain.post.dto.PostPinResponse;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
 
@@ -138,8 +137,8 @@ public interface PostApi {
             - isPinned: 고정 여부 (true: 고정, false: 해제)
             
             **응답:**
-            - result: 성공 여부
-            - isPinned: 변경된 고정 상태
+            - 고정 시: "게시글이 고정되었습니다."
+            - 해제 시: "게시글 고정이 해제되었습니다."
             
             **참고:**
             - 게시글을 고정(isPinned=true)하면 같은 모임 내 기존 고정글은 자동으로 고정 해제됩니다.
@@ -153,7 +152,7 @@ public interface PostApi {
             @ApiResponse(responseCode = "500", description = "서버 오류로 인해 게시글 고정/해제에 실패했습니다.")
         }
     )
-    ResponseEntity<ResponseWrapper<PostPinResponse>> pinPost(
+    ResponseEntity<ResponseWrapper<Void>> pinPost(
         @AuthenticationPrincipal UserDetailsImpl user,
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Parameter(description = "게시글 ID") @PathVariable Long postId,

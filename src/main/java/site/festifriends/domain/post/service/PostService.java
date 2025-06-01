@@ -17,7 +17,6 @@ import site.festifriends.domain.post.dto.PostCreateRequest;
 import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
 import site.festifriends.domain.post.dto.PostPinRequest;
-import site.festifriends.domain.post.dto.PostPinResponse;
 import site.festifriends.domain.post.dto.PostResponse;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
@@ -204,7 +203,7 @@ public class PostService {
      * 모임 내 게시글 고정/해제
      */
     @Transactional
-    public PostPinResponse pinPost(Long groupId, Long postId, Long memberId, PostPinRequest request) {
+    public void pinPost(Long groupId, Long postId, Long memberId, PostPinRequest request) {
         Group group = groupRepository.findById(groupId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
 
@@ -228,7 +227,5 @@ public class PostService {
             postRepository.unpinAllPostsInGroup(groupId);
         }
         post.setPinned(isPinned);
-
-        return PostPinResponse.success(isPinned);
     }
 }

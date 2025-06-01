@@ -20,7 +20,6 @@ import site.festifriends.domain.post.dto.PostListCursorResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
 import site.festifriends.domain.post.dto.PostListResponse;
 import site.festifriends.domain.post.dto.PostPinRequest;
-import site.festifriends.domain.post.dto.PostPinResponse;
 import site.festifriends.domain.post.dto.PostResponse;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
@@ -94,18 +93,18 @@ public class PostController implements PostApi {
 
     @Override
     @PatchMapping("/{groupId}/posts/{postId}/pinned")
-    public ResponseEntity<ResponseWrapper<PostPinResponse>> pinPost(
+    public ResponseEntity<ResponseWrapper<Void>> pinPost(
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
         @PathVariable Long postId,
         @RequestBody PostPinRequest request
     ) {
-        PostPinResponse response = postService.pinPost(groupId, postId, user.getMemberId(), request);
+        postService.pinPost(groupId, postId, user.getMemberId(), request);
 
         String message = Boolean.TRUE.equals(request.getIsPinned())
-            ? "게시글이 성공적으로 고정되었습니다."
+            ? "게시글이 고정되었습니다."
             : "게시글 고정이 해제되었습니다.";
 
-        return ResponseEntity.ok(ResponseWrapper.success(message, response));
+        return ResponseEntity.ok(ResponseWrapper.success(message));
     }
 }
