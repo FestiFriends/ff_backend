@@ -124,7 +124,7 @@ class MemberServiceTest {
             "UPCOMING",
             "국내",
             List.of(new LikedPerformanceImageDto("1", "https://example.com/img1.jpg", "이미지1")),
-            List.of(LocalDateTime.of(2023, 10, 1, 18, 0)),
+            List.of("화요일 ~ 금요일(20:00)"),
             100L // bookmarkId
         );
 
@@ -147,7 +147,7 @@ class MemberServiceTest {
             "UPCOMING",
             "국내",
             List.of(new LikedPerformanceImageDto("2", "https://example.com/img2.jpg", "이미지2")),
-            List.of(LocalDateTime.of(2023, 11, 1, 18, 0)),
+            List.of("토요일(16:00,19:00)"),
             101L // bookmarkId
         );
 

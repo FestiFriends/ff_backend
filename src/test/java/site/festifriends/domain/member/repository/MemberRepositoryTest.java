@@ -216,9 +216,9 @@ public class MemberRepositoryTest {
             .state(PerformanceState.UPCOMING)
             .visit("국내")
             .time(List.of(
-                LocalDateTime.of(2025, 5, 30, 18, 0),
-                LocalDateTime.of(2025, 5, 31, 19, 0),
-                LocalDateTime.of(2025, 6, 1, 20, 0)
+                "화요일 ~ 금요일(20:00)",
+                "토요일(16:00,19:00)",
+                "일요일(15:00,18:00)"
             ))
             .build());
 
@@ -267,9 +267,9 @@ public class MemberRepositoryTest {
         assertThat(dto.getImages().get(0).getSrc()).isEqualTo("https://example.com/img1.jpg");
         assertThat(dto.getImages().get(1).getSrc()).isEqualTo("https://example.com/img2.jpg");
         assertThat(dto.getTime()).containsExactly(
-            LocalDateTime.of(2025, 5, 30, 18, 0),
-            LocalDateTime.of(2025, 5, 31, 19, 0),
-            LocalDateTime.of(2025, 6, 1, 20, 0)
+            "화요일 ~ 금요일(20:00)",
+            "토요일(16:00,19:00)",
+            "일요일(15:00,18:00)"
         );
         assertThat(dto.getBookmarkId()).isNotNull();
 
