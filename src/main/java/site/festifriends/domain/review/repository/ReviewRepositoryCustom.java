@@ -1,5 +1,6 @@
 package site.festifriends.domain.review.repository;
 
+import site.festifriends.entity.Member;
 import site.festifriends.entity.Review;
 
 import java.util.List;
@@ -25,4 +26,14 @@ public interface ReviewRepositoryCustom {
      * 특정 사용자가 특정 모임에 참여했는지 확인
      */
     boolean isUserParticipantInGroup(Long userId, Long groupId);
+
+    /**
+     * 사용자가 참여한 모임 중 리뷰를 작성하지 않은 대상자들이 있는 모임 조회
+     */
+    List<Object[]> findWritableReviewGroups(Long userId, Long cursorId, int size);
+
+    /**
+     * 특정 모임에서 사용자가 리뷰를 작성하지 않은 대상자들 조회
+     */
+    List<Member> findUnreviewedMembersInGroup(Long userId, Long groupId);
 }

@@ -18,6 +18,8 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.review.dto.CreateReviewRequest;
 import site.festifriends.domain.review.dto.UserReviewResponse;
+import site.festifriends.domain.review.dto.WritableReviewRequest;
+import site.festifriends.domain.review.dto.WritableReviewResponse;
 import site.festifriends.domain.review.dto.WrittenReviewRequest;
 import site.festifriends.domain.review.dto.WrittenReviewResponse;
 import site.festifriends.domain.review.service.ReviewService;
@@ -55,8 +57,8 @@ public class ReviewController implements ReviewApi {
     @Override
     @PostMapping
     public ResponseEntity<ResponseWrapper<Void>> createReview(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestBody @Valid CreateReviewRequest request
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        @RequestBody @Valid CreateReviewRequest request
     ) {
         Long reviewerId = userDetails.getMemberId();
         reviewService.createReview(reviewerId, request);
@@ -64,5 +66,17 @@ public class ReviewController implements ReviewApi {
         return ResponseEntity.ok(
             ResponseWrapper.success("리뷰 작성이 완료되었습니다.")
         );
+    }
+
+    @Override
+    @GetMapping("/writable")
+    public ResponseEntity<CursorResponseWrapper<WritableReviewResponse>> getWritableReviews(
+        @AuthenticationPrincipal UserDetailsImpl userDetails,
+        WritableReviewRequest request
+    ) {
+        Long userId = userDetails.getMemberId();
+        CursorResponseWrapper<WritableReviewResponse> response = reviewService.getWritableReviews(userId, request);
+
+        return ResponseEntity.ok(response);
     }
 }
