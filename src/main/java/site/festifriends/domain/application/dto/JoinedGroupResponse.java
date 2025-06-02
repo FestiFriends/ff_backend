@@ -1,16 +1,16 @@
 package site.festifriends.domain.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.GroupCategory;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Getter
 @Builder
 public class JoinedGroupResponse {
+
     private String id;
     private Performance performance;
     private String title;
@@ -27,9 +27,13 @@ public class JoinedGroupResponse {
     private List<String> hashtag;
     private Host host;
 
+    @JsonProperty("isHost")
+    private Boolean isHost;
+
     @Getter
     @Builder
     public static class Performance {
+
         private String id;
         private String title;
         private String poster;
@@ -38,6 +42,7 @@ public class JoinedGroupResponse {
     @Getter
     @Builder
     public static class Host {
+
         private String id;
         private String name;
         private Double rating;
