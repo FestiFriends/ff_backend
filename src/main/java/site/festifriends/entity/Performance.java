@@ -127,7 +127,7 @@ public class Performance extends SoftDeleteEntity {
     @OrderColumn(name = "order_index")
     @Column(name = "time")
     @Comment("공연 시간")
-    private List<LocalDateTime> time = new ArrayList<>();
+    private List<String> time = new ArrayList<>();
 
     @OneToMany(mappedBy = "performance", cascade = CascadeType.ALL, orphanRemoval = true)
     @Comment("소개 이미지 목록")
@@ -138,7 +138,7 @@ public class Performance extends SoftDeleteEntity {
         List<String> cast, List<String> crew, String runtime, String age,
         List<String> productionCompany, List<String> agency, List<String> host,
         List<String> organizer, List<String> price, String poster,
-        PerformanceState state, String visit, List<LocalDateTime> time) {
+        PerformanceState state, String visit, List<String> time) {
         this.title = title;
         this.startDate = startDate;
         this.endDate = endDate;

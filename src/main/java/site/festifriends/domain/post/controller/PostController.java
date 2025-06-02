@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +16,10 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.post.dto.PostCreateRequest;
 import site.festifriends.domain.post.dto.PostCreateResponse;
+import site.festifriends.domain.post.dto.PostListCursorResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
+import site.festifriends.domain.post.dto.PostListResponse;
+import site.festifriends.domain.post.dto.PostPinRequest;
 import site.festifriends.domain.post.dto.PostResponse;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
@@ -32,12 +34,22 @@ public class PostController implements PostApi {
 
     @Override
     @GetMapping("/{groupId}/posts")
-    public ResponseEntity<CursorResponseWrapper<PostResponse>> getPostsByGroupId(
+    public ResponseEntity<PostListCursorResponse> getPostsByGroupId(
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
         PostListRequest request
     ) {
-        CursorResponseWrapper<PostResponse> response = postService.getPostsByGroupId(groupId, user.getMemberId(), request);
+        CursorResponseWrapper<PostResponse> postResponse = postService.getPostsByGroupId(groupId, user.getMemberId(),
+            request);
+
+        PostListResponse data = PostListResponse.of(groupId, postResponse.getData());
+
+        PostListCursorResponse response = PostListCursorResponse.success(
+            "게시글 목록 조회 성공.",
+            data,
+            postResponse.getCursorId(),
+            postResponse.getHasNext()
+        );
 
         return ResponseEntity.ok(response);
     }
@@ -77,5 +89,22 @@ public class PostController implements PostApi {
         PostUpdateDeleteResponse response = postService.deletePost(groupId, postId, user.getMemberId());
 
         return ResponseEntity.ok(ResponseWrapper.success("게시글이 성공적으로 삭제되었습니다.", response));
+    }
+
+    @Override
+    @PatchMapping("/{groupId}/posts/{postId}/pinned")
+    public ResponseEntity<ResponseWrapper<Void>> pinPost(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @PathVariable Long groupId,
+        @PathVariable Long postId,
+        @RequestBody PostPinRequest request
+    ) {
+        postService.pinPost(groupId, postId, user.getMemberId(), request);
+
+        String message = Boolean.TRUE.equals(request.getIsPinned())
+            ? "게시글이 고정되었습니다."
+            : "게시글 고정이 해제되었습니다.";
+
+        return ResponseEntity.ok(ResponseWrapper.success(message));
     }
 }

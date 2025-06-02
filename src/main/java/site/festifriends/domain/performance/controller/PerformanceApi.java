@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
@@ -45,7 +46,7 @@ public interface PerformanceApi {
             description = "공연 ID로 공연 상세 정보를 조회합니다."
     )
     @GetMapping("/{performanceId}")
-    ResponseEntity<PerformanceResponse> getPerformanceDetail(
+    ResponseEntity<ResponseWrapper<PerformanceResponse>> getPerformanceDetail(
             @Parameter(description = "공연 ID") @PathVariable Long performanceId
     );
 }

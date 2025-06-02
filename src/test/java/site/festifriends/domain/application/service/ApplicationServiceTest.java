@@ -18,8 +18,8 @@ import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
-import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
@@ -33,6 +33,9 @@ class ApplicationServiceTest {
 
     @Mock
     private ApplicationRepository applicationRepository;
+
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @InjectMocks
     private ApplicationService applicationService;
@@ -81,19 +84,19 @@ class ApplicationServiceTest {
     void updateApplicationStatus_Accept_Success() {
         // given
         ApplicationStatusRequest request = new ApplicationStatusRequest();
-        request.setStatus("accept");
+        request.setStatus(ApplicationStatus.ACCEPTED);
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
                 .willReturn(true);
 
         // when
-        ResponseWrapper<ApplicationStatusResponse> response = 
+        ResponseWrapper<Void> response = 
                 applicationService.updateApplicationStatus(1L, 1L, request);
 
         // then
         assertThat(response.getMessage()).isEqualTo("모임 가입 신청을 수락하였습니다");
-        assertThat(response.getData().getResult()).isTrue();
+        assertThat(response.getData()).isNull();
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.ACCEPTED);
     }
 
@@ -102,19 +105,19 @@ class ApplicationServiceTest {
     void updateApplicationStatus_Reject_Success() {
         // given
         ApplicationStatusRequest request = new ApplicationStatusRequest();
-        request.setStatus("reject");
+        request.setStatus(ApplicationStatus.REJECTED);
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
                 .willReturn(true);
 
         // when
-        ResponseWrapper<ApplicationStatusResponse> response = 
+        ResponseWrapper<Void> response = 
                 applicationService.updateApplicationStatus(1L, 1L, request);
 
         // then
         assertThat(response.getMessage()).isEqualTo("모임 가입 신청을 거절하였습니다");
-        assertThat(response.getData().getResult()).isTrue();
+        assertThat(response.getData()).isNull();
         assertThat(application.getStatus()).isEqualTo(ApplicationStatus.REJECTED);
     }
 
@@ -123,7 +126,7 @@ class ApplicationServiceTest {
     void updateApplicationStatus_ApplicationNotFound() {
         // given
         ApplicationStatusRequest request = new ApplicationStatusRequest();
-        request.setStatus("accept");
+        request.setStatus(ApplicationStatus.ACCEPTED);
 
         given(applicationRepository.findById(999L)).willReturn(Optional.empty());
 
@@ -139,7 +142,7 @@ class ApplicationServiceTest {
     void updateApplicationStatus_NotHost() {
         // given
         ApplicationStatusRequest request = new ApplicationStatusRequest();
-        request.setStatus("accept");
+        request.setStatus(ApplicationStatus.ACCEPTED);
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 2L, Role.HOST))
@@ -165,7 +168,7 @@ class ApplicationServiceTest {
                 .build();
 
         ApplicationStatusRequest request = new ApplicationStatusRequest();
-        request.setStatus("accept");
+        request.setStatus(ApplicationStatus.ACCEPTED);
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
@@ -179,11 +182,11 @@ class ApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("잘못된 상태 값으로 요청하면 예외가 발생한다")
+    @DisplayName("PENDING 상태가 아닌 값으로 요청하면 예외가 발생한다")
     void updateApplicationStatus_InvalidStatus() {
         // given
         ApplicationStatusRequest request = new ApplicationStatusRequest();
-        request.setStatus("invalid");
+        request.setStatus(ApplicationStatus.PENDING); // ACCEPTED나 REJECTED가 아닌 값
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
@@ -195,4 +198,4 @@ class ApplicationServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.BAD_REQUEST);
     }
-} 
+}

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
@@ -44,6 +45,9 @@ public class PerformanceService {
 
         // 각 공연별 모임 개수 조회
         Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(performanceIds);
+        
+        // 각 공연별 찜 개수 조회
+        Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(performanceIds);
 
         performances.forEach(performance -> {
             performance.getCast().size();
@@ -58,7 +62,7 @@ public class PerformanceService {
         });
 
         List<PerformanceResponse> performanceResponses = performances.stream()
-                .map(performance -> convertToResponse(performance, groupCountMap))
+                .map(performance -> convertToResponse(performance, groupCountMap, favoriteCountMap))
                 .collect(Collectors.toList());
 
         if ("group_count_desc".equals(request.getSort())) {
@@ -95,7 +99,7 @@ public class PerformanceService {
     /**
      * 공연 상세 정보 조회
      */
-    public PerformanceResponse getPerformanceDetail(Long performanceId) {
+    public ResponseWrapper<PerformanceResponse> getPerformanceDetail(Long performanceId) {
         Performance performance = performanceRepository.findById(performanceId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공연을 찾을 수 없습니다."));
 
@@ -112,21 +116,23 @@ public class PerformanceService {
         // 해당 공연의 모임 개수 조회
         Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(
                 Collections.singletonList(performanceId));
+        
+        // 해당 공연의 찜 개수 조회
+        Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(
+                Collections.singletonList(performanceId));
 
-        return convertToResponse(performance, groupCountMap);
+        PerformanceResponse response = convertToResponse(performance, groupCountMap, favoriteCountMap);
+        
+        return ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", response);
     }
 
-    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap) {
+    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap, Map<Long, Long> favoriteCountMap) {
         List<PerformanceResponse.PerformanceImage> images = performance.getImgs().stream()
                 .map(img -> PerformanceResponse.PerformanceImage.builder()
                         .id(img.getId().toString())
                         .src(img.getSrc())
                         .alt(img.getAlt())
                         .build())
-                .collect(Collectors.toList());
-
-        List<String> timeStrings = performance.getTime().stream()
-                .map(time -> time.format(ISO_FORMATTER))
                 .collect(Collectors.toList());
 
         return PerformanceResponse.builder()
@@ -148,8 +154,9 @@ public class PerformanceService {
                 .state(performance.getState().getDescription())
                 .visit(performance.getVisit())
                 .images(images)
-                .time(timeStrings)
+                .time(performance.getTime())
                 .groupCount(groupCountMap.getOrDefault(performance.getId(), 0L).intValue())
+                .favoriteCount(favoriteCountMap.getOrDefault(performance.getId(), 0L).intValue())
                 .build();
     }
 } 
