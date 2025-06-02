@@ -15,10 +15,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.entity.Performance;
+import site.festifriends.entity.QBookmark;
 import site.festifriends.entity.QGroup;
 import site.festifriends.entity.QPerformance;
-import site.festifriends.entity.QPerformanceBookmark;
 import site.festifriends.entity.QPerformanceImage;
+import site.festifriends.entity.enums.BookmarkType;
 
 @Repository
 @RequiredArgsConstructor
@@ -107,23 +108,26 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
 
     @Override
     public Map<Long, Long> findFavoriteCountsByPerformanceIds(List<Long> performanceIds) {
-        QPerformanceBookmark pb = QPerformanceBookmark.performanceBookmark;
+        QBookmark b = QBookmark.bookmark;
 
         List<Object[]> results = queryFactory
-                .select(pb.performance.id, pb.count())
-                .from(pb)
-                .where(pb.performance.id.in(performanceIds))
-                .groupBy(pb.performance.id)
-                .fetch()
-                .stream()
-                .map(tuple -> new Object[]{tuple.get(pb.performance.id), tuple.get(pb.count())})
-                .collect(Collectors.toList());
+            .select(b.targetId, b.count())
+            .from(b)
+            .where(
+                b.type.eq(BookmarkType.PERFORMANCE),
+                b.targetId.in(performanceIds)
+            )
+            .groupBy(b.targetId)
+            .fetch()
+            .stream()
+            .map(tuple -> new Object[]{tuple.get(b.targetId), tuple.get(b.count())})
+            .collect(Collectors.toList());
 
         return results.stream()
-                .collect(Collectors.toMap(
-                        result -> (Long) result[0],
-                        result -> (Long) result[1]
-                ));
+            .collect(Collectors.toMap(
+                result -> (Long) result[0],
+                result -> (Long) result[1]
+            ));
     }
 
     private BooleanExpression titleContains(String title) {
