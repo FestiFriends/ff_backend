@@ -27,6 +27,6 @@ public class LikedPerformanceResponse {
     private String state;
     private String visit;
     private List<LikedPerformanceImageDto> images;
-    private List<LocalDateTime> time;
+    private List<String> time;
     private Integer groupCount;
 }

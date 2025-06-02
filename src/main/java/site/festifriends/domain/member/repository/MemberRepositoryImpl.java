@@ -4,10 +4,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -108,7 +106,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
             GROUP_CONCAT(DISTINCT pr.price ORDER BY pr.order_index) AS price,
             p.poster_url, p.state, p.visit,
             GROUP_CONCAT(DISTINCT CONCAT(pi.performance_image_id, '|', pi.src, '|', IFNULL(pi.alt, ''))) AS images,
-            GROUP_CONCAT(DISTINCT pt.time ORDER BY pt.order_index) AS time,
+            GROUP_CONCAT(DISTINCT pt.time ORDER BY pt.order_index SEPARATOR '|') AS time,
             b.bookmark_id
             FROM bookmark b
             JOIN performance p ON b.target_id = p.performance_id
@@ -145,21 +143,21 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 LocalDateTime endDate = toLocalDateTime(row[3]);
                 String location = (String) row[4];
 
-                List<String> cast = splitToList((String) row[5]);
-                List<String> crew = splitToList((String) row[6]);
+                List<String> cast = splitToList((String) row[5], ",");
+                List<String> crew = splitToList((String) row[6], ",");
                 String runtime = (String) row[7];
                 String age = (String) row[8];
-                List<String> productionCompany = splitToList((String) row[9]);
-                List<String> agency = splitToList((String) row[10]);
-                List<String> host = splitToList((String) row[11]);
-                List<String> organizer = splitToList((String) row[12]);
-                List<String> price = splitToList((String) row[13]);
+                List<String> productionCompany = splitToList((String) row[9], ",");
+                List<String> agency = splitToList((String) row[10], ",");
+                List<String> host = splitToList((String) row[11], ",");
+                List<String> organizer = splitToList((String) row[12], ",");
+                List<String> price = splitToList((String) row[13], ",");
                 String poster = (String) row[14];
                 String state = String.valueOf(row[15]);
                 String visit = (String) row[16];
 
                 List<LikedPerformanceImageDto> images = parseImages((String) row[17]);
-                List<LocalDateTime> time = splitToLocalDateTimeList((String) row[18]);
+                List<String> time = splitToList((String) row[18], "\\|");
 
                 Long bookmarkId = row[19] == null ? null : ((Number) row[19]).longValue();
 
@@ -176,21 +174,11 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         return new SliceImpl<>(dtos, pageable, hasNext);
     }
 
-    private List<String> splitToList(String value) {
+    private List<String> splitToList(String value, String delimiter) {
         if (value == null || value.isEmpty()) {
             return new ArrayList<>();
         }
-        return Arrays.asList(value.split(","));
-    }
-
-    private List<LocalDateTime> splitToLocalDateTimeList(String value) {
-        if (value == null || value.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(value.split(","))
-            .map(String::trim)
-            .map(v -> LocalDateTime.parse(v, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-            .collect(Collectors.toList());
+        return Arrays.asList(value.split(delimiter));
     }
 
     private List<LikedPerformanceImageDto> parseImages(String value) {
