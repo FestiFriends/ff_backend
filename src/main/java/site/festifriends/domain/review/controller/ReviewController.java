@@ -8,11 +8,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.review.dto.CreateReviewRequest;
 import site.festifriends.domain.review.dto.UserReviewResponse;
 import site.festifriends.domain.review.dto.WrittenReviewRequest;
 import site.festifriends.domain.review.dto.WrittenReviewResponse;
@@ -46,5 +50,19 @@ public class ReviewController implements ReviewApi {
         CursorResponseWrapper<WrittenReviewResponse> response = reviewService.getWrittenReviews(userId, request);
 
         return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @PostMapping
+    public ResponseEntity<ResponseWrapper<Void>> createReview(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody @Valid CreateReviewRequest request
+    ) {
+        Long reviewerId = userDetails.getMemberId();
+        reviewService.createReview(reviewerId, request);
+
+        return ResponseEntity.ok(
+            ResponseWrapper.success("리뷰 작성이 완료되었습니다.")
+        );
     }
 }

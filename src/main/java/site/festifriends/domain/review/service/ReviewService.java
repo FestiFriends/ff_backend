@@ -3,7 +3,12 @@ package site.festifriends.domain.review.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.festifriends.common.exception.BusinessException;
+import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
+import site.festifriends.domain.group.repository.GroupRepository;
+import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.review.dto.CreateReviewRequest;
 import site.festifriends.domain.review.dto.UserReviewResponse;
 import site.festifriends.domain.review.dto.WrittenReviewRequest;
 import site.festifriends.domain.review.dto.WrittenReviewResponse;
@@ -14,6 +19,7 @@ import site.festifriends.entity.Performance;
 import site.festifriends.entity.Review;
 import site.festifriends.entity.enums.ReviewTag;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +31,8 @@ import java.util.stream.Collectors;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final GroupRepository groupRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * 사용자가 받은 리뷰 목록 조회
@@ -71,6 +79,64 @@ public class ReviewService {
         }
 
         return responses;
+    }
+
+    /**
+     * 리뷰 작성
+     */
+    @Transactional
+    public void createReview(Long reviewerId, CreateReviewRequest request) {
+        // 1. 기본 유효성 검증
+        Long groupId = Long.parseLong(request.getGroupId());
+        Long targetUserId = Long.parseLong(request.getTargetUserId());
+
+        // 자기 자신에게 리뷰 작성 방지
+        if (reviewerId.equals(targetUserId)) {
+            throw new BusinessException(ErrorCode.CANNOT_REVIEW_SELF);
+        }
+
+        // 2. 모임 존재 여부 확인
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.GROUP_NOT_FOUND));
+
+        // 3. 리뷰 대상 사용자 존재 여부 확인
+        Member targetUser = memberRepository.findById(targetUserId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TARGET_USER_NOT_FOUND));
+
+        Member reviewer = memberRepository.findById(reviewerId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        // 4. 현재 로그인한 사용자가 모임에 참여했는지 확인
+        if (!reviewRepository.isUserParticipantInGroup(reviewerId, groupId)) {
+            throw new BusinessException(ErrorCode.NOT_GROUP_PARTICIPANT);
+        }
+
+        // 5. 리뷰 대상자도 모임에 참여했는지 확인
+        if (!reviewRepository.isUserParticipantInGroup(targetUserId, groupId)) {
+            throw new BusinessException(ErrorCode.NOT_GROUP_PARTICIPANT);
+        }
+
+        // 6. 모임이 종료되었는지 확인
+        if (group.getEndDate().isAfter(LocalDateTime.now())) {
+            throw new BusinessException(ErrorCode.GROUP_NOT_ENDED);
+        }
+
+        // 7. 이미 해당 대상자에게 리뷰를 작성했는지 확인
+        if (reviewRepository.existsByReviewerIdAndRevieweeIdAndGroupId(reviewerId, targetUserId, groupId)) {
+            throw new BusinessException(ErrorCode.REVIEW_ALREADY_EXISTS);
+        }
+
+        // 8. 리뷰 저장
+        Review review = Review.builder()
+            .reviewer(reviewer)
+            .reviewee(targetUser)
+            .group(group)
+            .content(request.getContent())
+            .score(request.getRating())
+            .tags(request.getDefaultTag())
+            .build();
+
+        reviewRepository.save(review);
     }
 
     /**

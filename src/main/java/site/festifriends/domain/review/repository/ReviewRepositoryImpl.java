@@ -54,4 +54,37 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
         return query.getResultList();
     }
+
+    @Override
+    public boolean existsByReviewerIdAndRevieweeIdAndGroupId(Long reviewerId, Long revieweeId, Long groupId) {
+        String jpql = """
+            SELECT COUNT(r) > 0 FROM Review r
+            WHERE r.reviewer.id = :reviewerId
+            AND r.reviewee.id = :revieweeId
+            AND r.group.id = :groupId
+            AND r.deleted IS NULL
+            """;
+
+        return entityManager.createQuery(jpql, Boolean.class)
+            .setParameter("reviewerId", reviewerId)
+            .setParameter("revieweeId", revieweeId)
+            .setParameter("groupId", groupId)
+            .getSingleResult();
+    }
+
+    @Override
+    public boolean isUserParticipantInGroup(Long userId, Long groupId) {
+        String jpql = """
+            SELECT COUNT(mg) > 0 FROM MemberGroup mg
+            WHERE mg.member.id = :userId
+            AND mg.group.id = :groupId
+            AND mg.status IN ('ACCEPTED', 'CONFIRMED')
+            AND mg.deleted IS NULL
+            """;
+
+        return entityManager.createQuery(jpql, Boolean.class)
+            .setParameter("userId", userId)
+            .setParameter("groupId", groupId)
+            .getSingleResult();
+    }
 }

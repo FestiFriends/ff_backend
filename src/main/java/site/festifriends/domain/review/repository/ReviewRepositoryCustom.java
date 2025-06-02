@@ -15,4 +15,14 @@ public interface ReviewRepositoryCustom {
      * 특정 사용자가 작성한 리뷰들을 커서 기반 페이지네이션으로 조회
      */
     List<Review> findWrittenReviewsByReviewerId(Long reviewerId, Long cursorId, int size);
+
+    /**
+     * 특정 사용자가 특정 모임에서 특정 대상자에게 이미 리뷰를 작성했는지 확인
+     */
+    boolean existsByReviewerIdAndRevieweeIdAndGroupId(Long reviewerId, Long revieweeId, Long groupId);
+
+    /**
+     * 특정 사용자가 특정 모임에 참여했는지 확인
+     */
+    boolean isUserParticipantInGroup(Long userId, Long groupId);
 }

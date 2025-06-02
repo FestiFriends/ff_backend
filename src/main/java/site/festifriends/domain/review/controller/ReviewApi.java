@@ -4,10 +4,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.review.dto.CreateReviewRequest;
 import site.festifriends.domain.review.dto.UserReviewResponse;
 import site.festifriends.domain.review.dto.WrittenReviewRequest;
 import site.festifriends.domain.review.dto.WrittenReviewResponse;
@@ -41,5 +44,21 @@ public interface ReviewApi {
     ResponseEntity<CursorResponseWrapper<WrittenReviewResponse>> getWrittenReviews(
             UserDetailsImpl userDetails,
             WrittenReviewRequest request
+    );
+
+    @Operation(
+            summary = "리뷰 작성",
+            description = "모임에 참여한 사용자에 대한 리뷰를 작성합니다. 모임 종료 후에만 작성 가능합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "리뷰 작성이 완료되었습니다."),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+                    @ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+                    @ApiResponse(responseCode = "403", description = "권한이 없습니다."),
+                    @ApiResponse(responseCode = "404", description = "모임 또는 사용자를 찾을 수 없습니다.")
+            }
+    )
+    ResponseEntity<ResponseWrapper<Void>> createReview(
+            UserDetailsImpl userDetails,
+            @RequestBody @Valid CreateReviewRequest request
     );
 }
