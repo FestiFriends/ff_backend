@@ -5,8 +5,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
+import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.review.dto.UserReviewResponse;
+import site.festifriends.domain.review.dto.WrittenReviewRequest;
+import site.festifriends.domain.review.dto.WrittenReviewResponse;
 
 import java.util.List;
 
@@ -24,5 +28,18 @@ public interface ReviewApi {
     ResponseEntity<ResponseWrapper<List<UserReviewResponse>>> getUserReviews(
             @Parameter(description = "조회할 사용자 ID", required = true)
             Long userId
+    );
+
+    @Operation(
+            summary = "내가 작성한 리뷰 조회",
+            description = "본인이 작성한 리뷰 목록을 커서 기반 페이지네이션으로 조회합니다. 본인만 조회할 수 있습니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "내가 작성한 리뷰 조회 성공"),
+                    @ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
+            }
+    )
+    ResponseEntity<CursorResponseWrapper<WrittenReviewResponse>> getWrittenReviews(
+            UserDetailsImpl userDetails,
+            WrittenReviewRequest request
     );
 }
