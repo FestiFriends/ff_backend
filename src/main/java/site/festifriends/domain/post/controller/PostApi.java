@@ -47,7 +47,7 @@ public interface PostApi {
     ResponseEntity<PostListCursorResponse> getPostsByGroupId(
         @AuthenticationPrincipal UserDetailsImpl user,
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
-        @Parameter(description = "요청 파라미터 (cursorId, size)") @ModelAttribute PostListRequest request);
+        @Parameter(description = "요청 파라미터 (cursorId, size)") PostListRequest request);
 
     @Operation(
         summary = "모임 내 게시글 등록",

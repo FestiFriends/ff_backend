@@ -227,6 +227,9 @@ public class ApplicationService {
                 Group group = app.getGroup();
                 MemberGroup hostInfo = hostInfoMap.get(group.getId());
 
+                // 현재 사용자가 이 모임의 호스트인지 확인
+                boolean isHost = app.getRole() == Role.HOST;
+
                 // 연령대에서 시작/끝 나이 계산
                 int[] ageRange = new int[]{group.getStartAge(), group.getEndAge()};
 
@@ -255,6 +258,7 @@ public class ApplicationService {
                         .rating(hostRatingMap.getOrDefault(
                             hostInfo != null ? hostInfo.getMember().getId() : null, 0.0))
                         .build())
+                    .isHost(isHost)
                     .build();
             })
             .collect(Collectors.toList());

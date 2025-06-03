@@ -8,7 +8,7 @@ import site.festifriends.entity.Review;
 import java.util.Map;
 import java.util.List;
 
-public interface ReviewRepository extends JpaRepository<Review, Long> {
+public interface ReviewRepository extends JpaRepository<Review, Long>, ReviewRepositoryCustom {
 
     @Query("""
         SELECT r.reviewee.id AS memberId, AVG(r.score) AS avgRating

@@ -1,0 +1,39 @@
+package site.festifriends.domain.review.repository;
+
+import site.festifriends.entity.Member;
+import site.festifriends.entity.Review;
+
+import java.util.List;
+
+public interface ReviewRepositoryCustom {
+
+    /**
+     * 특정 사용자가 받은 리뷰들을 그룹별로 조회
+     */
+    List<Review> findUserReviewsByRevieweeId(Long revieweeId);
+
+    /**
+     * 특정 사용자가 작성한 리뷰들을 커서 기반 페이지네이션으로 조회
+     */
+    List<Review> findWrittenReviewsByReviewerId(Long reviewerId, Long cursorId, int size);
+
+    /**
+     * 특정 사용자가 특정 모임에서 특정 대상자에게 이미 리뷰를 작성했는지 확인
+     */
+    boolean existsByReviewerIdAndRevieweeIdAndGroupId(Long reviewerId, Long revieweeId, Long groupId);
+
+    /**
+     * 특정 사용자가 특정 모임에 참여했는지 확인
+     */
+    boolean isUserParticipantInGroup(Long userId, Long groupId);
+
+    /**
+     * 사용자가 참여한 모임 중 리뷰를 작성하지 않은 대상자들이 있는 모임 조회
+     */
+    List<Object[]> findWritableReviewGroups(Long userId, Long cursorId, int size);
+
+    /**
+     * 특정 모임에서 사용자가 리뷰를 작성하지 않은 대상자들 조회
+     */
+    List<Member> findUnreviewedMembersInGroup(Long userId, Long groupId);
+}
