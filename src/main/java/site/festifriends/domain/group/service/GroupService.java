@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupResponse;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
 import site.festifriends.domain.group.repository.GroupBookmarkRepository;
@@ -108,6 +109,75 @@ public class GroupService {
             .totalPages(groupPage.getTotalPages())
             .first(groupPage.isFirst())
             .last(groupPage.isLast())
+            .build();
+    }
+
+    /**
+     * 모임 기본 정보 조회
+     */
+    public GroupDetailResponse getGroupDetail(Long groupId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 해시태그 로딩
+        group.getHashTags().size();
+
+        // 공연 정보 로딩
+        Performance performance = group.getPerformance();
+
+        // 방장 정보 조회
+        MemberGroup hostMemberGroup = applicationRepository.findHostsByGroupIds(
+                Collections.singletonList(groupId))
+            .get(groupId);
+
+        // 현재 멤버 수 조회
+        Map<Long, Long> memberCountMap = applicationRepository.findConfirmedMemberCountsByGroupIds(
+            Collections.singletonList(groupId));
+        int currentMemberCount = memberCountMap.getOrDefault(groupId, 0L).intValue();
+
+        // 방장 평점 조회
+        Double hostRating = 0.0;
+        GroupDetailResponse.Host host = null;
+
+        if (hostMemberGroup != null) {
+            Long hostId = hostMemberGroup.getMember().getId();
+            List<Map<String, Object>> ratingResults = reviewRepository.findAverageRatingsByMemberIds(
+                Collections.singletonList(hostId));
+
+            if (!ratingResults.isEmpty()) {
+                hostRating = (Double) ratingResults.get(0).get("avgRating");
+            }
+
+            host = GroupDetailResponse.Host.builder()
+                .id(hostId.toString())
+                .name(hostMemberGroup.getMember().getNickname())
+                .rating(hostRating)
+                .build();
+        }
+
+        // 공연 정보 구성
+        GroupDetailResponse.Performance performanceInfo = GroupDetailResponse.Performance.builder()
+            .id(performance.getId().toString())
+            .title(performance.getTitle())
+            .poster(performance.getPoster())
+            .build();
+
+        return GroupDetailResponse.builder()
+            .id(group.getId().toString())
+            .performance(performanceInfo)
+            .title(group.getTitle())
+            .category(group.getGatherType().getDescription())
+            .gender(group.getGenderType().getDescription())
+            .startAge(group.getStartAge())
+            .endAge(group.getEndAge())
+            .location(group.getLocation())
+            .startDate(group.getStartDate().format(DATE_FORMATTER))
+            .endDate(group.getEndDate().format(DATE_FORMATTER))
+            .memberCount(currentMemberCount)
+            .maxMembers(group.getCount())
+            .description(group.getIntroduction())
+            .hashtag(group.getHashTags())
+            .host(host)
             .build();
     }
 
