@@ -1,6 +1,7 @@
 package site.festifriends.common.s3;
 
 import java.time.Duration;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -18,9 +19,15 @@ public class S3Uploader {
     private final S3Presigner s3Presigner;
 
     public String getPreSignedUrl(String fileName) {
+        String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+
+        String uuid = UUID.randomUUID().toString();
+
+        String key = uuid + extension;
+
         PutObjectRequest objectRequest = PutObjectRequest.builder()
             .bucket(bucket)
-            .key(fileName)
+            .key(key)
             .build();
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
