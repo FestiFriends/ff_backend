@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import site.festifriends.common.response.ResponseWrapper;
+import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
@@ -38,7 +40,8 @@ public interface PerformanceApi {
     )
     @GetMapping
     ResponseEntity<PerformanceSearchResponse> searchPerformances(
-            @Parameter(description = "검색 조건") PerformanceSearchRequest request
+            @Parameter(description = "검색 조건") @ModelAttribute PerformanceSearchRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
     );
 
     @Operation(
@@ -47,6 +50,7 @@ public interface PerformanceApi {
     )
     @GetMapping("/{performanceId}")
     ResponseEntity<ResponseWrapper<PerformanceResponse>> getPerformanceDetail(
-            @Parameter(description = "공연 ID") @PathVariable Long performanceId
+            @Parameter(description = "공연 ID") @PathVariable Long performanceId,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
     );
 }

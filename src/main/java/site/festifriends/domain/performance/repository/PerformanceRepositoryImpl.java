@@ -130,6 +130,33 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
             ));
     }
 
+    @Override
+    public Map<Long, Boolean> findIsLikedByPerformanceIds(List<Long> performanceIds, Long memberId) {
+        if (memberId == null) {
+            // 로그인하지 않은 경우 모든 공연에 대해 false 반환
+            return performanceIds.stream()
+                .collect(Collectors.toMap(id -> id, id -> false));
+        }
+
+        QBookmark b = QBookmark.bookmark;
+
+        List<Long> likedPerformanceIds = queryFactory
+            .select(b.targetId)
+            .from(b)
+            .where(
+                b.type.eq(BookmarkType.PERFORMANCE),
+                b.targetId.in(performanceIds),
+                b.member.id.eq(memberId)
+            )
+            .fetch();
+
+        return performanceIds.stream()
+            .collect(Collectors.toMap(
+                id -> id,
+                likedPerformanceIds::contains
+            ));
+    }
+
     private BooleanExpression titleContains(String title) {
         return title != null && !title.trim().isEmpty() ?
             QPerformance.performance.title.containsIgnoreCase(title.trim()) : null;

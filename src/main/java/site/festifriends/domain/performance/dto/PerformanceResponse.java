@@ -1,5 +1,6 @@
 package site.festifriends.domain.performance.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -30,6 +31,9 @@ public class PerformanceResponse {
     private List<String> time;       // 공연 시간 (ISO 8601) 배열
     private Integer groupCount;      // 모임 개수 (모임개수 정렬용)
     private Integer favoriteCount;   // 공연 찜 수
+
+    @JsonProperty("isLiked")
+    private Boolean isLiked;         // 현재 로그인한 사용자의 해당 공연 좋아요 여부
     
     @Getter
     @Builder
