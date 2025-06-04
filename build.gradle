@@ -50,13 +50,17 @@ dependencies {
     annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+    // aws s3
+    implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.3.0")
+    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
 }
 
 // QueryDSL Q클래스 생성 설정
 def querydslDir = "$buildDir/generated/querydsl"
 
 sourceSets {
-    main.java.srcDirs += [ querydslDir ]
+    main.java.srcDirs += [querydslDir]
 }
 
 tasks.withType(JavaCompile) {
