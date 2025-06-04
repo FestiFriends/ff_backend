@@ -94,9 +94,9 @@ public class Group extends SoftDeleteEntity {
     private Performance performance;
 
     @Builder
-    public Group(String title, Gender genderType, Integer startAge, Integer endAge, GroupCategory gatherType, 
-                LocalDateTime startDate, LocalDateTime endDate, String location, Integer count, 
-                String introduction, Performance performance) {
+    public Group(String title, Gender genderType, Integer startAge, Integer endAge, GroupCategory gatherType,
+        LocalDateTime startDate, LocalDateTime endDate, String location, Integer count,
+        String introduction, Performance performance) {
         this.title = title;
         this.genderType = genderType;
         this.startAge = startAge;
@@ -108,5 +108,28 @@ public class Group extends SoftDeleteEntity {
         this.count = count;
         this.introduction = introduction;
         this.performance = performance;
+    }
+
+    /**
+     * 모임 정보 수정
+     */
+    public void updateGroupInfo(String title, GroupCategory gatherType, Gender genderType,
+        Integer startAge, Integer endAge, String location,
+        LocalDateTime startDate, LocalDateTime endDate,
+        Integer maxMembers, String description, List<String> hashtags) {
+        this.title = title;
+        this.gatherType = gatherType;
+        this.genderType = genderType;
+        this.startAge = startAge;
+        this.endAge = endAge;
+        this.location = location;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.count = maxMembers;
+        this.introduction = description;
+        this.hashTags.clear();
+        if (hashtags != null) {
+            this.hashTags.addAll(hashtags);
+        }
     }
 }

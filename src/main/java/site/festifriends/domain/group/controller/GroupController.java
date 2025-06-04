@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
+import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
 import site.festifriends.domain.group.service.GroupService;
 
@@ -38,6 +39,18 @@ public class GroupController implements GroupApi {
     public ResponseEntity<ResponseWrapper<GroupDetailResponse>> getGroupDetail(@PathVariable Long groupId) {
         GroupDetailResponse response = groupService.getGroupDetail(groupId);
         return ResponseEntity.ok(ResponseWrapper.success("모임 기본 정보 조회 성공.", response));
+    }
+
+    @Override
+    public ResponseEntity<ResponseWrapper<Void>> updateGroup(
+        @PathVariable Long groupId,
+        GroupUpdateRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user) {
+
+        Long memberId = user.getMemberId();
+        groupService.updateGroup(groupId, request, memberId);
+
+        return ResponseEntity.ok(ResponseWrapper.success("모임 정보가 성공적으로 수정되었습니다."));
     }
 }
 

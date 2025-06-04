@@ -23,7 +23,7 @@ import site.festifriends.entity.enums.Role;
 
 @Repository
 @RequiredArgsConstructor
-public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
+public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
@@ -240,6 +240,11 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
             .fetchFirst();
 
         return count != null;
+    }
+
+    @Override
+    public boolean isGroupHost(Long groupId, Long memberId) {
+        return existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.HOST);
     }
 
     private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {

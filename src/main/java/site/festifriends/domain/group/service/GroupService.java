@@ -16,6 +16,7 @@ import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupResponse;
+import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
 import site.festifriends.domain.group.repository.GroupBookmarkRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
@@ -179,6 +180,57 @@ public class GroupService {
             .hashtag(group.getHashTags())
             .host(host)
             .build();
+    }
+
+    /**
+     * 모임 기본 정보 수정
+     */
+    @Transactional
+    public void updateGroup(Long groupId, GroupUpdateRequest request, Long memberId) {
+        // 모임 존재 여부 확인
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 방장 권한 확인
+        if (!applicationRepository.isGroupHost(groupId, memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "모임을 수정할 권한이 없습니다.");
+        }
+
+        // 날짜 유효성 검증
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "시작 날짜가 종료 날짜보다 늦을 수 없습니다.");
+        }
+
+        // 연령 유효성 검증
+        if (request.getStartAge() > request.getEndAge()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "시작 연령이 종료 연령보다 클 수 없습니다.");
+        }
+
+        // 현재 참여 인원 확인
+        Map<Long, Long> memberCountMap = applicationRepository.findConfirmedMemberCountsByGroupIds(
+            Collections.singletonList(groupId));
+        int currentMemberCount = memberCountMap.getOrDefault(groupId, 0L).intValue();
+
+        // 최대 인원수가 현재 참여 인원보다 적은지 확인
+        if (request.getMaxMembers() < currentMemberCount) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                "최대 인원수는 현재 참여 인원(" + currentMemberCount + "명)보다 적을 수 없습니다.");
+        }
+
+        // 모임 정보 수정
+        group.updateGroupInfo(
+            request.getTitle(),
+            request.getCategoryEnum(),
+            request.getGenderEnum(),
+            request.getStartAge(),
+            request.getEndAge(),
+            request.getLocation(),
+            request.getStartDate(),
+            request.getEndDate(),
+            request.getMaxMembers(),
+            request.getDescription(),
+            request.getHashtag()
+        );
     }
 
     private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,
