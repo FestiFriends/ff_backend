@@ -16,4 +16,6 @@ public interface PerformanceRepositoryCustom {
     Map<Long, Long> findFavoriteCountsByPerformanceIds(List<Long> performanceIds);
 
     Map<Long, Integer> getGroupCountsByPerformanceIds(List<Long> performanceIds);
+
+    Map<Long, Boolean> findIsLikedByPerformanceIds(List<Long> performanceIds, Long memberId);
 } 

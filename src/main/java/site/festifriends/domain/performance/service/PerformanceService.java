@@ -30,6 +30,10 @@ public class PerformanceService {
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     public PerformanceSearchResponse searchPerformances(PerformanceSearchRequest request) {
+        return searchPerformances(request, null);
+    }
+
+    public PerformanceSearchResponse searchPerformances(PerformanceSearchRequest request, Long memberId) {
         // 페이징 객체 생성
         Pageable pageable = PageRequest.of(request.getPage() - 1, request.getSize());
 
@@ -49,6 +53,9 @@ public class PerformanceService {
         // 각 공연별 찜 개수 조회
         Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(performanceIds);
 
+        // 각 공연별 사용자 좋아요 여부 조회
+        Map<Long, Boolean> isLikedMap = performanceRepository.findIsLikedByPerformanceIds(performanceIds, memberId);
+
         performances.forEach(performance -> {
             performance.getCast().size();
             performance.getCrew().size();
@@ -62,7 +69,7 @@ public class PerformanceService {
         });
 
         List<PerformanceResponse> performanceResponses = performances.stream()
-                .map(performance -> convertToResponse(performance, groupCountMap, favoriteCountMap))
+                .map(performance -> convertToResponse(performance, groupCountMap, favoriteCountMap, isLikedMap))
                 .collect(Collectors.toList());
 
         if ("group_count_desc".equals(request.getSort())) {
@@ -97,9 +104,16 @@ public class PerformanceService {
     }
 
     /**
-     * 공연 상세 정보 조회
+     * 공연 상세 정보 조회 (하위 호환성)
      */
     public ResponseWrapper<PerformanceResponse> getPerformanceDetail(Long performanceId) {
+        return getPerformanceDetail(performanceId, null);
+    }
+
+    /**
+     * 공연 상세 정보 조회
+     */
+    public ResponseWrapper<PerformanceResponse> getPerformanceDetail(Long performanceId, Long memberId) {
         Performance performance = performanceRepository.findById(performanceId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공연을 찾을 수 없습니다."));
 
@@ -121,12 +135,16 @@ public class PerformanceService {
         Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(
                 Collections.singletonList(performanceId));
 
-        PerformanceResponse response = convertToResponse(performance, groupCountMap, favoriteCountMap);
+        // 해당 공연의 사용자 좋아요 여부 조회
+        Map<Long, Boolean> isLikedMap = performanceRepository.findIsLikedByPerformanceIds(
+                Collections.singletonList(performanceId), memberId);
+
+        PerformanceResponse response = convertToResponse(performance, groupCountMap, favoriteCountMap, isLikedMap);
         
         return ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", response);
     }
 
-    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap, Map<Long, Long> favoriteCountMap) {
+    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap, Map<Long, Long> favoriteCountMap, Map<Long, Boolean> isLikedMap) {
         List<PerformanceResponse.PerformanceImage> images = performance.getImgs().stream()
                 .map(img -> PerformanceResponse.PerformanceImage.builder()
                         .id(img.getId().toString())
@@ -157,6 +175,7 @@ public class PerformanceService {
                 .time(performance.getTime())
                 .groupCount(groupCountMap.getOrDefault(performance.getId(), 0L).intValue())
                 .favoriteCount(favoriteCountMap.getOrDefault(performance.getId(), 0L).intValue())
+                .isLiked(isLikedMap.getOrDefault(performance.getId(), false))
                 .build();
     }
 } 
