@@ -13,9 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import site.festifriends.domain.image.dto.ImageDto;
 import site.festifriends.domain.member.dto.LikedMemberDto;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
-import site.festifriends.domain.member.dto.LikedPerformanceImageDto;
 
 @Repository
 @RequiredArgsConstructor
@@ -156,7 +156,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 String state = String.valueOf(row[15]);
                 String visit = (String) row[16];
 
-                List<LikedPerformanceImageDto> images = parseImages((String) row[17]);
+                List<ImageDto> images = parseImages((String) row[17]);
                 List<String> time = splitToList((String) row[18], "\\|");
 
                 Long bookmarkId = row[19] == null ? null : ((Number) row[19]).longValue();
@@ -181,7 +181,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         return Arrays.asList(value.split(delimiter));
     }
 
-    private List<LikedPerformanceImageDto> parseImages(String value) {
+    private List<ImageDto> parseImages(String value) {
         if (value == null || value.isEmpty()) {
             return new ArrayList<>();
         }
@@ -191,7 +191,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 String id = parts.length > 0 ? parts[0] : null;
                 String src = parts.length > 1 ? parts[1] : null;
                 String alt = parts.length > 2 ? parts[2] : null;
-                return LikedPerformanceImageDto.builder()
+                return ImageDto.builder()
                     .id(id)
                     .src(src)
                     .alt(alt)

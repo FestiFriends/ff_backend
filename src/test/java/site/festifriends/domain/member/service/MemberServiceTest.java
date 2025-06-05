@@ -18,10 +18,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import site.festifriends.common.response.CursorResponseWrapper;
+import site.festifriends.domain.image.dto.ImageDto;
 import site.festifriends.domain.member.dto.LikedMemberDto;
 import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
-import site.festifriends.domain.member.dto.LikedPerformanceImageDto;
 import site.festifriends.domain.member.dto.LikedPerformanceResponse;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
@@ -123,7 +123,7 @@ class MemberServiceTest {
             "https://example.com/performance1.jpg",
             "UPCOMING",
             "국내",
-            List.of(new LikedPerformanceImageDto("1", "https://example.com/img1.jpg", "이미지1")),
+            List.of(new ImageDto("1", "https://example.com/img1.jpg", "이미지1")),
             List.of("화요일 ~ 금요일(20:00)"),
             100L // bookmarkId
         );
@@ -146,7 +146,7 @@ class MemberServiceTest {
             "https://example.com/performance2.jpg",
             "UPCOMING",
             "국내",
-            List.of(new LikedPerformanceImageDto("2", "https://example.com/img2.jpg", "이미지2")),
+            List.of(new ImageDto("2", "https://example.com/img2.jpg", "이미지2")),
             List.of("토요일(16:00,19:00)"),
             101L // bookmarkId
         );
