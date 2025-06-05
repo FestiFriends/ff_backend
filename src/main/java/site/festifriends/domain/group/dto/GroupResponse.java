@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Builder
 public class GroupResponse {
-    private String groupId;
+    private String id;
     private String title;
     private GroupCategory category;
     private Gender gender;

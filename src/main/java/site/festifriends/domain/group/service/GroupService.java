@@ -251,7 +251,7 @@ public class GroupService {
         int memberCount = memberCountMap.getOrDefault(group.getId(), 0L).intValue();
 
         return GroupResponse.builder()
-            .groupId(group.getId().toString())
+            .id(group.getId().toString())
             .title(group.getTitle())
             .category(group.getGatherType())
             .gender(group.getGenderType())

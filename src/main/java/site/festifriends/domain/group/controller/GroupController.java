@@ -20,10 +20,11 @@ public class GroupController implements GroupApi {
     private final GroupService groupService;
 
     @Override
+    @GetMapping("/api/v1/performances/{performanceId}/groups")
     public ResponseEntity<ResponseWrapper<PerformanceGroupsData>> getGroupsByPerformanceId
         (
             @AuthenticationPrincipal UserDetailsImpl user,
-            Long performanceId,
+            @PathVariable Long performanceId,
             Integer page,
             Integer size
         ) {
