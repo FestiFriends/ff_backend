@@ -21,5 +21,7 @@ public interface ApplicationRepositoryCustom {
 
     boolean existsByGroupIdAndMemberIdAndRole(Long groupId, Long memberId, Role role);
 
+    boolean existsByMemberIdAndGroupId(Long memberId, Long groupId);
+
     boolean isGroupHost(Long groupId, Long memberId);
 } 

@@ -20,8 +20,12 @@ import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.dto.JoinedGroupResponse;
+import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.group.repository.GroupRepository;
+import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
+import site.festifriends.entity.Member;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.AgeRange;
@@ -35,6 +39,8 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final ReviewRepository reviewRepository;
+    private final MemberRepository memberRepository;
+    private final GroupRepository groupRepository;
 
     /**
      * 신청서 목록 조회
@@ -402,5 +408,44 @@ public class ApplicationService {
         if (!application.getMember().getId().equals(memberId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "본인의 신청서만 확정할 수 있습니다.");
         }
+    }
+
+    /**
+     * 모임 참가 신청
+     */
+    @Transactional
+    public ResponseWrapper<Void> applyToGroup(Long memberId, Long groupId, ApplicationRequest request) {
+        // 회원 존재 여부 확인
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, "로그인되어 있지 않습니다."));
+
+        // 모임 존재 여부 확인
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 이미 신청했는지 확인
+        boolean alreadyApplied = applicationRepository.existsByMemberIdAndGroupId(memberId, groupId);
+        if (alreadyApplied) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "이미 신청한 모임입니다.");
+        }
+
+        // 자신이 만든 모임인지 확인
+        boolean isOwnGroup = applicationRepository.existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.HOST);
+        if (isOwnGroup) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "본인이 만든 모임에는 신청할 수 없습니다.");
+        }
+
+        // 모임 신청 생성
+        MemberGroup application = MemberGroup.builder()
+            .member(member)
+            .group(group)
+            .role(Role.MEMBER)
+            .status(ApplicationStatus.PENDING)
+            .applicationText(request.getDescription())
+            .build();
+
+        applicationRepository.save(application);
+
+        return ResponseWrapper.success("모임 신청이 완료되었습니다.", null);
     }
 }

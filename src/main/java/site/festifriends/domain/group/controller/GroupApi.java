@@ -9,9 +9,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import site.festifriends.common.response.ResponseWrapper;
+import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
@@ -67,6 +69,24 @@ public interface GroupApi {
     ResponseEntity<ResponseWrapper<Void>> updateGroup(
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Valid @RequestBody GroupUpdateRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user
+    );
+
+    @Operation(
+        summary = "모임 참가 신청",
+        description = """
+            모임에 참가 신청을 합니다.
+            
+            - 로그인이 필요합니다
+            - 본인이 만든 모임에는 신청할 수 없습니다
+            - 이미 신청한 모임에는 중복 신청할 수 없습니다
+            - 신청 시 상태는 PENDING으로 설정됩니다
+            """
+    )
+    @PostMapping("/api/v1/groups/{groupId}/join")
+    ResponseEntity<ResponseWrapper<Void>> joinGroup(
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Valid @RequestBody ApplicationRequest request,
         @AuthenticationPrincipal UserDetailsImpl user
     );
 }

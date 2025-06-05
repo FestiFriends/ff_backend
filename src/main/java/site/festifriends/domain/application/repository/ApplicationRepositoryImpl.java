@@ -247,6 +247,27 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
         return existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.HOST);
     }
 
+    @Override
+    public boolean existsByMemberIdAndGroupId(Long memberId, Long groupId) {
+        if (memberId == null || groupId == null) {
+            return false;
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+
+        Integer count = queryFactory
+            .selectOne()
+            .from(mg)
+            .where(
+                mg.member.id.eq(memberId),
+                mg.group.id.eq(groupId),
+                mg.deleted.isNull()
+            )
+            .fetchFirst();
+
+        return count != null;
+    }
+
     private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
         return cursorId != null ? memberGroup.id.lt(cursorId) : memberGroup.id.isNotNull();
     }
