@@ -17,15 +17,18 @@ import site.festifriends.domain.post.dto.PostCreateRequest;
 import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
 import site.festifriends.domain.post.dto.PostPinRequest;
+import site.festifriends.domain.post.dto.PostReactionRequest;
 import site.festifriends.domain.post.dto.PostResponse;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
 import site.festifriends.domain.post.repository.PostImageRepository;
+import site.festifriends.domain.post.repository.PostReactionRepository;
 import site.festifriends.domain.post.repository.PostRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.Post;
 import site.festifriends.entity.PostImage;
+import site.festifriends.entity.PostReaction;
 import site.festifriends.entity.enums.Role;
 
 @Service
@@ -33,6 +36,7 @@ import site.festifriends.entity.enums.Role;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final PostReactionRepository postReactionRepository;
     private final ApplicationRepository applicationRepository;
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
@@ -59,7 +63,10 @@ public class PostService {
         Slice<Post> postSlice = postRepository.findPostsByGroupIdWithSlice(groupId, cursorId, pageable);
 
         List<PostResponse> postResponses = postSlice.getContent().stream()
-            .map(post -> PostResponse.from(post, memberId))
+            .map(post -> {
+                boolean hasReactioned = postReactionRepository.existsByPostIdAndMemberId(post.getId(), memberId);
+                return PostResponse.from(post, memberId, hasReactioned);
+            })
             .collect(Collectors.toList());
 
         if (postResponses.isEmpty()) {
@@ -227,5 +234,46 @@ public class PostService {
             postRepository.unpinAllPostsInGroup(groupId);
         }
         post.setPinned(isPinned);
+    }
+
+    /**
+     * 모임 내 게시글 반응 등록/취소
+     */
+    @Transactional
+    public void togglePostReaction(Long groupId, Long postId, Long memberId, PostReactionRequest request) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (!post.getGroup().getId().equals(groupId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
+        }
+
+        boolean isMember = applicationRepository.existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.MEMBER) ||
+            applicationRepository.existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.HOST);
+
+        if (!isMember) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "해당 모임에 속한 회원만 게시글에 반응할 수 있습니다.");
+        }
+
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 회원을 찾을 수 없습니다."));
+
+        boolean hasReactioned = Boolean.TRUE.equals(request.getHasReactioned());
+        boolean currentlyReacted = postReactionRepository.existsByPostIdAndMemberId(postId, memberId);
+
+        if (hasReactioned && !currentlyReacted) {
+            PostReaction reaction = PostReaction.builder()
+                .post(post)
+                .member(member)
+                .build();
+            postReactionRepository.save(reaction);
+            post.incrementReactionCount();
+        } else if (!hasReactioned && currentlyReacted) {
+            postReactionRepository.deleteByPostIdAndMemberId(postId, memberId);
+            post.decrementReactionCount();
+        }
     }
 }

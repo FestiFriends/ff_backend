@@ -16,6 +16,7 @@ import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListCursorResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
 import site.festifriends.domain.post.dto.PostPinRequest;
+import site.festifriends.domain.post.dto.PostReactionRequest;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
 
@@ -157,4 +158,35 @@ public interface PostApi {
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Parameter(description = "게시글 ID") @PathVariable Long postId,
         @Parameter(description = "게시글 고정/해제 정보") @RequestBody PostPinRequest request);
+
+    @Operation(
+        summary = "모임 내 게시글 반응 등록/취소",
+        description = """
+            모임 내 게시글에 반응을 등록하거나 취소합니다. 해당 모임에 속한 회원만 가능합니다.
+            
+            **요청 본문:**
+            - hasReactioned: 반응 여부 (true: 반응 등록, false: 반응 취소)
+            
+            **응답:**
+            - 반응 등록 시: "게시글에 반응이 등록되었습니다."
+            - 반응 취소 시: "게시글 반응이 취소되었습니다."
+            
+            **참고:**
+            - 한 회원당 하나의 게시글에 최대 1개의 반응만 가능합니다.
+            - 반응이 등록/취소될 때마다 게시글의 reactionCount가 자동으로 업데이트됩니다.
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "게시글 반응이 성공적으로 처리되었습니다."),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "해당 모임에 속한 회원만 게시글에 반응할 수 있습니다."),
+            @ApiResponse(responseCode = "404", description = "해당 모임 또는 게시글을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "500", description = "서버 오류로 인해 게시글 반응 처리에 실패했습니다.")
+        }
+    )
+    ResponseEntity<ResponseWrapper<Void>> togglePostReaction(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Parameter(description = "게시글 ID") @PathVariable Long postId,
+        @Parameter(description = "게시글 반응 정보") @RequestBody PostReactionRequest request);
 }
