@@ -147,5 +147,22 @@ public interface GroupApi {
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @AuthenticationPrincipal UserDetailsImpl user
     );
+
+    @Operation(
+        summary = "모임원 퇴출",
+        description = """
+            모임원을 강제로 퇴출시킵니다.
+            
+            - 모임장(HOST)만 다른 모임원을 퇴출시킬 수 있습니다
+            - 모임장은 자기 자신을 퇴출시킬 수 없습니다
+            - 퇴출된 멤버는 즉시 모임에서 제거됩니다
+            """
+    )
+    @DeleteMapping("/api/v1/groups/{groupId}/members/{memberId}")
+    ResponseEntity<ResponseWrapper<Void>> kickMember(
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Parameter(description = "퇴출할 멤버 ID") @PathVariable Long memberId,
+        @AuthenticationPrincipal UserDetailsImpl user
+    );
 }
 

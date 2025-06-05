@@ -362,6 +362,34 @@ public class GroupService {
         }
     }
 
+    /**
+     * 모임원 퇴출
+     */
+    @Transactional
+    public void kickMember(Long groupId, Long targetMemberId, Long hostId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        if (!applicationRepository.isGroupHost(groupId, hostId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "권한이 없습니다. 모임장만 모임원을 퇴출할 수 있습니다.");
+        }
+
+        if (hostId.equals(targetMemberId)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "모임장은 자신을 퇴출시킬 수 없습니다.");
+        }
+
+        // 퇴출 대상 모임원 존재 여부 확인
+        MemberGroup targetMemberGroup = applicationRepository.findByGroupIdAndMemberId(groupId, targetMemberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임 또는 모임원을 찾을 수 없습니다."));
+
+        if (targetMemberGroup.getRole() == Role.HOST) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "호스트는 퇴출시킬 수 없습니다.");
+        }
+
+        // 멤버 퇴출 (hard delete)
+        applicationRepository.delete(targetMemberGroup);
+    }
+
     private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,
         Map<Long, Long> memberCountMap, Map<Long, Double> hostRatingMap) {
         // 호스트 정보 설정

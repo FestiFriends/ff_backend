@@ -116,5 +116,18 @@ public class GroupController implements GroupApi {
 
         return ResponseEntity.ok(ResponseWrapper.success("정상적으로 탈퇴하였습니다.", null));
     }
+
+    @Override
+    @DeleteMapping("/api/v1/groups/{groupId}/members/{memberId}")
+    public ResponseEntity<ResponseWrapper<Void>> kickMember(
+        @PathVariable Long groupId,
+        @PathVariable Long memberId,
+        @AuthenticationPrincipal UserDetailsImpl user) {
+
+        Long hostId = user.getMemberId();
+        groupService.kickMember(groupId, memberId, hostId);
+
+        return ResponseEntity.ok(ResponseWrapper.success("모임원이 성공적으로 퇴출되었습니다.", null));
+    }
 }
 
