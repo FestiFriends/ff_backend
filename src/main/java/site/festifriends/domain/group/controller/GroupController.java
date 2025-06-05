@@ -7,12 +7,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.application.service.ApplicationService;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
+import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
 import site.festifriends.domain.group.service.GroupService;
@@ -70,6 +72,20 @@ public class GroupController implements GroupApi {
         ResponseWrapper<Void> response = applicationService.applyToGroup(memberId, groupId, request);
 
         return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/api/v1/groups/{groupId}/members")
+    public ResponseEntity<ResponseWrapper<GroupMembersResponse>> getGroupMembers(
+        @PathVariable Long groupId,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size,
+        @AuthenticationPrincipal UserDetailsImpl user) {
+
+        Long memberId = user.getMemberId();
+        GroupMembersResponse response = groupService.getGroupMembers(groupId, cursorId, size, memberId);
+
+        return ResponseEntity.ok(ResponseWrapper.success("모임원 목록 조회 성공", response));
     }
 }
 

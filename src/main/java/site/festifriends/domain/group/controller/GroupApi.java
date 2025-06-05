@@ -16,6 +16,7 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
+import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
 
@@ -87,6 +88,24 @@ public interface GroupApi {
     ResponseEntity<ResponseWrapper<Void>> joinGroup(
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Valid @RequestBody ApplicationRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user
+    );
+
+    @Operation(
+        summary = "모임원 목록 조회",
+        description = """
+            모임원 목록을 커서 기반 페이징으로 조회합니다.
+            
+            - 모임에 참가한 사용자(CONFIRMED 상태)만 조회 가능합니다
+            - 방장(HOST)이 먼저 나오고, 그 다음 멤버들이 최신순으로 나옵니다
+            - 커서 기반 페이징을 사용합니다
+            """
+    )
+    @GetMapping("/api/v1/groups/{groupId}/members")
+    ResponseEntity<ResponseWrapper<GroupMembersResponse>> getGroupMembers(
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Parameter(description = "커서 ID (기본값: 첫번째 요소)") @RequestParam(required = false) Long cursorId,
+        @Parameter(description = "한 페이지당 항목 수 (기본값: 20)") @RequestParam(defaultValue = "20") int size,
         @AuthenticationPrincipal UserDetailsImpl user
     );
 }

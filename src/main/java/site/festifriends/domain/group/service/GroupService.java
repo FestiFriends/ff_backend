@@ -15,6 +15,8 @@ import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
+import site.festifriends.domain.group.dto.GroupMemberResponse;
+import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
@@ -231,6 +233,51 @@ public class GroupService {
             request.getDescription(),
             request.getHashtag()
         );
+    }
+
+    /**
+     * 모임원 목록 조회
+     */
+    public GroupMembersResponse getGroupMembers(Long groupId, Long cursorId, int size, Long memberId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 요청자가 모임에 참가했는지 확인 (확정된 멤버이거나 방장이어야 함)
+        if (!applicationRepository.isGroupParticipant(groupId, memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "모임에 참가한 사용자만 모임원 목록을 조회할 수 있습니다.");
+        }
+
+        Pageable pageable = PageRequest.of(0, size);
+        var memberSlice = applicationRepository.findGroupMembersWithSlice(groupId, cursorId, pageable);
+
+        List<MemberGroup> members = memberSlice.getContent();
+
+        List<GroupMemberResponse> memberResponses = members.stream()
+            .map(memberGroup -> GroupMemberResponse.builder()
+                .memberId(memberGroup.getMember().getId().toString())
+                .name(memberGroup.getMember().getNickname())
+                .profileImage(memberGroup.getMember().getProfileImageUrl())
+                .role(memberGroup.getRole())
+                .build())
+            .collect(Collectors.toList());
+
+        // 전체 모임원 수 조회
+        int totalMemberCount = applicationRepository.countGroupMembers(groupId);
+
+        Long nextCursorId = null;
+        if (memberSlice.hasNext() && !members.isEmpty()) {
+            MemberGroup lastMember = members.get(members.size() - 1);
+            nextCursorId = lastMember.getId();
+        }
+
+        return GroupMembersResponse.builder()
+            .groupId(group.getId().toString())
+            .performanceId(group.getPerformance().getId().toString())
+            .memberCount(totalMemberCount)
+            .members(memberResponses)
+            .cursorId(nextCursorId)
+            .hasNext(memberSlice.hasNext())
+            .build();
     }
 
     private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,

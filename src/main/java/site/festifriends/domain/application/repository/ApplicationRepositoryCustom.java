@@ -24,4 +24,10 @@ public interface ApplicationRepositoryCustom {
     boolean existsByMemberIdAndGroupId(Long memberId, Long groupId);
 
     boolean isGroupHost(Long groupId, Long memberId);
+
+    boolean isGroupParticipant(Long groupId, Long memberId);
+
+    Slice<MemberGroup> findGroupMembersWithSlice(Long groupId, Long cursorId, Pageable pageable);
+
+    int countGroupMembers(Long groupId);
 } 
