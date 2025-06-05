@@ -1,5 +1,7 @@
 package site.festifriends.domain.group.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.festifriends.common.exception.BusinessException;
@@ -28,6 +31,8 @@ import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.Performance;
+import site.festifriends.entity.enums.Gender;
+import site.festifriends.entity.enums.GroupCategory;
 import site.festifriends.entity.enums.Role;
 
 @Service
@@ -44,13 +49,54 @@ public class GroupService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     /**
-     * 공연별 모임 목록 조회
+     * 공연별 모임 목록 조회 (기존 호환성)
      */
     public PerformanceGroupsData getGroupsByPerformanceId(Long performanceId, int page, int size, Long memberId) {
-        Pageable pageable = PageRequest.of(page - 1, size);
+        return getGroupsByPerformanceId(performanceId, null, null, null, null, null, "date_desc", page, size, memberId);
+    }
+
+    /**
+     * 공연별 모임 목록 조회 (검색 및 필터 기능 포함)
+     */
+    public PerformanceGroupsData getGroupsByPerformanceId(Long performanceId,
+        GroupCategory category,
+        String startDate,
+        String endDate,
+        String location,
+        Gender gender,
+        String sort,
+        int page,
+        int size,
+        Long memberId) {
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDateTime = null;
+
+        try {
+            if (startDate != null && !startDate.trim().isEmpty()) {
+                startDateTime = LocalDate.parse(startDate).atStartOfDay();
+            }
+            if (endDate != null && !endDate.trim().isEmpty()) {
+                endDateTime = LocalDate.parse(endDate).atTime(23, 59, 59);
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "날짜 형식이 올바르지 않습니다. yyyy-MM-dd 형식을 사용해주세요.");
+        }
+
+        // 정렬 조건 설정 (모임 시작일 기준)
+        Sort sortOrder;
+        if ("date_asc".equals(sort)) {
+            sortOrder = Sort.by(Sort.Direction.ASC, "startDate");
+        } else {
+            sortOrder = Sort.by(Sort.Direction.DESC, "startDate");
+        }
+
+        Pageable pageable = PageRequest.of(page - 1, size, sortOrder);
+
         Performance performance = performanceRepository.findById(performanceId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "존재하지 않는 공연입니다."));
-        Page<Group> groupPage = groupRepository.findByPerformanceId(performanceId, pageable);
+
+        Page<Group> groupPage = groupRepository.findByPerformanceIdWithFilters(
+            performanceId, category, startDateTime, endDateTime, location, gender, pageable);
 
         List<Group> groups = groupPage.getContent();
 
@@ -58,18 +104,14 @@ public class GroupService {
             group.getHashTags().size();
         });
 
-        // 모임 ID 목록 추출
         List<Long> groupIds = groups.stream()
             .map(Group::getId)
             .collect(Collectors.toList());
 
-        // 모임별 방장 정보 조회
         Map<Long, MemberGroup> hostMap = applicationRepository.findHostsByGroupIds(groupIds);
 
-        // 모임별 멤버 수 조회
         Map<Long, Long> memberCountMap = applicationRepository.findConfirmedMemberCountsByGroupIds(groupIds);
 
-        // 방장 ID 목록 추출
         List<Long> hostIds = hostMap.values().stream()
             .map(host -> host.getMember().getId())
             .collect(Collectors.toList());
@@ -102,7 +144,8 @@ public class GroupService {
             ))
             .collect(Collectors.toList());
 
-        Long totalGroupCount = groupRepository.countByPerformanceId(performanceId);
+        Long totalGroupCount = groupRepository.countByPerformanceIdWithFilters(
+            performanceId, category, startDateTime, endDateTime, location, gender);
 
         return PerformanceGroupsData.builder()
             .performanceId(performanceId.toString())
@@ -306,11 +349,10 @@ public class GroupService {
         if (newRole == Role.HOST) {
             MemberGroup currentHost = applicationRepository.findByGroupIdAndRole(groupId, Role.HOST)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "현재 모임장을 찾을 수 없습니다."));
-            
+
             currentHost.changeRole(Role.MEMBER);
             targetMemberGroup.changeRole(Role.HOST);
-        } 
-        else if (newRole == Role.MEMBER) {
+        } else if (newRole == Role.MEMBER) {
             if (targetMemberGroup.getRole() == Role.HOST) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST, "호스트는 다른 사람을 호스트로 지정한 후에만 권한을 변경할 수 있습니다.");
             }
@@ -337,15 +379,15 @@ public class GroupService {
         // 모임장인 경우 탈퇴 조건 검증
         if (memberGroup.getRole() == Role.HOST) {
             if (totalMemberCount > 1) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, 
+                throw new BusinessException(ErrorCode.BAD_REQUEST,
                     "모임장은 다른 멤버가 있을 때 탈퇴할 수 없습니다. 먼저 모임장을 위임한 후 탈퇴해주세요.");
             }
-            
+
             // 모임장이 혼자 있는 경우 - 모임 삭제 (soft delete)
             if (totalMemberCount == 1) {
                 // 멤버 그룹 삭제 (hard delete)
                 applicationRepository.delete(memberGroup);
-                
+
                 // 모임 삭제 (soft delete)
                 group.delete();
                 return;

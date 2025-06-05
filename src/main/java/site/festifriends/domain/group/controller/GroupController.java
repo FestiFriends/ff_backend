@@ -35,12 +35,19 @@ public class GroupController implements GroupApi {
         (
             @AuthenticationPrincipal UserDetailsImpl user,
             @PathVariable Long performanceId,
-            Integer page,
-            Integer size
+            @RequestParam(required = false) site.festifriends.entity.enums.GroupCategory category,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) site.festifriends.entity.enums.Gender gender,
+            @RequestParam(required = false, defaultValue = "date_desc") String sort,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer size
         ) {
 
         Long memberId = user != null ? user.getMemberId() : null;
-        PerformanceGroupsData data = groupService.getGroupsByPerformanceId(performanceId, page, size, memberId);
+        PerformanceGroupsData data = groupService.getGroupsByPerformanceId(
+            performanceId, category, startDate, endDate, location, gender, sort, page, size, memberId);
 
         return ResponseEntity.ok(ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", data));
     }

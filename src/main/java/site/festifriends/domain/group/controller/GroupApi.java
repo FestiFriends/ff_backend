@@ -30,6 +30,14 @@ public interface GroupApi {
         description = """
             해당 공연의 모임 목록을 조회합니다.
             
+            검색 및 필터 기능:
+            - category: 모임 카테고리 필터 (COMPANION, RIDE_SHARE, ROOM_SHARE)
+            - startDate: 모임 시작 날짜 이후 필터 (yyyy-MM-dd 형식)
+            - endDate: 모임 종료 날짜 이전 필터 (yyyy-MM-dd 형식)
+            - location: 지역 필터 (부분 일치)
+            - gender: 성별 필터 (MALE, FEMALE, ALL)
+            - sort: 정렬 기준 (date_asc: 일자 빠른순, date_desc: 일자 먼순)
+            
             로그인한 사용자인 경우 모임 찜 여부도 조회됩니다.
             로그인하지 않은 사용자인 경우 찜 여부는 모두 false로 반환됩니다.
             """
@@ -38,6 +46,12 @@ public interface GroupApi {
     ResponseEntity<ResponseWrapper<PerformanceGroupsData>> getGroupsByPerformanceId(
         @AuthenticationPrincipal UserDetailsImpl user,
         @Parameter(description = "공연 ID") @PathVariable Long performanceId,
+        @Parameter(description = "카테고리 필터") @RequestParam(required = false) site.festifriends.entity.enums.GroupCategory category,
+        @Parameter(description = "시작 날짜 (yyyy-MM-dd)") @RequestParam(required = false) String startDate,
+        @Parameter(description = "종료 날짜 (yyyy-MM-dd)") @RequestParam(required = false) String endDate,
+        @Parameter(description = "지역 필터") @RequestParam(required = false) String location,
+        @Parameter(description = "성별 필터") @RequestParam(required = false) site.festifriends.entity.enums.Gender gender,
+        @Parameter(description = "정렬 기준 (date_asc, date_desc)") @RequestParam(required = false, defaultValue = "date_desc") String sort,
         @Parameter(description = "페이지 번호 (기본값: 1)") @RequestParam(defaultValue = "1") Integer page,
         @Parameter(description = "한 페이지당 항목 수 (기본값: 20)") @RequestParam(defaultValue = "20") Integer size
     );
