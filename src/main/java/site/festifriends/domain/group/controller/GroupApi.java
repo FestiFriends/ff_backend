@@ -19,6 +19,7 @@ import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
+import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 
 @Tag(name = "Group", description = "모임 관련 API")
 public interface GroupApi {
@@ -106,6 +107,25 @@ public interface GroupApi {
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Parameter(description = "커서 ID (기본값: 첫번째 요소)") @RequestParam(required = false) Long cursorId,
         @Parameter(description = "한 페이지당 항목 수 (기본값: 20)") @RequestParam(defaultValue = "20") int size,
+        @AuthenticationPrincipal UserDetailsImpl user
+    );
+
+    @Operation(
+        summary = "모임원 권한 수정",
+        description = """
+            모임원의 권한을 수정합니다.
+            
+            - 모임장(HOST)만 다른 모임원의 권한을 수정할 수 있습니다
+            - 본인의 권한은 수정할 수 없습니다
+            - HOST로 변경 시, 기존 HOST는 자동으로 MEMBER로 변경됩니다
+            - HOST는 한 명만 존재할 수 있습니다
+            """
+    )
+    @PatchMapping("/api/v1/groups/{groupId}/members/{memberId}/role")
+    ResponseEntity<ResponseWrapper<Void>> updateMemberRole(
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Parameter(description = "대상 회원 ID") @PathVariable Long memberId,
+        @Valid @RequestBody UpdateMemberRoleRequest request,
         @AuthenticationPrincipal UserDetailsImpl user
     );
 }

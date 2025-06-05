@@ -2,6 +2,7 @@ package site.festifriends.domain.application.repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import site.festifriends.entity.MemberGroup;
@@ -30,4 +31,8 @@ public interface ApplicationRepositoryCustom {
     Slice<MemberGroup> findGroupMembersWithSlice(Long groupId, Long cursorId, Pageable pageable);
 
     int countGroupMembers(Long groupId);
+
+    Optional<MemberGroup> findByGroupIdAndMemberId(Long groupId, Long memberId);
+
+    Optional<MemberGroup> findByGroupIdAndRole(Long groupId, Role role);
 } 

@@ -20,6 +20,7 @@ import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
+import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 import site.festifriends.domain.group.repository.GroupBookmarkRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
@@ -27,6 +28,7 @@ import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.Performance;
+import site.festifriends.entity.enums.Role;
 
 @Service
 @RequiredArgsConstructor
@@ -278,6 +280,42 @@ public class GroupService {
             .cursorId(nextCursorId)
             .hasNext(memberSlice.hasNext())
             .build();
+    }
+
+    /**
+     * 모임원 권한 수정
+     */
+    @Transactional
+    public void updateMemberRole(Long groupId, Long targetMemberId, UpdateMemberRoleRequest request, Long hostId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        if (!applicationRepository.isGroupHost(groupId, hostId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "권한이 없습니다. 모임장만 권한을 수정할 수 있습니다.");
+        }
+
+        MemberGroup targetMemberGroup = applicationRepository.findByGroupIdAndMemberId(groupId, targetMemberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임 또는 모임원을 찾을 수 없습니다."));
+
+        if (hostId.equals(targetMemberId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "본인의 권한은 수정할 수 없습니다.");
+        }
+
+        Role newRole = request.getRole();
+
+        if (newRole == Role.HOST) {
+            MemberGroup currentHost = applicationRepository.findByGroupIdAndRole(groupId, Role.HOST)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "현재 모임장을 찾을 수 없습니다."));
+            
+            currentHost.changeRole(Role.MEMBER);
+            targetMemberGroup.changeRole(Role.HOST);
+        } 
+        else if (newRole == Role.MEMBER) {
+            if (targetMemberGroup.getRole() == Role.HOST) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "호스트는 다른 사람을 호스트로 지정한 후에만 권한을 변경할 수 있습니다.");
+            }
+            targetMemberGroup.changeRole(Role.MEMBER);
+        }
     }
 
     private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,

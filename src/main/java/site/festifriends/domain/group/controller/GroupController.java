@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,7 @@ import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
+import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 import site.festifriends.domain.group.service.GroupService;
 
 @RestController
@@ -86,6 +88,20 @@ public class GroupController implements GroupApi {
         GroupMembersResponse response = groupService.getGroupMembers(groupId, cursorId, size, memberId);
 
         return ResponseEntity.ok(ResponseWrapper.success("모임원 목록 조회 성공", response));
+    }
+
+    @Override
+    @PatchMapping("/api/v1/groups/{groupId}/members/{memberId}/role")
+    public ResponseEntity<ResponseWrapper<Void>> updateMemberRole(
+        @PathVariable Long groupId,
+        @PathVariable Long memberId,
+        @RequestBody UpdateMemberRoleRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user) {
+
+        Long hostId = user.getMemberId();
+        groupService.updateMemberRole(groupId, memberId, request, hostId);
+
+        return ResponseEntity.ok(ResponseWrapper.success("모임원 권한이 성공적으로 수정되었습니다.", null));
     }
 }
 

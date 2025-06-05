@@ -7,6 +7,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -350,6 +351,52 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
             .fetchOne();
 
         return count != null ? count.intValue() : 0;
+    }
+
+    @Override
+    public Optional<MemberGroup> findByGroupIdAndMemberId(Long groupId, Long memberId) {
+        if (groupId == null || memberId == null) {
+            return Optional.empty();
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        MemberGroup result = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .where(
+                mg.group.id.eq(groupId),
+                mg.member.id.eq(memberId),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<MemberGroup> findByGroupIdAndRole(Long groupId, Role role) {
+        if (groupId == null || role == null) {
+            return Optional.empty();
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        MemberGroup result = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .where(
+                mg.group.id.eq(groupId),
+                mg.role.eq(role),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 
     private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
