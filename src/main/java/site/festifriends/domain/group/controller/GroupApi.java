@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -126,6 +127,24 @@ public interface GroupApi {
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Parameter(description = "대상 회원 ID") @PathVariable Long memberId,
         @Valid @RequestBody UpdateMemberRoleRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user
+    );
+
+    @Operation(
+        summary = "모임 탈퇴",
+        description = """
+            모임에서 탈퇴합니다.
+            
+            - 일반 멤버는 언제든 탈퇴 가능합니다
+            - 모임장의 경우:
+              1. 모임에 본인만 있을 경우: 탈퇴 가능하며 모임이 삭제됩니다
+              2. 다른 멤버가 있을 경우: 먼저 모임장을 위임한 후 탈퇴해야 합니다
+            - 모든 멤버가 탈퇴하면 모임이 자동으로 삭제됩니다
+            """
+    )
+    @DeleteMapping("/api/v1/groups/{groupId}/leave")
+    ResponseEntity<ResponseWrapper<Void>> leaveGroup(
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @AuthenticationPrincipal UserDetailsImpl user
     );
 }

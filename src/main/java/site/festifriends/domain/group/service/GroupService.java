@@ -318,6 +318,50 @@ public class GroupService {
         }
     }
 
+    /**
+     * 모임 탈퇴
+     */
+    @Transactional
+    public void leaveGroup(Long groupId, Long memberId) {
+        // 모임 존재 여부 확인
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 탈퇴하려는 멤버가 해당 모임에 참가했는지 확인
+        MemberGroup memberGroup = applicationRepository.findByGroupIdAndMemberId(groupId, memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 참가하지 않았습니다."));
+
+        // 현재 모임의 전체 멤버 수 조회
+        int totalMemberCount = applicationRepository.countGroupMembers(groupId);
+
+        // 모임장인 경우 탈퇴 조건 검증
+        if (memberGroup.getRole() == Role.HOST) {
+            if (totalMemberCount > 1) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, 
+                    "모임장은 다른 멤버가 있을 때 탈퇴할 수 없습니다. 먼저 모임장을 위임한 후 탈퇴해주세요.");
+            }
+            
+            // 모임장이 혼자 있는 경우 - 모임 삭제 (soft delete)
+            if (totalMemberCount == 1) {
+                // 멤버 그룹 삭제 (hard delete)
+                applicationRepository.delete(memberGroup);
+                
+                // 모임 삭제 (soft delete)
+                group.delete();
+                return;
+            }
+        }
+
+        // 일반 멤버 탈퇴 또는 조건을 만족하는 모임장 탈퇴
+        applicationRepository.delete(memberGroup);
+
+        // 탈퇴 후 모임에 아무도 없으면 모임 삭제 (이론적으로는 위에서 처리되지만 안전장치)
+        int remainingMemberCount = applicationRepository.countGroupMembers(groupId);
+        if (remainingMemberCount == 0) {
+            group.delete();
+        }
+    }
+
     private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,
         Map<Long, Long> memberCountMap, Map<Long, Double> hostRatingMap) {
         // 호스트 정보 설정
