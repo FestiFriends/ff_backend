@@ -15,8 +15,12 @@ import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
+import site.festifriends.domain.group.dto.GroupMemberResponse;
+import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupResponse;
+import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
+import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 import site.festifriends.domain.group.repository.GroupBookmarkRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
@@ -24,6 +28,7 @@ import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.Performance;
+import site.festifriends.entity.enums.Role;
 
 @Service
 @RequiredArgsConstructor
@@ -181,6 +186,210 @@ public class GroupService {
             .build();
     }
 
+    /**
+     * 모임 기본 정보 수정
+     */
+    @Transactional
+    public void updateGroup(Long groupId, GroupUpdateRequest request, Long memberId) {
+        // 모임 존재 여부 확인
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 방장 권한 확인
+        if (!applicationRepository.isGroupHost(groupId, memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "모임을 수정할 권한이 없습니다.");
+        }
+
+        // 날짜 유효성 검증
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "시작 날짜가 종료 날짜보다 늦을 수 없습니다.");
+        }
+
+        // 연령 유효성 검증
+        if (request.getStartAge() > request.getEndAge()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "시작 연령이 종료 연령보다 클 수 없습니다.");
+        }
+
+        // 현재 참여 인원 확인
+        Map<Long, Long> memberCountMap = applicationRepository.findConfirmedMemberCountsByGroupIds(
+            Collections.singletonList(groupId));
+        int currentMemberCount = memberCountMap.getOrDefault(groupId, 0L).intValue();
+
+        // 최대 인원수가 현재 참여 인원보다 적은지 확인
+        if (request.getMaxMembers() < currentMemberCount) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                "최대 인원수는 현재 참여 인원(" + currentMemberCount + "명)보다 적을 수 없습니다.");
+        }
+
+        // 모임 정보 수정
+        group.updateGroupInfo(
+            request.getTitle(),
+            request.getCategoryEnum(),
+            request.getGenderEnum(),
+            request.getStartAge(),
+            request.getEndAge(),
+            request.getLocation(),
+            request.getStartDate(),
+            request.getEndDate(),
+            request.getMaxMembers(),
+            request.getDescription(),
+            request.getHashtag()
+        );
+    }
+
+    /**
+     * 모임원 목록 조회
+     */
+    public GroupMembersResponse getGroupMembers(Long groupId, Long cursorId, int size, Long memberId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 요청자가 모임에 참가했는지 확인 (확정된 멤버이거나 방장이어야 함)
+        if (!applicationRepository.isGroupParticipant(groupId, memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "모임에 참가한 사용자만 모임원 목록을 조회할 수 있습니다.");
+        }
+
+        Pageable pageable = PageRequest.of(0, size);
+        var memberSlice = applicationRepository.findGroupMembersWithSlice(groupId, cursorId, pageable);
+
+        List<MemberGroup> members = memberSlice.getContent();
+
+        List<GroupMemberResponse> memberResponses = members.stream()
+            .map(memberGroup -> GroupMemberResponse.builder()
+                .memberId(memberGroup.getMember().getId().toString())
+                .name(memberGroup.getMember().getNickname())
+                .profileImage(memberGroup.getMember().getProfileImageUrl())
+                .role(memberGroup.getRole())
+                .build())
+            .collect(Collectors.toList());
+
+        // 전체 모임원 수 조회
+        int totalMemberCount = applicationRepository.countGroupMembers(groupId);
+
+        Long nextCursorId = null;
+        if (memberSlice.hasNext() && !members.isEmpty()) {
+            MemberGroup lastMember = members.get(members.size() - 1);
+            nextCursorId = lastMember.getId();
+        }
+
+        return GroupMembersResponse.builder()
+            .groupId(group.getId().toString())
+            .performanceId(group.getPerformance().getId().toString())
+            .memberCount(totalMemberCount)
+            .members(memberResponses)
+            .cursorId(nextCursorId)
+            .hasNext(memberSlice.hasNext())
+            .build();
+    }
+
+    /**
+     * 모임원 권한 수정
+     */
+    @Transactional
+    public void updateMemberRole(Long groupId, Long targetMemberId, UpdateMemberRoleRequest request, Long hostId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        if (!applicationRepository.isGroupHost(groupId, hostId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "권한이 없습니다. 모임장만 권한을 수정할 수 있습니다.");
+        }
+
+        MemberGroup targetMemberGroup = applicationRepository.findByGroupIdAndMemberId(groupId, targetMemberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임 또는 모임원을 찾을 수 없습니다."));
+
+        if (hostId.equals(targetMemberId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "본인의 권한은 수정할 수 없습니다.");
+        }
+
+        Role newRole = request.getRole();
+
+        if (newRole == Role.HOST) {
+            MemberGroup currentHost = applicationRepository.findByGroupIdAndRole(groupId, Role.HOST)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "현재 모임장을 찾을 수 없습니다."));
+            
+            currentHost.changeRole(Role.MEMBER);
+            targetMemberGroup.changeRole(Role.HOST);
+        } 
+        else if (newRole == Role.MEMBER) {
+            if (targetMemberGroup.getRole() == Role.HOST) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "호스트는 다른 사람을 호스트로 지정한 후에만 권한을 변경할 수 있습니다.");
+            }
+            targetMemberGroup.changeRole(Role.MEMBER);
+        }
+    }
+
+    /**
+     * 모임 탈퇴
+     */
+    @Transactional
+    public void leaveGroup(Long groupId, Long memberId) {
+        // 모임 존재 여부 확인
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        // 탈퇴하려는 멤버가 해당 모임에 참가했는지 확인
+        MemberGroup memberGroup = applicationRepository.findByGroupIdAndMemberId(groupId, memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 참가하지 않았습니다."));
+
+        // 현재 모임의 전체 멤버 수 조회
+        int totalMemberCount = applicationRepository.countGroupMembers(groupId);
+
+        // 모임장인 경우 탈퇴 조건 검증
+        if (memberGroup.getRole() == Role.HOST) {
+            if (totalMemberCount > 1) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, 
+                    "모임장은 다른 멤버가 있을 때 탈퇴할 수 없습니다. 먼저 모임장을 위임한 후 탈퇴해주세요.");
+            }
+            
+            // 모임장이 혼자 있는 경우 - 모임 삭제 (soft delete)
+            if (totalMemberCount == 1) {
+                // 멤버 그룹 삭제 (hard delete)
+                applicationRepository.delete(memberGroup);
+                
+                // 모임 삭제 (soft delete)
+                group.delete();
+                return;
+            }
+        }
+
+        // 일반 멤버 탈퇴 또는 조건을 만족하는 모임장 탈퇴
+        applicationRepository.delete(memberGroup);
+
+        // 탈퇴 후 모임에 아무도 없으면 모임 삭제 (이론적으로는 위에서 처리되지만 안전장치)
+        int remainingMemberCount = applicationRepository.countGroupMembers(groupId);
+        if (remainingMemberCount == 0) {
+            group.delete();
+        }
+    }
+
+    /**
+     * 모임원 퇴출
+     */
+    @Transactional
+    public void kickMember(Long groupId, Long targetMemberId, Long hostId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        if (!applicationRepository.isGroupHost(groupId, hostId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "권한이 없습니다. 모임장만 모임원을 퇴출할 수 있습니다.");
+        }
+
+        if (hostId.equals(targetMemberId)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "모임장은 자신을 퇴출시킬 수 없습니다.");
+        }
+
+        // 퇴출 대상 모임원 존재 여부 확인
+        MemberGroup targetMemberGroup = applicationRepository.findByGroupIdAndMemberId(groupId, targetMemberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임 또는 모임원을 찾을 수 없습니다."));
+
+        if (targetMemberGroup.getRole() == Role.HOST) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "호스트는 퇴출시킬 수 없습니다.");
+        }
+
+        // 멤버 퇴출 (hard delete)
+        applicationRepository.delete(targetMemberGroup);
+    }
+
     private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,
         Map<Long, Long> memberCountMap, Map<Long, Double> hostRatingMap) {
         // 호스트 정보 설정
@@ -199,7 +408,7 @@ public class GroupService {
         int memberCount = memberCountMap.getOrDefault(group.getId(), 0L).intValue();
 
         return GroupResponse.builder()
-            .groupId(group.getId().toString())
+            .id(group.getId().toString())
             .title(group.getTitle())
             .category(group.getGatherType())
             .gender(group.getGenderType())

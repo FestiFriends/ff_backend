@@ -99,4 +99,11 @@ public class MemberGroup extends SoftDeleteEntity {
     public void confirm() {
         this.status = ApplicationStatus.CONFIRMED;
     }
+
+    /**
+     * 권한 변경
+     */
+    public void changeRole(Role newRole) {
+        this.role = newRole;
+    }
 }

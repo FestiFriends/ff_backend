@@ -25,7 +25,7 @@ public class PerformanceController implements PerformanceApi {
     @Override
     @GetMapping
     public ResponseEntity<PerformanceSearchResponse> searchPerformances(
-            @ModelAttribute PerformanceSearchRequest request,
+            PerformanceSearchRequest request,
             @AuthenticationPrincipal UserDetailsImpl user) {
         Long memberId = user != null ? user.getMemberId() : null;
         PerformanceSearchResponse response = performanceService.searchPerformances(request, memberId);

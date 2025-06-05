@@ -40,7 +40,7 @@ public interface PerformanceApi {
     )
     @GetMapping
     ResponseEntity<PerformanceSearchResponse> searchPerformances(
-            @Parameter(description = "검색 조건") @ModelAttribute PerformanceSearchRequest request,
+            @Parameter(description = "검색 조건") PerformanceSearchRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
     );
 

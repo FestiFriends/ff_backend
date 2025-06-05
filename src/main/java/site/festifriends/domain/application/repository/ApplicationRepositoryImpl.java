@@ -7,6 +7,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ import site.festifriends.entity.enums.Role;
 
 @Repository
 @RequiredArgsConstructor
-public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
+public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
@@ -240,6 +241,162 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom{
             .fetchFirst();
 
         return count != null;
+    }
+
+    @Override
+    public boolean isGroupHost(Long groupId, Long memberId) {
+        return existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.HOST);
+    }
+
+    @Override
+    public boolean existsByMemberIdAndGroupId(Long memberId, Long groupId) {
+        if (memberId == null || groupId == null) {
+            return false;
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+
+        Integer count = queryFactory
+            .selectOne()
+            .from(mg)
+            .where(
+                mg.member.id.eq(memberId),
+                mg.group.id.eq(groupId),
+                mg.deleted.isNull()
+            )
+            .fetchFirst();
+
+        return count != null;
+    }
+
+    @Override
+    public boolean isGroupParticipant(Long groupId, Long memberId) {
+        if (groupId == null || memberId == null) {
+            return false;
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+
+        Integer count = queryFactory
+            .selectOne()
+            .from(mg)
+            .where(
+                mg.group.id.eq(groupId),
+                mg.member.id.eq(memberId),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .fetchFirst();
+
+        return count != null;
+    }
+
+    @Override
+    public Slice<MemberGroup> findGroupMembersWithSlice(Long groupId, Long cursorId, Pageable pageable) {
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        // If groupId is null, we want to return no results
+        if (groupId == null) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, false);
+        }
+
+        BooleanExpression groupCondition = mg.group.id.eq(groupId);
+        BooleanExpression confirmedCondition = mg.status.eq(ApplicationStatus.CONFIRMED);
+        BooleanExpression notDeletedCondition = mg.deleted.isNull();
+        BooleanExpression cursorCondition = cursorIdLt(cursorId, mg);
+
+        JPAQuery<MemberGroup> query = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .where(
+                groupCondition,
+                confirmedCondition,
+                notDeletedCondition,
+                cursorCondition
+            )
+            .orderBy(mg.role.desc(), mg.id.desc()); // HOST 먼저, 그 다음 최신순
+
+        // Slice는 size + 1 개를 조회해서 hasNext를 판단
+        int size = pageable.getPageSize();
+        List<MemberGroup> results = query
+            .limit(size + 1)
+            .fetch();
+
+        boolean hasNext = results.size() > size;
+        if (hasNext) {
+            results = results.subList(0, size);
+        }
+
+        return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
+    public int countGroupMembers(Long groupId) {
+        // If groupId is null, return 0
+        if (groupId == null) {
+            return 0;
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+
+        Long count = queryFactory
+            .select(mg.count())
+            .from(mg)
+            .where(
+                mg.group.id.eq(groupId),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .fetchOne();
+
+        return count != null ? count.intValue() : 0;
+    }
+
+    @Override
+    public Optional<MemberGroup> findByGroupIdAndMemberId(Long groupId, Long memberId) {
+        if (groupId == null || memberId == null) {
+            return Optional.empty();
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        MemberGroup result = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .where(
+                mg.group.id.eq(groupId),
+                mg.member.id.eq(memberId),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<MemberGroup> findByGroupIdAndRole(Long groupId, Role role) {
+        if (groupId == null || role == null) {
+            return Optional.empty();
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        MemberGroup result = queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .where(
+                mg.group.id.eq(groupId),
+                mg.role.eq(role),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 
     private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
