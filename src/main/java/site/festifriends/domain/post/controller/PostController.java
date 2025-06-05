@@ -56,6 +56,18 @@ public class PostController implements PostApi {
     }
 
     @Override
+    @GetMapping("/{groupId}/posts/{postId}")
+    public ResponseEntity<ResponseWrapper<PostResponse>> getPostDetail(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @PathVariable Long groupId,
+        @PathVariable Long postId
+    ) {
+        PostResponse response = postService.getPostDetail(groupId, postId, user.getMemberId());
+
+        return ResponseEntity.ok(ResponseWrapper.success("게시글이 성공적으로 조회되었습니다.", response));
+    }
+
+    @Override
     @PostMapping("/{groupId}/posts")
     public ResponseEntity<ResponseWrapper<PostCreateResponse>> createPost(
         @AuthenticationPrincipal UserDetailsImpl user,

@@ -276,4 +276,31 @@ public class PostService {
             post.decrementReactionCount();
         }
     }
+
+    /**
+     * 모임 내 게시글 상세 조회
+     */
+    @Transactional(readOnly = true)
+    public PostResponse getPostDetail(Long groupId, Long postId, Long memberId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (!post.getGroup().getId().equals(groupId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
+        }
+
+        boolean isMember = applicationRepository.existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.MEMBER) ||
+            applicationRepository.existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.HOST);
+
+        if (!isMember) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "해당 모임에 속한 회원만 게시글을 조회할 수 있습니다.");
+        }
+
+        boolean hasReactioned = postReactionRepository.existsByPostIdAndMemberId(postId, memberId);
+
+        return PostResponse.from(post, memberId, hasReactioned);
+    }
 }

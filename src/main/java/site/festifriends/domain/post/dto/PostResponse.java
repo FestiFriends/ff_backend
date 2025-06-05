@@ -1,13 +1,12 @@
 package site.festifriends.domain.post.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Getter;
-import site.festifriends.entity.Post;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Builder;
+import lombok.Getter;
+import site.festifriends.entity.Post;
 
 @Getter
 @Builder
@@ -26,7 +25,7 @@ public class PostResponse {
     @JsonProperty("isMine")
     private boolean isMine;
 
-    @JsonProperty("hasReactioned")
+    @JsonProperty("isReactioned")
     private boolean hasReactioned;
 
     private int imageCount;

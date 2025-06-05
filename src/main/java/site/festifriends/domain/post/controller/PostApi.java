@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import site.festifriends.common.response.ResponseWrapper;
@@ -17,6 +16,7 @@ import site.festifriends.domain.post.dto.PostListCursorResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
 import site.festifriends.domain.post.dto.PostPinRequest;
 import site.festifriends.domain.post.dto.PostReactionRequest;
+import site.festifriends.domain.post.dto.PostResponse;
 import site.festifriends.domain.post.dto.PostUpdateDeleteResponse;
 import site.festifriends.domain.post.dto.PostUpdateRequest;
 
@@ -49,6 +49,28 @@ public interface PostApi {
         @AuthenticationPrincipal UserDetailsImpl user,
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Parameter(description = "요청 파라미터 (cursorId, size)") PostListRequest request);
+
+    @Operation(
+        summary = "모임 내 게시글 상세 조회",
+        description = """
+            모임 내 특정 게시글의 상세 정보를 조회합니다.
+            
+            **응답:**
+            - 게시글의 모든 정보(내용, 작성자, 이미지, 댓글 수, 반응 수 등)가 포함됩니다.
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "게시글이 성공적으로 조회되었습니다."),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "해당 모임에 속한 회원만 조회 가능"),
+            @ApiResponse(responseCode = "404", description = "모임 또는 게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        }
+    )
+    ResponseEntity<ResponseWrapper<PostResponse>> getPostDetail(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Parameter(description = "게시글 ID") @PathVariable Long postId);
 
     @Operation(
         summary = "모임 내 게시글 등록",
