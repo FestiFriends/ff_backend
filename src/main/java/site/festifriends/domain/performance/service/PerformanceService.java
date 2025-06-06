@@ -1,5 +1,10 @@
 package site.festifriends.domain.performance.service;
 
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -9,17 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.ResponseWrapper;
+import site.festifriends.domain.member.repository.BookmarkRepository;
+import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.performance.dto.PerformanceFavoriteRequest;
+import site.festifriends.domain.performance.dto.PerformanceFavoriteResponse;
 import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
+import site.festifriends.entity.Bookmark;
+import site.festifriends.entity.Member;
 import site.festifriends.entity.Performance;
-
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import site.festifriends.entity.enums.BookmarkType;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +33,8 @@ import java.util.stream.Collectors;
 public class PerformanceService {
 
     private final PerformanceRepository performanceRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final MemberRepository memberRepository;
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     public PerformanceSearchResponse searchPerformances(PerformanceSearchRequest request) {
@@ -44,12 +52,12 @@ public class PerformanceService {
 
         // 공연 ID 목록 추출
         List<Long> performanceIds = performances.stream()
-                .map(Performance::getId)
-                .collect(Collectors.toList());
+            .map(Performance::getId)
+            .collect(Collectors.toList());
 
         // 각 공연별 모임 개수 조회
         Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(performanceIds);
-        
+
         // 각 공연별 찜 개수 조회
         Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(performanceIds);
 
@@ -69,8 +77,8 @@ public class PerformanceService {
         });
 
         List<PerformanceResponse> performanceResponses = performances.stream()
-                .map(performance -> convertToResponse(performance, groupCountMap, favoriteCountMap, isLikedMap))
-                .collect(Collectors.toList());
+            .map(performance -> convertToResponse(performance, groupCountMap, favoriteCountMap, isLikedMap))
+            .collect(Collectors.toList());
 
         if ("group_count_desc".equals(request.getSort())) {
             performanceResponses.sort((a, b) -> {
@@ -91,16 +99,16 @@ public class PerformanceService {
         }
 
         return PerformanceSearchResponse.builder()
-                .code(200)
-                .message("요청이 성공적으로 처리되었습니다.")
-                .data(performanceResponses)
-                .page(request.getPage())
-                .size(request.getSize())
-                .totalElements(performancePage.getTotalElements())
-                .totalPages(performancePage.getTotalPages())
-                .first(performancePage.isFirst())
-                .last(performancePage.isLast())
-                .build();
+            .code(200)
+            .message("요청이 성공적으로 처리되었습니다.")
+            .data(performanceResponses)
+            .page(request.getPage())
+            .size(request.getSize())
+            .totalElements(performancePage.getTotalElements())
+            .totalPages(performancePage.getTotalPages())
+            .first(performancePage.isFirst())
+            .last(performancePage.isLast())
+            .build();
     }
 
     /**
@@ -115,7 +123,7 @@ public class PerformanceService {
      */
     public ResponseWrapper<PerformanceResponse> getPerformanceDetail(Long performanceId, Long memberId) {
         Performance performance = performanceRepository.findById(performanceId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공연을 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공연을 찾을 수 없습니다."));
 
         performance.getCast().size();
         performance.getCrew().size();
@@ -129,53 +137,85 @@ public class PerformanceService {
 
         // 해당 공연의 모임 개수 조회
         Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(
-                Collections.singletonList(performanceId));
-        
+            Collections.singletonList(performanceId));
+
         // 해당 공연의 찜 개수 조회
         Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(
-                Collections.singletonList(performanceId));
+            Collections.singletonList(performanceId));
 
         // 해당 공연의 사용자 좋아요 여부 조회
         Map<Long, Boolean> isLikedMap = performanceRepository.findIsLikedByPerformanceIds(
-                Collections.singletonList(performanceId), memberId);
+            Collections.singletonList(performanceId), memberId);
 
         PerformanceResponse response = convertToResponse(performance, groupCountMap, favoriteCountMap, isLikedMap);
-        
+
         return ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", response);
     }
 
-    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap, Map<Long, Long> favoriteCountMap, Map<Long, Boolean> isLikedMap) {
+    private PerformanceResponse convertToResponse(Performance performance, Map<Long, Long> groupCountMap,
+        Map<Long, Long> favoriteCountMap, Map<Long, Boolean> isLikedMap) {
         List<PerformanceResponse.PerformanceImage> images = performance.getImgs().stream()
-                .map(img -> PerformanceResponse.PerformanceImage.builder()
-                        .id(img.getId().toString())
-                        .src(img.getSrc())
-                        .alt(img.getAlt())
-                        .build())
-                .collect(Collectors.toList());
+            .map(img -> PerformanceResponse.PerformanceImage.builder()
+                .id(img.getId().toString())
+                .src(img.getSrc())
+                .alt(img.getAlt())
+                .build())
+            .collect(Collectors.toList());
 
         return PerformanceResponse.builder()
-                .id(performance.getId().toString())
-                .title(performance.getTitle())
-                .startDate(performance.getStartDate().format(ISO_FORMATTER))
-                .endDate(performance.getEndDate().format(ISO_FORMATTER))
-                .location(performance.getLocation())
-                .cast(performance.getCast())
-                .crew(performance.getCrew())
-                .runtime(performance.getRuntime())
-                .age(performance.getAge())
-                .productionCompany(performance.getProductionCompany())
-                .agency(performance.getAgency())
-                .host(performance.getHost())
-                .organizer(performance.getOrganizer())
-                .price(performance.getPrice())
-                .poster(performance.getPoster())
-                .state(performance.getState().getDescription())
-                .visit(performance.getVisit())
-                .images(images)
-                .time(performance.getTime())
-                .groupCount(groupCountMap.getOrDefault(performance.getId(), 0L).intValue())
-                .favoriteCount(favoriteCountMap.getOrDefault(performance.getId(), 0L).intValue())
-                .isLiked(isLikedMap.getOrDefault(performance.getId(), false))
+            .id(performance.getId().toString())
+            .title(performance.getTitle())
+            .startDate(performance.getStartDate().format(ISO_FORMATTER))
+            .endDate(performance.getEndDate().format(ISO_FORMATTER))
+            .location(performance.getLocation())
+            .cast(performance.getCast())
+            .crew(performance.getCrew())
+            .runtime(performance.getRuntime())
+            .age(performance.getAge())
+            .productionCompany(performance.getProductionCompany())
+            .agency(performance.getAgency())
+            .host(performance.getHost())
+            .organizer(performance.getOrganizer())
+            .price(performance.getPrice())
+            .poster(performance.getPoster())
+            .state(performance.getState().getDescription())
+            .visit(performance.getVisit())
+            .images(images)
+            .time(performance.getTime())
+            .groupCount(groupCountMap.getOrDefault(performance.getId(), 0L).intValue())
+            .favoriteCount(favoriteCountMap.getOrDefault(performance.getId(), 0L).intValue())
+            .isLiked(isLikedMap.getOrDefault(performance.getId(), false))
+            .build();
+    }
+
+    /**
+     * 공연 찜하기/취소
+     */
+    @Transactional
+    public PerformanceFavoriteResponse togglePerformanceFavorite(Long performanceId, Long memberId,
+        PerformanceFavoriteRequest request) {
+        Performance performance = performanceRepository.findById(performanceId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "공연을 찾을 수 없습니다."));
+
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        boolean currentlyLiked = bookmarkRepository.existsByMemberIdAndTypeAndTargetId(
+            memberId, BookmarkType.PERFORMANCE, performanceId);
+
+        if (Boolean.TRUE.equals(request.getIsLiked()) && !currentlyLiked) {
+            Bookmark bookmark = Bookmark.builder()
+                .member(member)
+                .type(BookmarkType.PERFORMANCE)
+                .targetId(performanceId)
                 .build();
+            bookmarkRepository.save(bookmark);
+        } else if (Boolean.FALSE.equals(request.getIsLiked()) && currentlyLiked) {
+            bookmarkRepository.deleteByMemberIdAndTypeAndTargetId(
+                memberId, BookmarkType.PERFORMANCE, performanceId);
+        }
+
+        boolean finalLikedState = Boolean.TRUE.equals(request.getIsLiked());
+        return PerformanceFavoriteResponse.of(performanceId, finalLikedState);
     }
 } 
