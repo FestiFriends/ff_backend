@@ -1,5 +1,7 @@
 package site.festifriends.domain.comment.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -9,18 +11,18 @@ import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.comment.dto.CommentCreateRequest;
 import site.festifriends.domain.comment.dto.CommentListRequest;
 import site.festifriends.domain.comment.dto.CommentResponse;
 import site.festifriends.domain.comment.repository.CommentRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
+import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.post.repository.PostRepository;
 import site.festifriends.entity.Comments;
 import site.festifriends.entity.Group;
+import site.festifriends.entity.Member;
 import site.festifriends.entity.Post;
 import site.festifriends.entity.enums.Role;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,13 +31,15 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final GroupRepository groupRepository;
+    private final MemberRepository memberRepository;
     private final ApplicationRepository applicationRepository;
 
     /**
      * 게시글의 댓글 목록 조회
      */
     @Transactional(readOnly = true)
-    public CursorResponseWrapper<CommentResponse> getCommentsByPostId(Long groupId, Long postId, Long memberId, CommentListRequest request) {
+    public CursorResponseWrapper<CommentResponse> getCommentsByPostId(Long groupId, Long postId, Long memberId,
+        CommentListRequest request) {
         Group group = groupRepository.findById(groupId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
 
@@ -78,5 +82,39 @@ public class CommentService {
             nextCursorId,
             commentSlice.hasNext()
         );
+    }
+
+    /**
+     * 게시글에 댓글 작성
+     */
+    @Transactional
+    public void createComment(Long groupId, Long postId, Long memberId, CommentCreateRequest request) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (!post.getGroup().getId().equals(groupId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 요청입니다.");
+        }
+
+        Member author = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        boolean isMember = applicationRepository.existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.MEMBER) ||
+            applicationRepository.existsByGroupIdAndMemberIdAndRole(groupId, memberId, Role.HOST);
+
+        if (!isMember) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "댓글 등록 권한이 없습니다.");
+        }
+
+        Comments comment = Comments.builder()
+            .post(post)
+            .author(author)
+            .content(request.getContent())
+            .build();
+
+        commentRepository.save(comment);
     }
 }
