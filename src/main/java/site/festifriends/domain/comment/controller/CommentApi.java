@@ -13,6 +13,7 @@ import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.comment.dto.CommentCreateRequest;
 import site.festifriends.domain.comment.dto.CommentListCursorResponse;
 import site.festifriends.domain.comment.dto.CommentListRequest;
+import site.festifriends.domain.comment.dto.CommentUpdateRequest;
 
 @Tag(name = "Comment", description = "게시글 댓글 관련 API")
 public interface CommentApi {
@@ -71,4 +72,52 @@ public interface CommentApi {
         @Parameter(description = "모임 ID") @PathVariable Long groupId,
         @Parameter(description = "게시글 ID") @PathVariable Long postId,
         @Parameter(description = "댓글 작성 요청") @RequestBody CommentCreateRequest request);
+
+    @Operation(
+        summary = "게시글 댓글 수정",
+        description = """
+            댓글 작성자가 자신의 댓글 내용을 수정합니다.
+            
+            **요청:**
+            - content: 수정된 댓글 내용 (필수, 최대 500자)
+            
+            **권한:**
+            - 댓글 작성자만 수정 가능
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 수정되었습니다."),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+            @ApiResponse(responseCode = "403", description = "댓글 수정 권한이 없습니다."),
+            @ApiResponse(responseCode = "404", description = "해당 모임을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "500", description = "서버 오류로 인해 댓글 수정에 실패했습니다.")
+        }
+    )
+    ResponseEntity<ResponseWrapper<Void>> updateComment(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Parameter(description = "게시글 ID") @PathVariable Long postId,
+        @Parameter(description = "댓글 ID") @PathVariable Long commentId,
+        @Parameter(description = "댓글 수정 요청") @RequestBody CommentUpdateRequest request);
+
+    @Operation(
+        summary = "게시글 댓글 삭제",
+        description = """
+            댓글 작성자가 자신의 댓글을 삭제합니다.
+            
+            **권한:**
+            - 댓글 작성자만 삭제 가능
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 삭제되었습니다."),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+            @ApiResponse(responseCode = "403", description = "댓글 삭제 권한이 없습니다."),
+            @ApiResponse(responseCode = "404", description = "해당 모임을 찾을 수 없습니다."),
+            @ApiResponse(responseCode = "500", description = "서버 오류로 인해 댓글 삭제에 실패했습니다.")
+        }
+    )
+    ResponseEntity<ResponseWrapper<Void>> deleteComment(
+        @AuthenticationPrincipal UserDetailsImpl user,
+        @Parameter(description = "모임 ID") @PathVariable Long groupId,
+        @Parameter(description = "게시글 ID") @PathVariable Long postId,
+        @Parameter(description = "댓글 ID") @PathVariable Long commentId);
 }

@@ -14,6 +14,7 @@ import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.comment.dto.CommentCreateRequest;
 import site.festifriends.domain.comment.dto.CommentListRequest;
 import site.festifriends.domain.comment.dto.CommentResponse;
+import site.festifriends.domain.comment.dto.CommentUpdateRequest;
 import site.festifriends.domain.comment.repository.CommentRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
@@ -116,5 +117,61 @@ public class CommentService {
             .build();
 
         commentRepository.save(comment);
+    }
+
+    /**
+     * 댓글 수정
+     */
+    @Transactional
+    public void updateComment(Long groupId, Long postId, Long commentId, Long memberId, CommentUpdateRequest request) {
+        validateCommentAccess(groupId, postId, commentId);
+
+        Comments comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."));
+
+        if (!comment.isMine(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "댓글 수정 권한이 없습니다.");
+        }
+
+        comment.updateContent(request.getContent());
+    }
+
+    /**
+     * 댓글 삭제
+     */
+    @Transactional
+    public void deleteComment(Long groupId, Long postId, Long commentId, Long memberId) {
+        validateCommentAccess(groupId, postId, commentId);
+
+        Comments comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."));
+
+        if (!comment.isMine(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "댓글 삭제 권한이 없습니다.");
+        }
+
+        comment.delete();
+    }
+
+    /**
+     * 댓글 접근 권한 검증 (공통 로직)
+     */
+    private void validateCommentAccess(Long groupId, Long postId, Long commentId) {
+        Group group = groupRepository.findById(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
+
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (!post.getGroup().getId().equals(groupId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 요청입니다.");
+        }
+
+        Comments comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."));
+
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 요청입니다.");
+        }
     }
 }
