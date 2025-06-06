@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.group.dto.GroupCreateRequest;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupMemberResponse;
 import site.festifriends.domain.group.dto.GroupMembersResponse;
@@ -26,11 +27,14 @@ import site.festifriends.domain.group.dto.PerformanceGroupsData;
 import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 import site.festifriends.domain.group.repository.GroupBookmarkRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
+import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
+import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.Performance;
+import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.GroupCategory;
 import site.festifriends.entity.enums.Role;
@@ -45,8 +49,86 @@ public class GroupService {
     private final ApplicationRepository applicationRepository;
     private final PerformanceRepository performanceRepository;
     private final ReviewRepository reviewRepository;
+    private final MemberRepository memberRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+    /**
+     * 모임 개설
+     */
+    @Transactional
+    public void createGroup(GroupCreateRequest request, Long memberId) {
+        validateGroupCreateRequest(request);
+
+        Long performanceId = Long.parseLong(request.getPerformanceId());
+        Performance performance = performanceRepository.findById(performanceId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "존재하지 않는 공연입니다."));
+
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        GroupCategory category = convertCategory(request.getCategory());
+
+        Group group = Group.builder()
+            .title(request.getTitle())
+            .gatherType(category)
+            .genderType(request.getGender())
+            .startAge(request.getStartAge())
+            .endAge(request.getEndAge())
+            .location(request.getLocation())
+            .startDate(request.getStartDate())
+            .endDate(request.getEndDate())
+            .count(request.getMaxMembers())
+            .introduction(request.getDescription())
+            .performance(performance)
+            .build();
+
+        if (request.getHashtag() != null && !request.getHashtag().isEmpty()) {
+            group.getHashTags().addAll(request.getHashtag());
+        }
+
+        Group savedGroup = groupRepository.save(group);
+
+        MemberGroup hostMemberGroup = MemberGroup.builder()
+            .member(member)
+            .group(savedGroup)
+            .role(Role.HOST)
+            .status(ApplicationStatus.CONFIRMED)
+            .build();
+
+        applicationRepository.save(hostMemberGroup);
+    }
+
+    private void validateGroupCreateRequest(GroupCreateRequest request) {
+        if (request.getStartAge() > request.getEndAge()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "시작 연령이 종료 연령보다 클 수 없습니다.");
+        }
+
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "시작 시간이 종료 시간보다 늦을 수 없습니다.");
+        }
+
+        if (request.getStartDate().isBefore(LocalDateTime.now())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "시작 시간은 현재 시간보다 미래여야 합니다.");
+        }
+
+        if (request.getHashtag() != null) {
+            for (String tag : request.getHashtag()) {
+                if (tag.length() > 20) {
+                    throw new BusinessException(ErrorCode.BAD_REQUEST, "해시태그는 20자 이하로 입력해주세요.");
+                }
+            }
+        }
+    }
+
+    private GroupCategory convertCategory(String category) {
+        return switch (category) {
+            case "같이 동행" -> GroupCategory.COMPANION;
+            case "같이 탑승" -> GroupCategory.RIDE_SHARE;
+            case "같이 숙박" -> GroupCategory.ROOM_SHARE;
+            default -> throw new BusinessException(ErrorCode.BAD_REQUEST, "유효하지 않은 카테고리입니다.");
+        };
+    }
 
     /**
      * 공연별 모임 목록 조회 (기존 호환성)

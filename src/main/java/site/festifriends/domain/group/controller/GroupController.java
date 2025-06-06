@@ -15,6 +15,7 @@ import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.application.service.ApplicationService;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.group.dto.GroupCreateRequest;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
@@ -28,6 +29,17 @@ public class GroupController implements GroupApi {
 
     private final GroupService groupService;
     private final ApplicationService applicationService;
+
+    @Override
+    @PostMapping("/api/v1/groups")
+    public ResponseEntity<ResponseWrapper<Void>> createGroup(
+        @RequestBody GroupCreateRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user
+    ) {
+        groupService.createGroup(request, user.getMemberId());
+
+        return ResponseEntity.ok(ResponseWrapper.success("모임이 성공적으로 개설되었습니다."));
+    }
 
     @Override
     @GetMapping("/api/v1/performances/{performanceId}/groups")

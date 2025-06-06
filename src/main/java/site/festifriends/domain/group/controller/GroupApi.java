@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.group.dto.GroupCreateRequest;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
@@ -24,6 +25,35 @@ import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 
 @Tag(name = "Group", description = "모임 관련 API")
 public interface GroupApi {
+
+    @Operation(
+        summary = "모임 개설",
+        description = """
+            새로운 모임을 개설합니다.
+            
+            **요청 파라미터:**
+            - performanceId: 관련 공연 ID (필수)
+            - title: 모임 제목 (필수, 최대 100자)
+            - category: 모임 카테고리 (필수, "같이 동행"/"같이 탑승"/"같이 숙박")
+            - gender: 성별 제한 (필수, MALE/FEMALE/ALL)
+            - startAge, endAge: 연령 제한 (필수, 1-100)
+            - location: 모임 장소 (필수, 최대 200자)
+            - startDate, endDate: 모임 시작/종료 시간 (필수)
+            - maxMembers: 최대 인원 (필수, 2-50명)
+            - description: 모임 설명 (필수, 최대 500자)
+            - hashtag: 해시태그 (선택, 최대 10개)
+            """,
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "모임이 성공적으로 개설되었습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류로 인해 모임 개설에 실패했습니다.")
+        }
+    )
+    @PostMapping("/api/v1/groups")
+    ResponseEntity<ResponseWrapper<Void>> createGroup(
+        @Valid @RequestBody GroupCreateRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user
+    );
 
     @Operation(
         summary = "공연 모임 목록 조회",
