@@ -36,7 +36,9 @@ public class SecurityConfig {
         "/swagger-ui/**", "/swagger",
         "/api/v1/auth/**",
         "/api/v1/performances",
-        "/api/v1/performances/**"
+        "/api/v1/performances/**",
+        "/api/v1/performances/top-favorites",
+        "/api/v1/performances/top-groups"
     };
 
     @Bean

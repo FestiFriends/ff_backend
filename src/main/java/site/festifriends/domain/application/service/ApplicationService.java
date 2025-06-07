@@ -16,17 +16,17 @@ import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationListResponse;
+import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.dto.JoinedGroupResponse;
-import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
-import site.festifriends.entity.Member;
 import site.festifriends.entity.Group;
+import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.AgeRange;
 import site.festifriends.entity.enums.ApplicationStatus;
@@ -97,6 +97,7 @@ public class ApplicationService {
                     .groupId(firstApp.getGroup().getId().toString())
                     .groupName(firstApp.getGroup().getTitle())
                     .poster(firstApp.getGroup().getPerformance().getPoster())
+                    .category(firstApp.getGroup().getGatherType())
                     .applications(applicationInfos)
                     .build();
             })
@@ -157,6 +158,7 @@ public class ApplicationService {
                 MemberGroup hostInfo = hostInfoMap.get(app.getGroup().getId());
                 String hostNickname = hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음";
                 Long hostId = hostInfo != null ? hostInfo.getMember().getId() : null;
+                String hostProfileImage = hostInfo != null ? hostInfo.getMember().getProfileImageUrl() : null;
 
                 return AppliedListResponse.builder()
                     .applicationId(app.getId().toString())
@@ -164,8 +166,10 @@ public class ApplicationService {
                     .poster(app.getGroup().getPerformance().getPoster())
                     .groupId(app.getGroup().getId().toString())
                     .groupName(app.getGroup().getTitle())
+                    .category(app.getGroup().getGatherType())
                     .hostName(hostNickname)
                     .hostRating(hostRatingMap.getOrDefault(hostId, 0.0))
+                    .hostProfileImage(hostProfileImage)
                     .gender(app.getGroup().getGenderType())
                     .applicationText(app.getApplicationText())
                     .createdAt(app.getCreatedAt())
@@ -263,6 +267,7 @@ public class ApplicationService {
                         .name(hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음")
                         .rating(hostRatingMap.getOrDefault(
                             hostInfo != null ? hostInfo.getMember().getId() : null, 0.0))
+                        .profileImage(hostInfo != null ? hostInfo.getMember().getProfileImageUrl() : null)
                         .build())
                     .isHost(isHost)
                     .build();

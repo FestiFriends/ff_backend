@@ -1,13 +1,12 @@
 package site.festifriends.domain.post.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Getter;
-import site.festifriends.entity.Post;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Builder;
+import lombok.Getter;
+import site.festifriends.entity.Post;
 
 @Getter
 @Builder
@@ -26,6 +25,9 @@ public class PostResponse {
     @JsonProperty("isMine")
     private boolean isMine;
 
+    @JsonProperty("isReactioned")
+    private boolean hasReactioned;
+
     private int imageCount;
     private List<PostImageResponse> images;
     private PostAuthorResponse author;
@@ -35,10 +37,14 @@ public class PostResponse {
     private int reactionCount;
 
     public static PostResponse from(Post post) {
-        return from(post, null);
+        return from(post, null, false);
     }
 
     public static PostResponse from(Post post, Long currentUserId) {
+        return from(post, currentUserId, false);
+    }
+
+    public static PostResponse from(Post post, Long currentUserId, boolean hasReactioned) {
         boolean isMine = currentUserId != null && post.isMine(currentUserId);
 
         return PostResponse.builder()
@@ -48,6 +54,7 @@ public class PostResponse {
             .isPinned(post.isPinned())
             .isReported(post.isReported())
             .isMine(isMine)
+            .hasReactioned(hasReactioned)
             .imageCount(post.getImageCount())
             .images(post.getImages().stream()
                 .map(PostImageResponse::from)

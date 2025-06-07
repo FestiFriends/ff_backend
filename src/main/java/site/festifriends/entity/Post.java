@@ -66,6 +66,12 @@ public class Post extends SoftDeleteEntity {
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
     private List<PostImage> images = new ArrayList<>();
 
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
+    private List<PostReaction> reactions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
+    private List<Comments> comments = new ArrayList<>();
+
     @Builder
     public Post(Group group, Member author, String content) {
         this.group = group;
