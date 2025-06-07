@@ -101,4 +101,26 @@ public interface PerformanceApi {
     ResponseEntity<ResponseWrapper<List<PerformanceResponse>>> getTopFavoriteUpcomingPerformances(
         @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
     );
+
+    @Operation(
+        summary = "개설된 모임이 가장 많은 공연 TOP5 조회",
+        description = """
+            개설된 모임이 가장 많은 공연 TOP5를 조회합니다.
+            
+            **조건:**
+            - 아직 시작하지 않은 공연만 대상
+            - 모임 수가 많은 순으로 정렬
+            - 모임 수가 같은 경우 빠른 날짜순으로 정렬
+            - 날짜도 같은 경우 제목 가나다순으로 정렬
+            - 최대 5개 공연 반환
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "요청이 성공적으로 처리되었습니다."),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        }
+    )
+    @GetMapping("/top-groups")
+    ResponseEntity<ResponseWrapper<List<PerformanceResponse>>> getTopGroupsUpcomingPerformances(
+        @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
+    );
 }

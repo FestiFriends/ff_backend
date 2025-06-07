@@ -262,6 +262,54 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
         return topPerformanceIds.stream()
             .map(performanceMap::get)
             .filter(performance -> performance != null)
-            .collect(Collectors.toList());
+            .toList();
+    }
+
+    @Override
+    public List<Performance> findTopGroupsUpcomingPerformances(int limit) {
+        QPerformance p = QPerformance.performance;
+        QGroup g = QGroup.group;
+        QPerformanceImage pi = QPerformanceImage.performanceImage;
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Long> topPerformanceIds = queryFactory
+            .select(p.id)
+            .from(p)
+            .leftJoin(g).on(g.performance.id.eq(p.id).and(g.deleted.isNull()))
+            .where(
+                p.startDate.gt(now),
+                notDeleted()
+            )
+            .groupBy(p.id)
+            .orderBy(
+                g.count().desc(),     // 모임 수가 많은 순
+                p.startDate.asc(),    // 모임 수가 같으면 빠른 날짜순
+                p.title.asc()         // 날짜도 같으면 제목순
+            )
+            .limit(limit)
+            .fetch();
+
+        if (topPerformanceIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Performance> performances = queryFactory
+            .selectFrom(p)
+            .leftJoin(p.imgs, pi).fetchJoin()
+            .where(
+                p.id.in(topPerformanceIds),
+                notDeleted()
+            )
+            .distinct()
+            .fetch();
+
+        Map<Long, Performance> performanceMap = performances.stream()
+            .collect(Collectors.toMap(Performance::getId, performance -> performance));
+
+        return topPerformanceIds.stream()
+            .map(performanceMap::get)
+            .filter(performance -> performance != null)
+            .toList();
     }
 } 

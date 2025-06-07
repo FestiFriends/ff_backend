@@ -73,4 +73,13 @@ public class PerformanceController implements PerformanceApi {
             memberId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/top-groups")
+    public ResponseEntity<ResponseWrapper<List<PerformanceResponse>>> getTopGroupsUpcomingPerformances(
+        @AuthenticationPrincipal UserDetailsImpl user) {
+        Long memberId = user != null ? user.getMemberId() : null;
+        ResponseWrapper<List<PerformanceResponse>> response = performanceService.getTopGroupsUpcomingPerformances(
+            memberId);
+        return ResponseEntity.ok(response);
+    }
 } 
