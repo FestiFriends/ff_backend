@@ -267,6 +267,7 @@ public class ApplicationService {
                         .name(hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음")
                         .rating(hostRatingMap.getOrDefault(
                             hostInfo != null ? hostInfo.getMember().getId() : null, 0.0))
+                        .profileImage(hostInfo != null ? hostInfo.getMember().getProfileImageUrl() : null)
                         .build())
                     .isHost(isHost)
                     .build();
