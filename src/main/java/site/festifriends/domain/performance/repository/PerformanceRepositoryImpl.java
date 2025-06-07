@@ -216,4 +216,52 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
                 return query.orderBy(p.title.asc());
         }
     }
+
+    @Override
+    public List<Performance> findTopFavoriteUpcomingPerformances(int limit) {
+        QPerformance p = QPerformance.performance;
+        QBookmark b = QBookmark.bookmark;
+        QPerformanceImage pi = QPerformanceImage.performanceImage;
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Long> topPerformanceIds = queryFactory
+            .select(p.id)
+            .from(p)
+            .leftJoin(b).on(b.type.eq(BookmarkType.PERFORMANCE).and(b.targetId.eq(p.id)))
+            .where(
+                p.startDate.gt(now),
+                notDeleted()
+            )
+            .groupBy(p.id)
+            .orderBy(
+                b.count().desc(),
+                p.startDate.asc(),
+                p.title.asc()
+            )
+            .limit(limit)
+            .fetch();
+
+        if (topPerformanceIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Performance> performances = queryFactory
+            .selectFrom(p)
+            .leftJoin(p.imgs, pi).fetchJoin()
+            .where(
+                p.id.in(topPerformanceIds),
+                notDeleted()
+            )
+            .distinct()
+            .fetch();
+
+        Map<Long, Performance> performanceMap = performances.stream()
+            .collect(Collectors.toMap(Performance::getId, performance -> performance));
+
+        return topPerformanceIds.stream()
+            .map(performanceMap::get)
+            .filter(performance -> performance != null)
+            .collect(Collectors.toList());
+    }
 } 

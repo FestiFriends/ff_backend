@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -77,6 +78,27 @@ public interface PerformanceApi {
     ResponseEntity<ResponseWrapper<PerformanceFavoriteResponse>> togglePerformanceFavorite(
         @Parameter(description = "공연 ID") @PathVariable Long performanceId,
         @Parameter(description = "찜하기 요청") @RequestBody PerformanceFavoriteRequest request,
+        @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
+    );
+
+    @Operation(
+        summary = "찜한 수가 많은 공연 TOP5 조회",
+        description = """
+            찜한 수가 많은 공연 TOP5를 조회합니다.
+            
+            **조건:**
+            - 아직 시작하지 않은 공연만 대상
+            - 찜 수가 많은 순으로 정렬
+            - 찜 수가 같은 경우 제목 가나다순으로 정렬
+            - 최대 5개 공연 반환
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "요청이 성공적으로 처리되었습니다."),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        }
+    )
+    @GetMapping("/top-favorites")
+    ResponseEntity<ResponseWrapper<List<PerformanceResponse>>> getTopFavoriteUpcomingPerformances(
         @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
     );
 }

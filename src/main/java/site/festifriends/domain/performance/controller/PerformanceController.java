@@ -1,5 +1,6 @@
 package site.festifriends.domain.performance.controller;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -61,5 +62,15 @@ public class PerformanceController implements PerformanceApi {
             : "공연을 찜 취소했습니다.";
 
         return ResponseEntity.ok(ResponseWrapper.success(message, response));
+    }
+
+    @Override
+    @GetMapping("/top-favorites")
+    public ResponseEntity<ResponseWrapper<List<PerformanceResponse>>> getTopFavoriteUpcomingPerformances(
+        @AuthenticationPrincipal UserDetailsImpl user) {
+        Long memberId = user != null ? user.getMemberId() : null;
+        ResponseWrapper<List<PerformanceResponse>> response = performanceService.getTopFavoriteUpcomingPerformances(
+            memberId);
+        return ResponseEntity.ok(response);
     }
 } 

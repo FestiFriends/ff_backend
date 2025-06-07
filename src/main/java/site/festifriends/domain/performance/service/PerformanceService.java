@@ -218,4 +218,43 @@ public class PerformanceService {
         boolean finalLikedState = Boolean.TRUE.equals(request.getIsLiked());
         return PerformanceFavoriteResponse.of(performanceId, finalLikedState);
     }
+
+    /**
+     * 찜한 수가 많은 공연 TOP5 조회 (아직 시작하지 않은 공연만)
+     */
+    public ResponseWrapper<List<PerformanceResponse>> getTopFavoriteUpcomingPerformances(Long memberId) {
+        List<Performance> topPerformances = performanceRepository.findTopFavoriteUpcomingPerformances(5);
+
+        if (topPerformances.isEmpty()) {
+            return ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", List.of());
+        }
+
+        topPerformances.forEach(performance -> {
+            performance.getCast().size();
+            performance.getCrew().size();
+            performance.getProductionCompany().size();
+            performance.getAgency().size();
+            performance.getHost().size();
+            performance.getOrganizer().size();
+            performance.getPrice().size();
+            performance.getTime().size();
+            performance.getImgs().size();
+        });
+
+        List<Long> performanceIds = topPerformances.stream()
+            .map(Performance::getId)
+            .collect(Collectors.toList());
+
+        Map<Long, Long> groupCountMap = performanceRepository.findGroupCountsByPerformanceIds(performanceIds);
+
+        Map<Long, Long> favoriteCountMap = performanceRepository.findFavoriteCountsByPerformanceIds(performanceIds);
+
+        Map<Long, Boolean> isLikedMap = performanceRepository.findIsLikedByPerformanceIds(performanceIds, memberId);
+
+        List<PerformanceResponse> performanceResponses = topPerformances.stream()
+            .map(performance -> convertToResponse(performance, groupCountMap, favoriteCountMap, isLikedMap))
+            .toList();
+
+        return ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", performanceResponses);
+    }
 } 
