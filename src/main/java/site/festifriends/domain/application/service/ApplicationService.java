@@ -158,6 +158,7 @@ public class ApplicationService {
                 MemberGroup hostInfo = hostInfoMap.get(app.getGroup().getId());
                 String hostNickname = hostInfo != null ? hostInfo.getMember().getNickname() : "알 수 없음";
                 Long hostId = hostInfo != null ? hostInfo.getMember().getId() : null;
+                String hostProfileImage = hostInfo != null ? hostInfo.getMember().getProfileImageUrl() : null;
 
                 return AppliedListResponse.builder()
                     .applicationId(app.getId().toString())
@@ -165,8 +166,10 @@ public class ApplicationService {
                     .poster(app.getGroup().getPerformance().getPoster())
                     .groupId(app.getGroup().getId().toString())
                     .groupName(app.getGroup().getTitle())
+                    .category(app.getGroup().getGatherType())
                     .hostName(hostNickname)
                     .hostRating(hostRatingMap.getOrDefault(hostId, 0.0))
+                    .hostProfileImage(hostProfileImage)
                     .gender(app.getGroup().getGenderType())
                     .applicationText(app.getApplicationText())
                     .createdAt(app.getCreatedAt())
