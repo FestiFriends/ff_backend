@@ -222,7 +222,8 @@ public class GroupService {
                 hostMap.get(group.getId()),
                 bookmarkedGroupIds.contains(group.getId()),
                 finalMemberCountMap,
-                finalHostRatingMap
+                finalHostRatingMap,
+                memberId
             ))
             .collect(Collectors.toList());
 
@@ -515,17 +516,22 @@ public class GroupService {
     }
 
     private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,
-        Map<Long, Long> memberCountMap, Map<Long, Double> hostRatingMap) {
+        Map<Long, Long> memberCountMap, Map<Long, Double> hostRatingMap, Long memberId) {
         // 호스트 정보 설정
         GroupResponse.Host host = null;
+        boolean isHost = false;
+
         if (hostMemberGroup != null) {
             Long hostId = hostMemberGroup.getMember().getId();
             Double hostRating = hostRatingMap.getOrDefault(hostId, 0.0);
+
+            isHost = memberId != null && memberId.equals(hostId);
 
             host = GroupResponse.Host.builder()
                 .hostId(hostId.toString())
                 .name(hostMemberGroup.getMember().getNickname())
                 .rating(hostRating)
+                .profileImage(hostMemberGroup.getMember().getProfileImageUrl())
                 .build();
         }
 
@@ -545,6 +551,7 @@ public class GroupService {
             .maxMembers(group.getCount())
             .hashtag(group.getHashTags())
             .isFavorite(isFavorite)
+            .isHost(isHost)
             .host(host)
             .build();
     }

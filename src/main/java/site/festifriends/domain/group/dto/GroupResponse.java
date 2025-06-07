@@ -27,6 +27,9 @@ public class GroupResponse {
     @JsonProperty("isFavorite")
     private boolean isFavorite;
 
+    @JsonProperty("isHost")
+    private boolean isHost;
+
     private Host host;
 
     @Getter
@@ -35,5 +38,6 @@ public class GroupResponse {
         private String hostId;
         private String name;
         private Double rating;
+        private String profileImage;
     }
 }
