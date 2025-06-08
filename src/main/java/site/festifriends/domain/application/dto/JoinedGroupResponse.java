@@ -46,5 +46,6 @@ public class JoinedGroupResponse {
         private String id;
         private String name;
         private Double rating;
+        private String profileImage;
     }
 } 

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationRequest;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.group.dto.GroupCreateRequest;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupMembersResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
@@ -26,9 +27,46 @@ import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 public interface GroupApi {
 
     @Operation(
+        summary = "모임 개설",
+        description = """
+            새로운 모임을 개설합니다.
+            
+            **요청 파라미터:**
+            - performanceId: 관련 공연 ID (필수)
+            - title: 모임 제목 (필수, 최대 100자)
+            - category: 모임 카테고리 (필수, "같이 동행"/"같이 탑승"/"같이 숙박")
+            - gender: 성별 제한 (필수, MALE/FEMALE/ALL)
+            - startAge, endAge: 연령 제한 (필수, 1-100)
+            - location: 모임 장소 (필수, 최대 200자)
+            - startDate, endDate: 모임 시작/종료 시간 (필수)
+            - maxMembers: 최대 인원 (필수, 2-50명)
+            - description: 모임 설명 (필수, 최대 500자)
+            - hashtag: 해시태그 (선택, 최대 10개)
+            """,
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "모임이 성공적으로 개설되었습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류로 인해 모임 개설에 실패했습니다.")
+        }
+    )
+    @PostMapping("/api/v1/groups")
+    ResponseEntity<ResponseWrapper<Void>> createGroup(
+        @Valid @RequestBody GroupCreateRequest request,
+        @AuthenticationPrincipal UserDetailsImpl user
+    );
+
+    @Operation(
         summary = "공연 모임 목록 조회",
         description = """
             해당 공연의 모임 목록을 조회합니다.
+            
+            검색 및 필터 기능:
+            - category: 모임 카테고리 필터 (COMPANION, RIDE_SHARE, ROOM_SHARE)
+            - startDate: 모임 시작 날짜 이후 필터 (yyyy-MM-dd 형식)
+            - endDate: 모임 종료 날짜 이전 필터 (yyyy-MM-dd 형식)
+            - location: 지역 필터 (부분 일치)
+            - gender: 성별 필터 (MALE, FEMALE, ALL)
+            - sort: 정렬 기준 (date_asc: 일자 빠른순, date_desc: 일자 먼순)
             
             로그인한 사용자인 경우 모임 찜 여부도 조회됩니다.
             로그인하지 않은 사용자인 경우 찜 여부는 모두 false로 반환됩니다.
@@ -38,6 +76,12 @@ public interface GroupApi {
     ResponseEntity<ResponseWrapper<PerformanceGroupsData>> getGroupsByPerformanceId(
         @AuthenticationPrincipal UserDetailsImpl user,
         @Parameter(description = "공연 ID") @PathVariable Long performanceId,
+        @Parameter(description = "카테고리 필터") @RequestParam(required = false) site.festifriends.entity.enums.GroupCategory category,
+        @Parameter(description = "시작 날짜 (yyyy-MM-dd)") @RequestParam(required = false) String startDate,
+        @Parameter(description = "종료 날짜 (yyyy-MM-dd)") @RequestParam(required = false) String endDate,
+        @Parameter(description = "지역 필터") @RequestParam(required = false) String location,
+        @Parameter(description = "성별 필터") @RequestParam(required = false) site.festifriends.entity.enums.Gender gender,
+        @Parameter(description = "정렬 기준 (date_asc, date_desc)") @RequestParam(required = false, defaultValue = "date_desc") String sort,
         @Parameter(description = "페이지 번호 (기본값: 1)") @RequestParam(defaultValue = "1") Integer page,
         @Parameter(description = "한 페이지당 항목 수 (기본값: 20)") @RequestParam(defaultValue = "20") Integer size
     );

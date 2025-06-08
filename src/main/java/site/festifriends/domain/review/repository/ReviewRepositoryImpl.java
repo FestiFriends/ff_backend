@@ -1,12 +1,11 @@
 package site.festifriends.domain.review.repository;
 
+import jakarta.persistence.EntityManager;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.Review;
-
-import jakarta.persistence.EntityManager;
-import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -15,11 +14,29 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     private final EntityManager entityManager;
 
     @Override
+    public List<Review> findRecentReviews(int limit) {
+        String jpql = """
+            SELECT r FROM Review r
+            JOIN FETCH r.group g
+            LEFT JOIN FETCH g.performance p
+            LEFT JOIN FETCH r.tags
+            WHERE r.deleted IS NULL
+            AND g.deleted IS NULL
+            ORDER BY r.createdAt DESC
+            """;
+
+        return entityManager.createQuery(jpql, Review.class)
+            .setMaxResults(limit)
+            .getResultList();
+    }
+
+    @Override
     public List<Review> findUserReviewsByRevieweeId(Long revieweeId) {
         String jpql = """
             SELECT r FROM Review r
             JOIN FETCH r.group g
             LEFT JOIN FETCH g.performance p
+            LEFT JOIN FETCH r.tags
             WHERE r.reviewee.id = :revieweeId
             AND r.deleted IS NULL
             AND g.deleted IS NULL
@@ -38,6 +55,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             JOIN FETCH r.group g
             JOIN FETCH r.reviewee re
             LEFT JOIN FETCH g.performance p
+            LEFT JOIN FETCH r.tags
             WHERE r.reviewer.id = :reviewerId
             AND r.deleted IS NULL
             AND g.deleted IS NULL
@@ -54,33 +72,6 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         }
 
         return query.getResultList();
-    }
-
-    @Override
-    public List<Member> findUnreviewedMembersInGroup(Long userId, Long groupId) {
-        String jpql = """
-            SELECT m FROM Member m
-            WHERE m.id IN (
-                SELECT mg.member.id FROM MemberGroup mg
-                WHERE mg.group.id = :groupId
-                AND mg.member.id != :userId
-                AND mg.status IN ('ACCEPTED', 'CONFIRMED')
-                AND mg.deleted IS NULL
-            )
-            AND NOT EXISTS (
-                SELECT 1 FROM Review r
-                WHERE r.reviewer.id = :userId
-                AND r.reviewee.id = m.id
-                AND r.group.id = :groupId
-                AND r.deleted IS NULL
-            )
-            ORDER BY m.id
-            """;
-
-        return entityManager.createQuery(jpql, Member.class)
-            .setParameter("userId", userId)
-            .setParameter("groupId", groupId)
-            .getResultList();
     }
 
     @Override
@@ -156,5 +147,32 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
         }
 
         return query.getResultList();
+    }
+
+    @Override
+    public List<Member> findUnreviewedMembersInGroup(Long userId, Long groupId) {
+        String jpql = """
+            SELECT m FROM Member m
+            WHERE m.id IN (
+                SELECT mg.member.id FROM MemberGroup mg
+                WHERE mg.group.id = :groupId
+                AND mg.member.id != :userId
+                AND mg.status IN ('ACCEPTED', 'CONFIRMED')
+                AND mg.deleted IS NULL
+            )
+            AND NOT EXISTS (
+                SELECT 1 FROM Review r
+                WHERE r.reviewer.id = :userId
+                AND r.reviewee.id = m.id
+                AND r.group.id = :groupId
+                AND r.deleted IS NULL
+            )
+            ORDER BY m.id
+            """;
+
+        return entityManager.createQuery(jpql, Member.class)
+            .setParameter("userId", userId)
+            .setParameter("groupId", groupId)
+            .getResultList();
     }
 }

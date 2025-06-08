@@ -1,11 +1,15 @@
 package site.festifriends.domain.review.repository;
 
+import java.util.List;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.Review;
 
-import java.util.List;
-
 public interface ReviewRepositoryCustom {
+
+    /**
+     * 최근 작성된 리뷰 기준으로 모임을 조회 (TOP N)
+     */
+    List<Review> findRecentReviews(int limit);
 
     /**
      * 특정 사용자가 받은 리뷰들을 그룹별로 조회
