@@ -42,11 +42,7 @@ public class Member extends SoftDeleteEntity {
     @Column(name = "nickname", length = 20, nullable = false)
     @Comment("닉네임")
     private String nickname;
-
-    @Column(name = "profile_image_url", nullable = false)
-    @Comment("프로필 이미지 URL")
-    private String profileImageUrl;
-
+    
     @Column(name = "age", nullable = false)
     @Comment("나이")
     private Integer age;
