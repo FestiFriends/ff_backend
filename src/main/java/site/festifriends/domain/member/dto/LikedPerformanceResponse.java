@@ -30,4 +30,6 @@ public class LikedPerformanceResponse {
     private List<ImageDto> images;
     private List<String> time;
     private Integer groupCount;
+    private Integer favoriteCount;
+    private Boolean isLiked;
 }
