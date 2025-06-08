@@ -23,6 +23,7 @@ import site.festifriends.domain.member.dto.LikedMemberDto;
 import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
 import site.festifriends.domain.member.dto.LikedPerformanceResponse;
+import site.festifriends.domain.member.repository.BookmarkRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
 
@@ -35,8 +36,12 @@ class MemberServiceTest {
     @Mock
     private PerformanceRepository performanceRepository;
 
+    @Mock
+    private BookmarkRepository bookmarkRepository;
+
     @InjectMocks
     private MemberService memberService;
+
 
     @Test
     @DisplayName("[성공] 내가 찜한 유저 목록 조회(nextCursor 존재)")
@@ -47,11 +52,13 @@ class MemberServiceTest {
         int size = 2;
 
         LikedMemberDto member1 = new LikedMemberDto(
-            "테스트1", "Male", 28, "1L", false, "https://example.com/1.jpg", List.of("#음악", "#여행"), 100L);
+            "테스트1", "Male", 28, "1L", new ImageDto("1", "https://example.com/1.jpg", "이미지1"), List.of("#음악", "#여행"),
+            100L);
         LikedMemberDto member2 = new LikedMemberDto(
-            "테스트2", "Female", 25, "2L", false, "https://example.com/2.jpg", List.of("#운동", "#독서"), 99L);
+            "테스트2", "Female", 25, "2L", new ImageDto("2", "https://example.com/2.jpg", "이미지2"), List.of("#운동", "#독서"),
+            99L);
         LikedMemberDto member3 = new LikedMemberDto(
-            "테스트3", "Male", 30, "3L", false, "https://example.com/3.jpg", List.of("#사진"), 98L);
+            "테스트3", "Male", 30, "3L", new ImageDto("3", "https://example.com/3.jpg", "이미지3"), List.of("#사진"), 98L);
 
         List<LikedMemberDto> memberList = Arrays.asList(member1, member2, member3);
         Slice<LikedMemberDto> slice = new SliceImpl<>(memberList, PageRequest.of(0, size + 1), true);
@@ -78,9 +85,11 @@ class MemberServiceTest {
         int size = 2;
 
         LikedMemberDto member1 = new LikedMemberDto(
-            "테스트1", "Male", 28, "1L", false, "https://example.com/1.jpg", List.of("#음악", "#여행"), 100L);
+            "테스트1", "Male", 28, "1L", new ImageDto("1", "https://example.com/1.jpg", "이미지1"), List.of("#음악", "#여행"),
+            100L);
         LikedMemberDto member2 = new LikedMemberDto(
-            "테스트2", "Female", 25, "2L", false, "https://example.com/2.jpg", List.of("#운동", "#독서"), 99L);
+            "테스트2", "Female", 25, "2L", new ImageDto("2", "https://example.com/2.jpg", "이미지2"), List.of("#운동", "#독서"),
+            99L);
 
         List<LikedMemberDto> memberList = Arrays.asList(member1, member2);
         Slice<LikedMemberDto> slice = new SliceImpl<>(memberList, PageRequest.of(0, size + 1), false);
