@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.member.dto.LikedMemberCountResponse;
 import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.service.MemberService;
 
@@ -44,7 +45,10 @@ public class MemberController implements MemberApi {
     @GetMapping("/favorites/count")
     public ResponseEntity<?> getMyLikedMembersCount(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Long count = memberService.getMyLikedMembersCount(userDetails.getMemberId());
-        return ResponseEntity.ok(ResponseWrapper.success("요청이 성공적으로 처리되었습니다.", count));
+        return ResponseEntity.ok(ResponseWrapper.success(
+            "요청이 성공적으로 처리되었습니다.",
+            new LikedMemberCountResponse(count)
+        ));
     }
 
     @Override

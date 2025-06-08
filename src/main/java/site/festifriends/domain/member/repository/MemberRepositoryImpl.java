@@ -13,9 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import site.festifriends.domain.image.dto.ImageDto;
 import site.festifriends.domain.member.dto.LikedMemberDto;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
-import site.festifriends.domain.member.dto.LikedPerformanceImageDto;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,13 +29,16 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         int pageSize = pageable.getPageSize() + 1;
 
         String sql = """
-            SELECT m.nickname, m.gender, m.age, m.member_id, m.profile_image_url, GROUP_CONCAT(mt.tag) as tags, b.bookmark_id
+            SELECT m.nickname, m.gender, m.age, m.member_id,
+            GROUP_CONCAT(DISTINCT CONCAT(mi.member_id, '|', mi.src, '|', IFNULL(mi.alt, ''))) AS images,
+            GROUP_CONCAT(mt.tag) as tags, b.bookmark_id
             FROM bookmark b
             JOIN member m ON b.target_id = m.member_id
             LEFT JOIN member_tags mt ON m.member_id = mt.member_id
+            LEFT JOIN member_image mi ON m.member_id = mi.member_id
             WHERE b.member_id = :memberId
             AND b.type = 'MEMBER'
-            AND (:cursorId IS NULL OR b.bookmark_id < :cursorId)
+            AND (:cursorId IS NULL OR b.bookmark_id <= :cursorId)
             GROUP BY m.nickname, m.gender, m.age, m.member_id, m.profile_image_url, b.bookmark_id
             ORDER BY b.bookmark_id DESC
             LIMIT :pageSize
@@ -55,8 +58,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 (String) row[1],
                 (Integer) row[2],
                 row[3].toString(),
-                false,
-                (String) row[4],
+                parseImage((String) row[4]),
                 row[5] == null ? new ArrayList<>() :
                     Arrays.stream(((String) row[5]).split(","))
                         .map(tag -> "#" + tag)
@@ -121,7 +123,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
             LEFT JOIN performance_time pt ON p.performance_id = pt.performance_id
             WHERE b.member_id = :memberId
             AND b.type = 'PERFORMANCE'
-            AND (:cursorId IS NULL OR b.bookmark_id < :cursorId)
+            AND (:cursorId IS NULL OR b.bookmark_id <= :cursorId)
             GROUP BY p.performance_id, p.title, p.start_date, p.end_date, p.location,
             p.runtime, p.age, p.poster_url, p.state, p.visit, b.bookmark_id
             ORDER BY b.bookmark_id DESC
@@ -156,7 +158,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 String state = String.valueOf(row[15]);
                 String visit = (String) row[16];
 
-                List<LikedPerformanceImageDto> images = parseImages((String) row[17]);
+                List<ImageDto> images = parseImages((String) row[17]);
                 List<String> time = splitToList((String) row[18], "\\|");
 
                 Long bookmarkId = row[19] == null ? null : ((Number) row[19]).longValue();
@@ -181,7 +183,22 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         return Arrays.asList(value.split(delimiter));
     }
 
-    private List<LikedPerformanceImageDto> parseImages(String value) {
+    private ImageDto parseImage(String value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        String[] parts = value.split("\\|");
+        String id = parts.length > 0 ? parts[0] : null;
+        String src = parts.length > 1 ? parts[1] : null;
+        String alt = parts.length > 2 ? parts[2] : null;
+        return ImageDto.builder()
+            .id(id)
+            .src(src)
+            .alt(alt)
+            .build();
+    }
+
+    private List<ImageDto> parseImages(String value) {
         if (value == null || value.isEmpty()) {
             return new ArrayList<>();
         }
@@ -191,7 +208,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 String id = parts.length > 0 ? parts[0] : null;
                 String src = parts.length > 1 ? parts[1] : null;
                 String alt = parts.length > 2 ? parts[2] : null;
-                return LikedPerformanceImageDto.builder()
+                return ImageDto.builder()
                     .id(id)
                     .src(src)
                     .alt(alt)

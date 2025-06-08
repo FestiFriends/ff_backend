@@ -12,6 +12,7 @@ public class PostAuthorResponse {
     private String name;
     private String profileImage;
 
+    // profile image 어떻게 처리할건지?
     public static PostAuthorResponse from(Member member) {
         return PostAuthorResponse.builder()
             .id(member.getId())

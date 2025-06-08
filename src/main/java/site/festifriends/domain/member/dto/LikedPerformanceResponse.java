@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import site.festifriends.domain.image.dto.ImageDto;
 
 @Getter
 @AllArgsConstructor
@@ -26,7 +27,9 @@ public class LikedPerformanceResponse {
     private String poster;
     private String state;
     private String visit;
-    private List<LikedPerformanceImageDto> images;
+    private List<ImageDto> images;
     private List<String> time;
     private Integer groupCount;
+    private Integer favoriteCount;
+    private Boolean isLiked;
 }

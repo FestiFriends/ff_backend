@@ -1,4 +1,4 @@
-package site.festifriends.domain.member.dto;
+package site.festifriends.domain.image.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class LikedPerformanceImageDto {
+public class ImageDto {
 
     private String id;
     private String src;

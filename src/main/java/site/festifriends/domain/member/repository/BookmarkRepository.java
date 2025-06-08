@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import site.festifriends.entity.Bookmark;
 import site.festifriends.entity.enums.BookmarkType;
 
-public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
+public interface BookmarkRepository extends JpaRepository<Bookmark, Long>, BookmarkRepositoryCustom {
 
     Optional<Bookmark> findByMemberIdAndTypeAndTargetId(Long memberId, BookmarkType type, Long targetId);
 
