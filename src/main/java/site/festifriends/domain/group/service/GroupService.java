@@ -25,7 +25,6 @@ import site.festifriends.domain.group.dto.GroupResponse;
 import site.festifriends.domain.group.dto.GroupUpdateRequest;
 import site.festifriends.domain.group.dto.PerformanceGroupsData;
 import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
-import site.festifriends.domain.group.repository.GroupBookmarkRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
@@ -45,7 +44,6 @@ import site.festifriends.entity.enums.Role;
 public class GroupService {
 
     private final GroupRepository groupRepository;
-    private final GroupBookmarkRepository groupBookmarkRepository;
     private final ApplicationRepository applicationRepository;
     private final PerformanceRepository performanceRepository;
     private final ReviewRepository reviewRepository;
@@ -199,28 +197,23 @@ public class GroupService {
             .collect(Collectors.toList());
 
         // 방장별 평점 조회
-        Map<Long, Double> hostRatingMap = Collections.emptyMap();
+        final Map<Long, Double> finalHostRatingMap;
         if (!hostIds.isEmpty()) {
-            hostRatingMap = reviewRepository.findAverageRatingsByMemberIds(hostIds).stream()
+            finalHostRatingMap = reviewRepository.findAverageRatingsByMemberIds(hostIds).stream()
                 .collect(Collectors.toMap(
                     result -> (Long) result.get("memberId"),
                     result -> (Double) result.get("avgRating")
                 ));
+        } else {
+            finalHostRatingMap = Collections.emptyMap();
         }
 
-        // 로그인한 경우 찜 여부 조회
-        final List<Long> bookmarkedGroupIds = memberId != null
-            ? groupBookmarkRepository.findBookmarkedGroupIdsByMemberIdAndGroupIds(memberId, groupIds)
-            : Collections.emptyList();
-
         final Map<Long, Long> finalMemberCountMap = memberCountMap;
-        final Map<Long, Double> finalHostRatingMap = hostRatingMap;
 
         List<GroupResponse> groupResponses = groups.stream()
             .map(group -> convertToGroupResponse(
                 group,
                 hostMap.get(group.getId()),
-                bookmarkedGroupIds.contains(group.getId()),
                 finalMemberCountMap,
                 finalHostRatingMap,
                 memberId
@@ -515,7 +508,7 @@ public class GroupService {
         applicationRepository.delete(targetMemberGroup);
     }
 
-    private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup, boolean isFavorite,
+    private GroupResponse convertToGroupResponse(Group group, MemberGroup hostMemberGroup,
         Map<Long, Long> memberCountMap, Map<Long, Double> hostRatingMap, Long memberId) {
         // 호스트 정보 설정
         GroupResponse.Host host = null;
@@ -550,7 +543,6 @@ public class GroupService {
             .memberCount(memberCount)
             .maxMembers(group.getCount())
             .hashtag(group.getHashTags())
-            .isFavorite(isFavorite)
             .isHost(isHost)
             .host(host)
             .build();
