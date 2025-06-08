@@ -20,9 +20,12 @@ import site.festifriends.domain.member.dto.LikedMemberDto;
 import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
 import site.festifriends.domain.member.dto.LikedPerformanceResponse;
+import site.festifriends.domain.member.repository.BookmarkRepository;
+import site.festifriends.domain.member.repository.MemberImageRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberImage;
 import site.festifriends.entity.enums.Gender;
 
 @Service
@@ -32,23 +35,33 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final BlackListTokenService blackListTokenService;
     private final PerformanceRepository performanceRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final MemberImageRepository memberImageRepository;
 
     public Member loginOrSignUp(KakaoUserInfo userInfo) {
 
-        return memberRepository.findBySocialId(userInfo.getSocialId())
-            .orElseGet(() -> {
-                Member newMember = Member.builder()
-                    .socialId(userInfo.getSocialId())
-                    .nickname(userInfo.getName())
-                    .email(userInfo.getEmail())
-                    .profileImageUrl(userInfo.getProfileImage())
-                    .age(0)
-                    .gender(Gender.ALL)
-                    .introduction("")
-                    .build();
+        Member member = memberRepository.findBySocialId(userInfo.getSocialId()).orElse(null);
 
-                return memberRepository.save(newMember);
-            });
+        if (member == null) {
+            Member newMember = memberRepository.save(Member.builder()
+                .socialId(userInfo.getSocialId())
+                .nickname(userInfo.getName())
+                .email(userInfo.getEmail())
+                .age(0)
+                .gender(Gender.ALL)
+                .introduction("")
+                .build());
+
+            MemberImage memberImage = MemberImage.builder()
+                .member(newMember)
+                .src(userInfo.getProfileImage())
+                .alt("멤버 이미지")
+                .build();
+
+            memberImageRepository.save(memberImage);
+        }
+
+        return member;
     }
 
     public void saveRefreshToken(Long memberId, String refreshToken) {
@@ -86,9 +99,9 @@ public class MemberService {
                 likedMember.getGender(),
                 likedMember.getAge(),
                 likedMember.getUserUid(),
-                likedMember.getIsUserNew(),
                 likedMember.getProfileImage(),
-                likedMember.getHashtag()
+                likedMember.getHashtag(),
+                true
             ));
         }
         Long nextCursorId = null;
@@ -124,6 +137,7 @@ public class MemberService {
             .collect(Collectors.toList());
 
         Map<Long, Integer> groupCounts = performanceRepository.getGroupCountsByPerformanceIds(performanceIds);
+        Map<Long, Integer> favoriteCounts = bookmarkRepository.getCountByPerformanceIds(performanceIds);
 
         List<LikedPerformanceResponse> response = new ArrayList<>();
 
@@ -148,7 +162,9 @@ public class MemberService {
                 likedPerformance.getVisit(),
                 likedPerformance.getImages(),
                 likedPerformance.getTime(),
-                groupCounts.getOrDefault(likedPerformance.getId(), 0)
+                groupCounts.getOrDefault(likedPerformance.getId(), 0),
+                favoriteCounts.getOrDefault(likedPerformance.getId(), 0),
+                true
             ));
         }
 
