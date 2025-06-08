@@ -18,6 +18,8 @@ import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
 import site.festifriends.domain.performance.service.PerformanceService;
+import site.festifriends.domain.review.dto.RecentReviewResponse;
+import site.festifriends.domain.review.service.ReviewService;
 
 @RestController
 @RequestMapping("/api/v1/performances")
@@ -25,6 +27,7 @@ import site.festifriends.domain.performance.service.PerformanceService;
 public class PerformanceController implements PerformanceApi {
 
     private final PerformanceService performanceService;
+    private final ReviewService reviewService;
 
     @Override
     @GetMapping
@@ -74,6 +77,7 @@ public class PerformanceController implements PerformanceApi {
         return ResponseEntity.ok(response);
     }
 
+    @Override
     @GetMapping("/top-groups")
     public ResponseEntity<ResponseWrapper<List<PerformanceResponse>>> getTopGroupsUpcomingPerformances(
         @AuthenticationPrincipal UserDetailsImpl user) {
@@ -81,5 +85,15 @@ public class PerformanceController implements PerformanceApi {
         ResponseWrapper<List<PerformanceResponse>> response = performanceService.getTopGroupsUpcomingPerformances(
             memberId);
         return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/recent-reviews")
+    public ResponseEntity<ResponseWrapper<List<RecentReviewResponse>>> getRecentReviews() {
+        List<RecentReviewResponse> reviews = reviewService.getRecentReviews();
+
+        return ResponseEntity.ok(
+            ResponseWrapper.success("최근 올라온 리뷰 top5 조회 성공", reviews)
+        );
     }
 } 

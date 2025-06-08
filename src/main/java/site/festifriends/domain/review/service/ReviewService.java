@@ -1,5 +1,11 @@
 package site.festifriends.domain.review.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +15,7 @@ import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.review.dto.CreateReviewRequest;
+import site.festifriends.domain.review.dto.RecentReviewResponse;
 import site.festifriends.domain.review.dto.UserReviewResponse;
 import site.festifriends.domain.review.dto.WritableReviewRequest;
 import site.festifriends.domain.review.dto.WritableReviewResponse;
@@ -17,16 +24,9 @@ import site.festifriends.domain.review.dto.WrittenReviewResponse;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
-import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.Performance;
 import site.festifriends.entity.Review;
 import site.festifriends.entity.enums.ReviewTag;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +36,47 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    /**
+     * 최근 올라온 리뷰 TOP 5 조회
+     */
+    public List<RecentReviewResponse> getRecentReviews() {
+        List<Review> recentReviews = reviewRepository.findRecentReviews(5);
+
+        List<RecentReviewResponse> responses = new ArrayList<>();
+
+        for (Review review : recentReviews) {
+            Group group = review.getGroup();
+            Performance performance = group.getPerformance();
+
+            RecentReviewResponse.Performance performanceInfo = null;
+            if (performance != null) {
+                performanceInfo = RecentReviewResponse.Performance.builder()
+                    .id(performance.getId().toString())
+                    .title(performance.getTitle())
+                    .poster(performance.getPoster())
+                    .build();
+            }
+
+            RecentReviewResponse.ReviewInfo reviewInfo = convertToRecentReviewInfo(review);
+
+            RecentReviewResponse response = RecentReviewResponse.builder()
+                .groupId(group.getId().toString())
+                .performance(performanceInfo)
+                .groupTitle(group.getTitle())
+                .category(group.getGatherType())
+                .groupStartDate(group.getStartDate().format(DATE_FORMATTER))
+                .groupEndDate(group.getEndDate().format(DATE_FORMATTER))
+                .reviews(List.of(reviewInfo))
+                .build();
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
 
     /**
      * 사용자가 받은 리뷰 목록 조회
@@ -269,14 +310,38 @@ public class ReviewService {
         );
     }
 
+    private RecentReviewResponse.ReviewInfo convertToRecentReviewInfo(Review review) {
+        List<ReviewTag> tags = new ArrayList<>();
+        try {
+            if (review.getTags() != null) {
+                tags = new ArrayList<>(review.getTags());
+            }
+        } catch (Exception e) {
+            tags = new ArrayList<>();
+        }
+
+        return RecentReviewResponse.ReviewInfo.builder()
+            .reviewId(review.getId().toString())
+            .rating(review.getScore())
+            .content(review.getContent())
+            .defaultTag(tags)
+            .createdAt(review.getCreatedAt())
+            .build();
+    }
+
     private UserReviewResponse.ReviewInfo convertToUserReviewInfo(Review review) {
         Integer rating = review.getScore() != null ? (int) Math.round(review.getScore()) : 0;
 
-        List<String> tags = review.getTags() != null
-            ? review.getTags().stream()
-            .map(ReviewTag::name)
-            .collect(Collectors.toList())
-            : new ArrayList<>();
+        List<String> tags = new ArrayList<>();
+        try {
+            if (review.getTags() != null) {
+                tags = review.getTags().stream()
+                    .map(ReviewTag::name)
+                    .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            tags = new ArrayList<>();
+        }
 
         return UserReviewResponse.ReviewInfo.builder()
             .reviewId(review.getId().toString())
@@ -290,11 +355,16 @@ public class ReviewService {
     private WrittenReviewResponse.ReviewInfo convertToWrittenReviewInfo(Review review) {
         Integer rating = review.getScore() != null ? (int) Math.round(review.getScore()) : 0;
 
-        List<String> tags = review.getTags() != null
-            ? review.getTags().stream()
-            .map(ReviewTag::name)
-            .collect(Collectors.toList())
-            : new ArrayList<>();
+        List<String> tags = new ArrayList<>();
+        try {
+            if (review.getTags() != null) {
+                tags = review.getTags().stream()
+                    .map(ReviewTag::name)
+                    .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            tags = new ArrayList<>();
+        }
 
         Member reviewee = review.getReviewee();
 

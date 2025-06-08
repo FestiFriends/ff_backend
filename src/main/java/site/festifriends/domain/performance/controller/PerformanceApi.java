@@ -18,6 +18,7 @@ import site.festifriends.domain.performance.dto.PerformanceFavoriteResponse;
 import site.festifriends.domain.performance.dto.PerformanceResponse;
 import site.festifriends.domain.performance.dto.PerformanceSearchRequest;
 import site.festifriends.domain.performance.dto.PerformanceSearchResponse;
+import site.festifriends.domain.review.dto.RecentReviewResponse;
 
 @Tag(name = "Performance", description = "공연 관련 API")
 public interface PerformanceApi {
@@ -123,4 +124,26 @@ public interface PerformanceApi {
     ResponseEntity<ResponseWrapper<List<PerformanceResponse>>> getTopGroupsUpcomingPerformances(
         @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user
     );
+
+    @Operation(
+        summary = "최근 올라온 리뷰 TOP 5 조회",
+        description = """
+            최근 작성된 리뷰를 기준으로 상위 5개 리뷰를 조회합니다.
+            
+            **조건:**
+            - 작성일시(createdAt) 기준 최신순 정렬
+            - 같은 모임의 리뷰여도 상관없이 개별 리뷰 5개 반환
+            
+            **응답 정보:**
+            - 각 리뷰의 모임 정보 (제목, 카테고리, 날짜)
+            - 관련 공연 정보 (제목, 포스터)
+            - 리뷰 상세 정보 (평점, 내용, 태그, 작성일시)
+            """,
+        responses = {
+            @ApiResponse(responseCode = "200", description = "최근 올라온 리뷰 top5 조회 성공"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+        }
+    )
+    @GetMapping("/recent-reviews")
+    ResponseEntity<ResponseWrapper<List<RecentReviewResponse>>> getRecentReviews();
 }
