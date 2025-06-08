@@ -13,7 +13,7 @@ public class LikedMemberDto {
     private String gender;
     private Integer age;
     private String userUid;
-    private List<ImageDto> profileImage;
+    private ImageDto profileImage;
     private List<String> hashtag;
     private Long bookmarkId;
 

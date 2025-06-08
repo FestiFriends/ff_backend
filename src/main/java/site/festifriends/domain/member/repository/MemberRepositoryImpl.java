@@ -58,7 +58,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 (String) row[1],
                 (Integer) row[2],
                 row[3].toString(),
-                parseImages((String) row[4]),
+                parseImage((String) row[4]),
                 row[5] == null ? new ArrayList<>() :
                     Arrays.stream(((String) row[5]).split(","))
                         .map(tag -> "#" + tag)
@@ -181,6 +181,21 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
             return new ArrayList<>();
         }
         return Arrays.asList(value.split(delimiter));
+    }
+
+    private ImageDto parseImage(String value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        String[] parts = value.split("\\|");
+        String id = parts.length > 0 ? parts[0] : null;
+        String src = parts.length > 1 ? parts[1] : null;
+        String alt = parts.length > 2 ? parts[2] : null;
+        return ImageDto.builder()
+            .id(id)
+            .src(src)
+            .alt(alt)
+            .build();
     }
 
     private List<ImageDto> parseImages(String value) {
