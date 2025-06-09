@@ -1,6 +1,7 @@
 package site.festifriends.domain.review.repository;
 
 import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -118,7 +119,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
                 AND mg.status IN ('ACCEPTED', 'CONFIRMED')
                 AND mg.deleted IS NULL
             )
-            AND g.endDate < CURRENT_TIMESTAMP
+            AND g.endDate < :currentTime
             AND g.deleted IS NULL
             AND EXISTS (
                 SELECT 1 FROM MemberGroup mg2
@@ -140,6 +141,7 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
         var query = entityManager.createQuery(jpql, Object[].class)
             .setParameter("userId", userId)
+            .setParameter("currentTime", LocalDateTime.now())
             .setMaxResults(size + 1); // hasNext 판단을 위해 1개 추가 조회
 
         if (cursorId != null) {
