@@ -257,4 +257,42 @@ public class MemberRepositoryTest {
         assertThat(dto2.getEndDate()).isEqualTo(LocalDateTime.of(2025, 6, 1, 22, 0));
         assertThat(dto2.getPoster()).isEqualTo("https://example.com/poster1.jpg");
     }
+
+    @Test
+    @DisplayName("[성공] 회원 프로필 기본 정보 조회")
+    void getMemberProfile() {
+        // given
+        Long targetId = member.getId();
+
+        // when
+        Object[] result = memberRepositoryImpl.getMemberProfile(targetId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result[0]).isEqualTo(member.getId());
+        assertThat(result[1]).isEqualTo(member.getNickname());
+        assertThat(result[2]).isEqualTo(member.getAge());
+        assertThat(result[3]).isEqualTo(member.getGender().name());
+        assertThat(result[4]).isEqualTo(
+            memberImage.getId() + "|" + memberImage.getSrc() + "|" + memberImage.getAlt());
+        assertThat(result[5]).isEqualTo(member.getIntroduction());
+    }
+
+    @Test
+    @DisplayName("[성공] 회원 좋아요 여부, 신고 여부, 본인 여부 테스트")
+    void getMemberExtraData() {
+        // given
+        Long targetId = target1.getId();
+        Long memberId = member.getId();
+
+        // when
+        Object[] result = memberRepositoryImpl.getMemberExtraData(memberId, targetId);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result[0]).isEqualTo(1); // 좋아요 여부
+        assertThat(result[1]).isEqualTo(0); // 신고 여부
+        assertThat(result[2]).isEqualTo(0); // 본인 여부
+    }
+
 }
