@@ -10,7 +10,7 @@ import site.festifriends.entity.Group;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.GroupCategory;
 
-public interface GroupRepository extends JpaRepository<Group, Long> {
+public interface GroupRepository extends JpaRepository<Group, Long>, GroupRepositoryCustom {
 
     @Query("SELECT g FROM Group g WHERE g.performance.id = :performanceId AND g.deleted IS NULL")
     Page<Group> findByPerformanceId(@Param("performanceId") Long performanceId, Pageable pageable);

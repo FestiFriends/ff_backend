@@ -59,6 +59,8 @@ public class MemberService {
                 .build();
 
             memberImageRepository.save(memberImage);
+
+            return newMember;
         }
 
         return member;
@@ -181,6 +183,13 @@ public class MemberService {
             nextCursorId,
             slice.hasNext()
         );
+    }
+
+    public void updateMemberProfile(Long memberId, String name, Integer age, String description, List<String> hashtag,
+        String sns) {
+        Member member = getMemberById(memberId);
+
+        member.updateProfile(name, age, description, hashtag, sns);
     }
 
     public Member getMemberById(Long memberId) {

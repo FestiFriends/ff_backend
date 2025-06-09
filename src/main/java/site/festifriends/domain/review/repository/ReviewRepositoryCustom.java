@@ -40,4 +40,19 @@ public interface ReviewRepositoryCustom {
      * 특정 모임에서 사용자가 리뷰를 작성하지 않은 대상자들 조회
      */
     List<Member> findUnreviewedMembersInGroup(Long userId, Long groupId);
+
+    /**
+     * 특정 사용자의 리뷰 평점 및 리뷰 달린 개수 조회
+     */
+    Object[] getMemberReviewCount(Long targetId);
+
+    /**
+     * 특정 사용자의 리뷰 태그 종류별 개수 조회
+     */
+    List<Object[]> countEachReviewTag(Long targetId);
+
+    /**
+     * 특정 사용자의 리뷰 내용 조회
+     */
+    List<String> getMemberReviewContent(Long targetId);
 }

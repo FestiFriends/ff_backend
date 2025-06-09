@@ -1,7 +1,6 @@
 package site.festifriends.domain.member.repository;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,8 +20,7 @@ import site.festifriends.domain.member.dto.LikedPerformanceDto;
 @RequiredArgsConstructor
 public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
-    @PersistenceContext
-    private EntityManager em;
+    private final EntityManager em;
 
     @Override
     public Slice<LikedMemberDto> getMyLikedMembers(Long memberId, Long cursorId, Pageable pageable) {
@@ -30,7 +28,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
         String sql = """
             SELECT m.nickname, m.gender, m.age, m.member_id,
-            GROUP_CONCAT(DISTINCT CONCAT(mi.member_id, '|', mi.src, '|', IFNULL(mi.alt, ''))) AS images,
+            GROUP_CONCAT(DISTINCT CONCAT(mi.member_image_id, '|', mi.src, '|', IFNULL(mi.alt, ''))) AS images,
             GROUP_CONCAT(mt.tag) as tags, b.bookmark_id
             FROM bookmark b
             JOIN member m ON b.target_id = m.member_id
@@ -174,6 +172,60 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         boolean hasNext = dtos.size() == pageSize;
 
         return new SliceImpl<>(dtos, pageable, hasNext);
+    }
+
+    @Override
+    public Object[] getMemberProfile(Long targetId) {
+        String sql = """
+            SELECT m.member_id, m.nickname, m.age, m.gender,
+            GROUP_CONCAT(DISTINCT CONCAT(mi.member_image_id, '|', mi.src, '|', IFNULL(mi.alt, ''))) AS images,
+            m.introduce,
+            GROUP_CONCAT(DISTINCT mt.tag) AS tags,
+            GROUP_CONCAT(DISTINCT ms.sns_link) AS sns
+            FROM member m
+            LEFT JOIN member_image mi ON m.member_id = mi.member_id
+            LEFT JOIN member_tags mt ON m.member_id = mt.member_id
+            LEFT JOIN member_sns ms ON m.member_id = ms.member_id
+            WHERE m.member_id = :memberId
+            AND m.deleted IS NULL
+            GROUP BY m.member_id, m.nickname, m.age, m.gender, m.introduce
+            """;
+
+        Query memberQuery = em.createNativeQuery(sql);
+
+        memberQuery.setParameter("memberId", targetId);
+
+        return (Object[]) memberQuery.getSingleResult();
+    }
+
+    @Override
+    public Object[] getMemberExtraData(Long memberId, Long targetId) {
+        if (memberId == null) {
+            return new Object[]{0, 0, 0};
+        }
+
+        String sql = """
+            SELECT
+            CASE WHEN EXISTS (
+                SELECT 1 FROM bookmark b
+                WHERE b.member_id = :memberId
+                AND b.target_id = :targetId
+                AND b.type = 'MEMBER'
+            ) THEN 1 ELSE 0 END as isLiked,
+            CASE WHEN EXISTS (
+                SELECT 1 FROM report r
+                WHERE r.member_id = :memberId
+                AND r.target_id = :targetId
+                AND r.type = 'MEMBER'
+            ) THEN 1 ELSE 0 END as isReported,
+            CASE WHEN :targetId = :memberId THEN 1 ELSE 0 END AS isMine
+            """;
+
+        Query memberQuery = em.createNativeQuery(sql);
+        memberQuery.setParameter("memberId", memberId);
+        memberQuery.setParameter("targetId", targetId);
+
+        return (Object[]) memberQuery.getSingleResult();
     }
 
     private List<String> splitToList(String value, String delimiter) {
