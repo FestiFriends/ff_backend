@@ -59,6 +59,8 @@ public class MemberService {
                 .build();
 
             memberImageRepository.save(memberImage);
+
+            return newMember;
         }
 
         return member;
