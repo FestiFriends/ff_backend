@@ -183,6 +183,13 @@ public class MemberService {
         );
     }
 
+    public void updateMemberProfile(Long memberId, String name, Integer age, String description, List<String> hashtag,
+        String sns) {
+        Member member = getMemberById(memberId);
+
+        member.updateProfile(name, age, description, hashtag, sns);
+    }
+
     public Member getMemberById(Long memberId) {
         return memberRepository.findById(memberId)
             .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "존재하지 않는 회원입니다."));

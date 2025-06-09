@@ -46,4 +46,8 @@ public class MemberImage extends BaseEntity {
         this.alt = alt;
     }
 
+    public void updateImage(String src, String alt) {
+        this.src = src;
+        this.alt = alt;
+    }
 }
