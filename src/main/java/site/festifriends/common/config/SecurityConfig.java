@@ -56,9 +56,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorizeHttpRequests ->
                 authorizeHttpRequests
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, readOnlyUrl).permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/groups/{groupId}").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/token").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/profiles/me").authenticated()
+                    .requestMatchers(HttpMethod.GET, readOnlyUrl).permitAll()
                     .anyRequest().authenticated())
             .exceptionHandling(exception ->
                 exception

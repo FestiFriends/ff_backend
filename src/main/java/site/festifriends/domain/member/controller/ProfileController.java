@@ -44,6 +44,7 @@ public class ProfileController implements ProfileApi {
     }
 
     @Override
+    @GetMapping("/me")
     public ResponseEntity<ResponseWrapper<GetMyProfileResponse>> getMyProfile(
         @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
