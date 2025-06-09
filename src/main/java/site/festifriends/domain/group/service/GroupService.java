@@ -542,6 +542,7 @@ public class GroupService {
             .endDate(group.getEndDate().format(DATE_FORMATTER))
             .memberCount(memberCount)
             .maxMembers(group.getCount())
+            .description(group.getIntroduction())
             .hashtag(group.getHashTags())
             .isHost(isHost)
             .host(host)

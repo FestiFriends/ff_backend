@@ -22,6 +22,7 @@ public class GroupResponse {
     private String endDate;
     private Integer memberCount;
     private Integer maxMembers;
+    private String description;
     private List<String> hashtag;
 
     @JsonProperty("isHost")
