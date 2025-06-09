@@ -12,4 +12,8 @@ public interface MemberRepositoryCustom {
     Long countMyLikedMembers(Long memberId);
 
     Slice<LikedPerformanceDto> getMyLikedPerformances(Long memberId, Long cursorId, Pageable pageable);
+
+    Object[] getMemberProfile(Long targetId);
+
+    Object[] getMemberExtraData(Long memberId, Long targetId);
 }

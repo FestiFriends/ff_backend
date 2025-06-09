@@ -177,4 +177,50 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             .setParameter("groupId", groupId)
             .getResultList();
     }
+
+    @Override
+    public Object[] getMemberReviewCount(Long targetId) {
+        String countSql = """
+            SELECT
+                AVG(r.score) AS avgRating,
+                COUNT(*) AS reviewCount
+            FROM review r
+            WHERE r.reviewee_id = :targetId
+            AND r.deleted IS NULL
+            """;
+
+        return (Object[]) entityManager.createNativeQuery(countSql)
+            .setParameter("targetId", targetId)
+            .getSingleResult();
+    }
+
+    @Override
+    public List<Object[]> countEachReviewTag(Long targetId) {
+        String sql = """
+            SELECT rt.tag, COUNT(*) AS tagCount
+            FROM review r
+            JOIN review_tags rt ON r.review_id = rt.review_id
+            WHERE r.reviewee_id = :targetId
+            AND r.deleted IS NULL
+            GROUP BY rt.tag
+            """;
+
+        return entityManager.createNativeQuery(sql)
+            .setParameter("targetId", targetId)
+            .getResultList();
+    }
+
+    @Override
+    public List<String> getMemberReviewContent(Long targetId) {
+        String sql = """
+            SELECT r.content
+            FROM review r
+            WHERE r.reviewee_id = :targetId
+            AND r.deleted IS NULL
+            """;
+
+        return entityManager.createNativeQuery(sql)
+            .setParameter("targetId", targetId)
+            .getResultList();
+    }
 }
