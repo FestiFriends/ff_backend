@@ -142,7 +142,7 @@ public class PostService {
             groupId
         );
 
-        notificationService.sendNotifications(members, event);
+        notificationService.sendNotifications(members, event, memberId);
 
         return PostCreateResponse.success();
     }

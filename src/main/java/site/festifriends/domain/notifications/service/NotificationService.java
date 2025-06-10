@@ -123,8 +123,11 @@ public class NotificationService {
         }
     }
 
-    public void sendNotifications(List<Member> members, NotificationEvent event) {
+    public void sendNotifications(List<Member> members, NotificationEvent event, Long writerId) {
         for (Member member : members) {
+            if (member.getId().equals(writerId)) {
+                continue;
+            }
             SseEmitter emitter = emitters.get(member.getId());
             if (emitter != null) {
                 try {
