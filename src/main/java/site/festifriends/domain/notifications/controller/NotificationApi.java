@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse;
@@ -23,5 +24,17 @@ public interface NotificationApi {
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam(required = false) Long cursorId,
         @RequestParam(defaultValue = "20") int size
+    );
+
+    @Operation(
+        summary = "알림 구독",
+        description = "알림을 실시간으로 구독합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "알림 구독 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+        }
+    )
+    ResponseEntity<SseEmitter> subscribe(
+        @AuthenticationPrincipal UserDetailsImpl userDetails
     );
 }

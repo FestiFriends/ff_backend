@@ -1,10 +1,12 @@
 package site.festifriends.domain.notifications.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse;
@@ -24,8 +26,9 @@ public class NotificationController implements NotificationApi {
         return ResponseEntity.ok(notificationService.getNotifications(userDetails.getMemberId(), cursorId, size));
     }
 
-//    @Override
-//    public ResponseEntity<SseEmitter> subscribe(UserDetailsImpl userDetails) {
-//        return null;
-//    }
+    @Override
+    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> subscribe(UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(notificationService.subscribe(userDetails.getMemberId()));
+    }
 }
