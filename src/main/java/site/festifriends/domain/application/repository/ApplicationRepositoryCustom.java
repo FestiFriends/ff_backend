@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.Role;
 
@@ -35,4 +36,8 @@ public interface ApplicationRepositoryCustom {
     Optional<MemberGroup> findByGroupIdAndMemberId(Long groupId, Long memberId);
 
     Optional<MemberGroup> findByGroupIdAndRole(Long groupId, Role role);
-} 
+
+    Optional<Member> findHostByGroupId(Long groupId);
+
+    List<Member> findMembersByGroupId(Long groupId);
+}

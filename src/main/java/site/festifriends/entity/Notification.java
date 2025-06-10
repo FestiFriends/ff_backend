@@ -57,11 +57,12 @@ public class Notification extends SoftDeleteEntity {
     private Long subTargetId;
 
     @Builder
-    public Notification(Member member, NotificationType type, String message, Long targetId) {
+    public Notification(Member member, NotificationType type, String message, Long targetId, Long subTargetId) {
         this.member = member;
         this.type = type;
         this.message = message;
         this.targetId = targetId;
+        this.subTargetId = subTargetId;
         this.isRead = false;
     }
 

@@ -27,6 +27,8 @@ import site.festifriends.domain.group.dto.PerformanceGroupsData;
 import site.festifriends.domain.group.dto.UpdateMemberRoleRequest;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.notifications.dto.NotificationEvent;
+import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
@@ -36,6 +38,7 @@ import site.festifriends.entity.Performance;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.GroupCategory;
+import site.festifriends.entity.enums.NotificationType;
 import site.festifriends.entity.enums.Role;
 
 @Service
@@ -48,6 +51,7 @@ public class GroupService {
     private final PerformanceRepository performanceRepository;
     private final ReviewRepository reviewRepository;
     private final MemberRepository memberRepository;
+    private final NotificationService notificationService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
@@ -428,6 +432,20 @@ public class GroupService {
 
             currentHost.changeRole(Role.MEMBER);
             targetMemberGroup.changeRole(Role.HOST);
+
+            NotificationEvent event = notificationService.createNotification(
+                targetMemberGroup.getMember(),
+                NotificationType.GROUP,
+                group.getTitle(),
+                groupId,
+                null
+            );
+
+            notificationService.sendNotification(
+                targetMemberId,
+                event
+            );
+
         } else if (newRole == Role.MEMBER) {
             if (targetMemberGroup.getRole() == Role.HOST) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST, "호스트는 다른 사람을 호스트로 지정한 후에만 권한을 변경할 수 있습니다.");
@@ -503,6 +521,19 @@ public class GroupService {
         if (targetMemberGroup.getRole() == Role.HOST) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "호스트는 퇴출시킬 수 없습니다.");
         }
+
+        NotificationEvent event = notificationService.createNotification(
+            targetMemberGroup.getMember(),
+            NotificationType.BANNED,
+            group.getTitle(),
+            null,
+            null
+        );
+
+        notificationService.sendNotification(
+            targetMemberId,
+            event
+        );
 
         // 멤버 퇴출 (hard delete)
         applicationRepository.delete(targetMemberGroup);

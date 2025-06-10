@@ -24,12 +24,15 @@ import site.festifriends.domain.application.dto.JoinedGroupResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.notifications.dto.NotificationEvent;
+import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.AgeRange;
 import site.festifriends.entity.enums.ApplicationStatus;
+import site.festifriends.entity.enums.NotificationType;
 import site.festifriends.entity.enums.Role;
 
 @Service
@@ -41,6 +44,7 @@ public class ApplicationService {
     private final ReviewRepository reviewRepository;
     private final MemberRepository memberRepository;
     private final GroupRepository groupRepository;
+    private final NotificationService notificationService;
 
     /**
      * 신청서 목록 조회
@@ -335,9 +339,37 @@ public class ApplicationService {
         if (status == ApplicationStatus.ACCEPTED) {
             application.approve();
             message = "모임 가입 신청을 수락하였습니다";
+
+            NotificationEvent event = notificationService.createNotification(
+                application.getMember(),
+                NotificationType.APPLIED,
+                application.getGroup().getTitle(),
+                null,
+                null
+            );
+
+            notificationService.sendNotification(
+                application.getMember().getId(),
+                event
+            );
+
         } else if (status == ApplicationStatus.REJECTED) {
             application.reject();
             message = "모임 가입 신청을 거절하였습니다";
+
+            NotificationEvent event = notificationService.createNotification(
+                application.getMember(),
+                NotificationType.REJECTED,
+                application.getGroup().getTitle(),
+                null,
+                null
+            );
+
+            notificationService.sendNotification(
+                application.getMember().getId(),
+                event
+            );
+
         } else {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 상태 값입니다. ACCEPTED 또는 REJECTED만 허용됩니다.");
         }
@@ -450,6 +482,19 @@ public class ApplicationService {
             .build();
 
         applicationRepository.save(application);
+
+        // 알림 생성 및 전송
+        Member host = applicationRepository.findHostByGroupId(groupId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "모임 방장을 찾을 수 없습니다."));
+
+        NotificationEvent event = notificationService.createNotification(
+            host,
+            NotificationType.APPLICATION,
+            group.getTitle(),
+            null,
+            null
+        );
+        notificationService.sendNotification(host.getId(), event);
 
         return ResponseWrapper.success("모임 신청이 완료되었습니다.", null);
     }

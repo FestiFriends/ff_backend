@@ -1,6 +1,7 @@
 package site.festifriends.domain.notifications.service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,11 @@ import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse.TargetDto;
 import site.festifriends.domain.notifications.dto.NotificationDto;
+import site.festifriends.domain.notifications.dto.NotificationEvent;
 import site.festifriends.domain.notifications.repository.NotificationRepository;
+import site.festifriends.entity.Member;
+import site.festifriends.entity.Notification;
+import site.festifriends.entity.enums.NotificationType;
 
 @Service
 @Slf4j
@@ -97,6 +102,89 @@ public class NotificationService {
         }
 
         return sseEmitter;
+    }
+
+    public void sendNotification(Long subjectId, NotificationEvent event) {
+        SseEmitter emitter = emitters.get(subjectId);
+
+        if (emitter == null) {
+            log.warn("No active SSE emitter found for member: {}", subjectId);
+            return;
+        }
+
+        try {
+            emitter.send(SseEmitter.event()
+                .name("notification")
+                .data(event));
+        } catch (IOException e) {
+            log.error("Failed to send notification to member: {}", subjectId, e);
+            emitters.remove(subjectId);
+            emitter.completeWithError(e);
+        }
+    }
+
+    public void sendNotifications(List<Member> members, NotificationEvent event) {
+        for (Member member : members) {
+            SseEmitter emitter = emitters.get(member.getId());
+            if (emitter != null) {
+                try {
+                    emitter.send(SseEmitter.event()
+                        .name("notification")
+                        .data(event));
+                } catch (IOException e) {
+                    log.error("Failed to send notification to member: {}", member.getId(), e);
+                    emitters.remove(member.getId());
+                    emitter.completeWithError(e);
+                }
+            }
+        }
+    }
+
+    @Transactional
+    public NotificationEvent createNotification(Member subject, NotificationType type, String s, Long targetId,
+        Long subTargetId) {
+        String message = s + type.getDescription();
+
+        Notification newNotification = Notification.builder()
+            .member(subject)
+            .type(type)
+            .message(message)
+            .targetId(targetId)
+            .subTargetId(subTargetId)
+            .build();
+
+        notificationRepository.save(newNotification);
+
+        return NotificationEvent.builder()
+            .message(message)
+            .createdAt(newNotification.getCreatedAt())
+            .build();
+    }
+
+    @Transactional
+    public NotificationEvent createNotifications(List<Member> subjects, NotificationType type, String s, Long targetId,
+        Long subTargetId) {
+        String message = s + type.getDescription();
+
+        List<Notification> notifications = new ArrayList<>();
+
+        for (Member subject : subjects) {
+            Notification newNotification = Notification.builder()
+                .member(subject)
+                .type(type)
+                .message(message)
+                .targetId(targetId)
+                .subTargetId(subTargetId)
+                .build();
+            notifications.add(newNotification);
+        }
+
+        notificationRepository.saveAll(notifications);
+
+        return NotificationEvent.builder()
+            .message(message)
+            .createdAt(LocalDateTime.now())
+            .build();
     }
 
     private TargetDto createTargetDto(NotificationDto notification) {
