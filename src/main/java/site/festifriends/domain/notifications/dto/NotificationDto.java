@@ -10,5 +10,9 @@ public class NotificationDto {
 
     private Long id;
     private String message;
+    private String type;
     private LocalDateTime createdAt;
+    private Boolean isRead;
+    private Long targetId;
+    private Long subTargetId;
 }

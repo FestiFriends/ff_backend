@@ -22,7 +22,7 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
         int pageSize = pageable.getPageSize() + 1;
 
         String sql = """
-            SELECT n.notification_id, n.message, n.created_at
+            SELECT n.notification_id, n.message, n.type ,n.created_at, n.is_read, n.target_id, n.sub_target_id
             FROM notification n
             WHERE n.member_id = :memberId
             AND n.is_read = false
@@ -43,7 +43,11 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
             .map(result -> NotificationDto.builder()
                 .id(((Number) result[0]).longValue())
                 .message((String) result[1])
-                .createdAt(((Timestamp) result[2]).toLocalDateTime())
+                .type((String) result[2])
+                .createdAt(((Timestamp) result[3]).toLocalDateTime())
+                .isRead((Boolean) result[4])
+                .targetId(((Number) result[5]).longValue())
+                .subTargetId(result[6] != null ? ((Number) result[6]).longValue() : null)
                 .build())
             .toList();
 

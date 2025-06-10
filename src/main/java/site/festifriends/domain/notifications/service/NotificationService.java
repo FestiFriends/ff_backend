@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse;
+import site.festifriends.domain.notifications.dto.GetNotificationsResponse.TargetDto;
 import site.festifriends.domain.notifications.dto.NotificationDto;
 import site.festifriends.domain.notifications.repository.NotificationRepository;
 
@@ -39,10 +40,15 @@ public class NotificationService {
         List<GetNotificationsResponse> response = new ArrayList<>();
 
         for (NotificationDto notification : slice.getContent()) {
+            TargetDto targetDto = createTargetDto(notification);
+
             response.add(GetNotificationsResponse.builder()
                 .id(notification.getId())
                 .message(notification.getMessage())
+                .type(notification.getType())
                 .createdAt(notification.getCreatedAt())
+                .isRead(notification.getIsRead())
+                .target(targetDto)
                 .build());
         }
 
@@ -88,5 +94,24 @@ public class NotificationService {
         }
 
         return sseEmitter;
+    }
+
+    private TargetDto createTargetDto(NotificationDto notification) {
+        if (notification.getTargetId() == null) {
+            return null;
+        }
+
+        if ("POST".equals(notification.getType())) {
+            return TargetDto.builder()
+                .postId(notification.getTargetId())
+                .groupId(notification.getSubTargetId())
+                .build();
+        } else if ("GROUP".equals(notification.getType()) || "SCHEDULE".equals(notification.getType())) {
+            return TargetDto.builder()
+                .groupId(notification.getTargetId())
+                .build();
+        }
+
+        return null;
     }
 }

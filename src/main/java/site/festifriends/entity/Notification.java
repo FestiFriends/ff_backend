@@ -52,6 +52,10 @@ public class Notification extends SoftDeleteEntity {
     @Comment("알림 대상 ID (공지, 댓글 등)")
     private Long targetId;
 
+    @Column(name = "sub_target_id")
+    @Comment("알림 서브 대상 ID (예: 새 글의 경우 그룹 ID )")
+    private Long subTargetId;
+
     @Builder
     public Notification(Member member, NotificationType type, String message, Long targetId) {
         this.member = member;
