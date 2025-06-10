@@ -70,7 +70,8 @@ public interface MemberApi {
         summary = "사용자 찜하기/취소",
         description = "사용자를 찜하거나 찜을 취소합니다.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "사용자 찜하기/취소 성공"),
+            @ApiResponse(responseCode = "200", description = "사용자를 찜했습니다"),
+            @ApiResponse(responseCode = "200", description = "사용자를 찜 취소했습니다"),
             @ApiResponse(responseCode = "400", description = "존재하지 않는 회원입니다."),
             @ApiResponse(responseCode = "400", description = "이미 찜한 사용자를 찜할 수 없습니다."),
             @ApiResponse(responseCode = "400", description = "찜하지 않은 사용자를 찜 취소할 수 없습니다."),
