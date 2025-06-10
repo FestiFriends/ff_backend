@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.jwt.TokenResolver;
@@ -20,12 +21,15 @@ import site.festifriends.domain.member.dto.LikedMemberDto;
 import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
 import site.festifriends.domain.member.dto.LikedPerformanceResponse;
+import site.festifriends.domain.member.dto.ToggleUserLikeResponse;
 import site.festifriends.domain.member.repository.BookmarkRepository;
 import site.festifriends.domain.member.repository.MemberImageRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
+import site.festifriends.entity.Bookmark;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberImage;
+import site.festifriends.entity.enums.BookmarkType;
 import site.festifriends.entity.enums.Gender;
 
 @Service
@@ -38,6 +42,7 @@ public class MemberService {
     private final BookmarkRepository bookmarkRepository;
     private final MemberImageRepository memberImageRepository;
 
+    @Transactional
     public Member loginOrSignUp(KakaoUserInfo userInfo) {
 
         Member member = memberRepository.findBySocialId(userInfo.getSocialId()).orElse(null);
@@ -66,12 +71,14 @@ public class MemberService {
         return member;
     }
 
+    @Transactional
     public void saveRefreshToken(Long memberId, String refreshToken) {
         Member member = getMemberById(memberId);
         member.updateRefreshToken(refreshToken);
         memberRepository.save(member);
     }
 
+    @Transactional
     public void deleteMember(Long memberId, HttpServletRequest request) {
         Member member = getMemberById(memberId);
 
@@ -84,6 +91,7 @@ public class MemberService {
         blackListTokenService.addBlackListToken(refreshToken);
     }
 
+    @Transactional(readOnly = true)
     public CursorResponseWrapper<LikedMemberResponse> getMyLikedMembers(Long memberId, Long cursorId, int size) {
         Pageable pageable = PageRequest.of(0, size);
 
@@ -120,10 +128,12 @@ public class MemberService {
         );
     }
 
+    @Transactional(readOnly = true)
     public Long getMyLikedMembersCount(Long memberId) {
         return memberRepository.countMyLikedMembers(memberId);
     }
 
+    @Transactional(readOnly = true)
     public CursorResponseWrapper<LikedPerformanceResponse> getMyLikedPerformances(Long memberId, Long cursorId,
         int size) {
         Pageable pageable = PageRequest.of(0, size);
@@ -185,11 +195,56 @@ public class MemberService {
         );
     }
 
+    @Transactional
     public void updateMemberProfile(Long memberId, String name, Integer age, String description, List<String> hashtag,
         String sns) {
         Member member = getMemberById(memberId);
 
         member.updateProfile(name, age, description, hashtag, sns);
+    }
+
+    @Transactional
+    public ToggleUserLikeResponse toggleLikeMember(Long memberId, Long targetId, boolean like) {
+        getMemberById(targetId);
+
+        Bookmark bookmark = bookmarkRepository.findByMemberIdAndTypeAndTargetId(memberId, BookmarkType.MEMBER, targetId)
+            .orElse(null);
+
+        boolean alreadyLiked = bookmark != null;
+
+        if (alreadyLiked && like) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "이미 찜한 사용자를 다시 찜할 수 없습니다.");
+        }
+
+        if (!alreadyLiked && !like) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "찜하지 않은 사용자를 찜 취소할 수 없습니다.");
+        }
+
+        if (!alreadyLiked && like) {
+            Member member = getMemberById(memberId);
+            Bookmark newBookmark = Bookmark.builder()
+                .member(member)
+                .type(BookmarkType.MEMBER)
+                .targetId(targetId)
+                .build();
+            bookmarkRepository.save(newBookmark);
+
+            return new ToggleUserLikeResponse(
+                true,
+                targetId
+            );
+        }
+
+        if (alreadyLiked && !like) {
+            bookmarkRepository.delete(bookmark);
+
+            return new ToggleUserLikeResponse(
+                false,
+                targetId
+            );
+        }
+
+        return null;
     }
 
     public Member getMemberById(Long memberId) {
