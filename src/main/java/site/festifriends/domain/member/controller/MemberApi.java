@@ -41,7 +41,7 @@ public interface MemberApi {
         summary = "내가 찜한 사용자 수",
         description = "내가 찜한 사용자 수를 조회합니다.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "찜한 사용자 삭제 성공"),
+            @ApiResponse(responseCode = "200", description = "요청이 성공적으로 처리되었습니다."),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
         }
     )
@@ -51,7 +51,7 @@ public interface MemberApi {
         summary = "찜한 공연 목록 조회",
         description = "내가 찜한 공연 목록을 조회합니다.",
         responses = {
-            @ApiResponse(responseCode = "200", description = "찜한 사용자 삭제 성공"),
+            @ApiResponse(responseCode = "200", description = "요청이 성공적으로 처리되었습니다."),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
         }
     )
