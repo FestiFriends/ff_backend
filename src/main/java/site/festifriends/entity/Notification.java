@@ -16,14 +16,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
-import site.festifriends.common.model.BaseEntity;
+import site.festifriends.common.model.SoftDeleteEntity;
 import site.festifriends.entity.enums.NotificationType;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "notification")
-public class Notification extends BaseEntity {
+public class Notification extends SoftDeleteEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
