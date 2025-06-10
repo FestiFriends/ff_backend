@@ -11,7 +11,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import site.festifriends.common.exception.BusinessException;
+import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse.TargetDto;
@@ -113,5 +116,31 @@ public class NotificationService {
         }
 
         return null;
+    }
+
+    @Transactional
+    public void readAllNotifications(Long memberId) {
+        notificationRepository.readAllNotifications(memberId);
+    }
+
+    @Transactional
+    public void readNotification(Long memberId, Long notificationId) {
+        if (!notificationRepository.existsById(notificationId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "알림이 존재하지 않습니다.");
+        }
+        notificationRepository.readNotification(memberId, notificationId);
+    }
+
+    @Transactional
+    public void deleteAllNotifications(Long memberId) {
+        notificationRepository.deleteAllNotifications(memberId);
+    }
+
+    @Transactional
+    public void deleteNotification(Long memberId, Long notificationId) {
+        if (!notificationRepository.existsById(notificationId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "알림이 존재하지 않습니다.");
+        }
+        notificationRepository.deleteNotification(memberId, notificationId);
     }
 }
