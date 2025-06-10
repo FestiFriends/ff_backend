@@ -13,6 +13,8 @@ import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.notifications.dto.NotificationEvent;
+import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.post.dto.PostCreateRequest;
 import site.festifriends.domain.post.dto.PostCreateResponse;
 import site.festifriends.domain.post.dto.PostListRequest;
@@ -29,6 +31,7 @@ import site.festifriends.entity.Member;
 import site.festifriends.entity.Post;
 import site.festifriends.entity.PostImage;
 import site.festifriends.entity.PostReaction;
+import site.festifriends.entity.enums.NotificationType;
 import site.festifriends.entity.enums.Role;
 
 @Service
@@ -41,6 +44,7 @@ public class PostService {
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
     private final PostImageRepository postImageRepository;
+    private final NotificationService notificationService;
 
     /**
      * 모임 내 게시글 목록 조회
@@ -128,6 +132,17 @@ public class PostService {
 
             postImageRepository.saveAll(images);
         }
+
+        List<Member> members = applicationRepository.findMembersByGroupId(groupId);
+        NotificationEvent event = notificationService.createNotifications(
+            members,
+            NotificationType.POST,
+            group.getTitle(),
+            savedPost.getId(),
+            groupId
+        );
+
+        notificationService.sendNotifications(members, event, memberId);
 
         return PostCreateResponse.success();
     }

@@ -14,6 +14,8 @@ import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
+import site.festifriends.domain.notifications.dto.NotificationEvent;
+import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.review.dto.CreateReviewRequest;
 import site.festifriends.domain.review.dto.RecentReviewResponse;
 import site.festifriends.domain.review.dto.UserReviewResponse;
@@ -26,6 +28,7 @@ import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.Performance;
 import site.festifriends.entity.Review;
+import site.festifriends.entity.enums.NotificationType;
 import site.festifriends.entity.enums.ReviewTag;
 
 @Service
@@ -36,6 +39,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
+    private final NotificationService notificationService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -181,6 +185,19 @@ public class ReviewService {
             .build();
 
         reviewRepository.save(review);
+
+        NotificationEvent event = notificationService.createNotification(
+            targetUser,
+            NotificationType.MY_PROFILE,
+            reviewer.getNickname(),
+            null,
+            null
+        );
+
+        notificationService.sendNotification(
+            targetUserId,
+            event
+        );
     }
 
     /**

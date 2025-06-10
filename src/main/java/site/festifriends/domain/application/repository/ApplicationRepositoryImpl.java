@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.QGroup;
 import site.festifriends.entity.QMember;
@@ -397,6 +398,52 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
             .fetchOne();
 
         return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<Member> findHostByGroupId(Long groupId) {
+        if (groupId == null) {
+            return Optional.empty();
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        Member host = queryFactory
+            .select(m)
+            .from(m)
+            .leftJoin(mg).on(mg.member.id.eq(m.id))
+            .where(
+                mg.group.id.eq(groupId),
+                mg.role.eq(Role.HOST),
+                mg.deleted.isNull()
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(host);
+    }
+
+    @Override
+    public List<Member> findMembersByGroupId(Long groupId) {
+        if (groupId == null) {
+            return Collections.emptyList();
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        List<Member> members = queryFactory
+            .select(m)
+            .from(m)
+            .join(mg).on(mg.member.id.eq(m.id))
+            .where(
+                mg.group.id.eq(groupId),
+                mg.status.eq(ApplicationStatus.CONFIRMED),
+                mg.deleted.isNull()
+            )
+            .fetch();
+
+        return members;
     }
 
     private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
