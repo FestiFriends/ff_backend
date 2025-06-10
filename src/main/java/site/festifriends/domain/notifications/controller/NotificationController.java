@@ -75,7 +75,7 @@ public class NotificationController implements NotificationApi {
     @DeleteMapping("/{notificationId}")
     public ResponseEntity<?> deleteNotification(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
-        @RequestParam Long notificationId
+        @PathVariable Long notificationId
     ) {
         notificationService.deleteNotification(userDetails.getMemberId(), notificationId);
         return ResponseEntity.ok(ResponseWrapper.success("알림을 삭제하였습니다."));

@@ -86,6 +86,6 @@ public interface NotificationApi {
     )
     ResponseEntity<?> deleteNotification(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
-        @RequestParam Long notificationId
+        @PathVariable Long notificationId
     );
 }
