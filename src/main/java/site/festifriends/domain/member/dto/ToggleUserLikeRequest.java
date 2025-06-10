@@ -1,6 +1,6 @@
 package site.festifriends.domain.member.dto;
 
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ToggleUserLikeRequest {
 
-    @NotEmpty
+    @NotNull
     private Boolean isLiked;
 
 }
