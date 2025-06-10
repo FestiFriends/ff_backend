@@ -144,6 +144,7 @@ public class NotificationService {
         notificationRepository.deleteNotification(memberId, notificationId);
     }
 
+    @Transactional(readOnly = true)
     public boolean existUnreadNotification(Long memberId) {
         return notificationRepository.existsByMemberIdAndIsReadFalseAndDeletedIsNull(memberId);
     }
