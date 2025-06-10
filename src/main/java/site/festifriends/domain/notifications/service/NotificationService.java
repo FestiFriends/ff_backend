@@ -143,4 +143,8 @@ public class NotificationService {
         }
         notificationRepository.deleteNotification(memberId, notificationId);
     }
+
+    public boolean existUnreadNotification(Long memberId) {
+        return notificationRepository.existsByMemberIdAndIsReadFalseAndDeletedIsNull(memberId);
+    }
 }

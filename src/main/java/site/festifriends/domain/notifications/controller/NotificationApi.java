@@ -77,8 +77,8 @@ public interface NotificationApi {
     );
 
     @Operation(
-        summary = "알림 개발 삭제",
-        description = "개발 알림을 삭제합니다.",
+        summary = "알림 개별 삭제",
+        description = "개별 알림을 삭제합니다.",
         responses = {
             @ApiResponse(responseCode = "200", description = "알림을 삭제하였습니다."),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
@@ -87,5 +87,17 @@ public interface NotificationApi {
     ResponseEntity<?> deleteNotification(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @PathVariable Long notificationId
+    );
+
+    @Operation(
+        summary = "새로운 알림 조회",
+        description = "회원이 읽지 않은 새로운 알림이 있는지 조회합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "알림 상태를 확인했습니다."),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+        }
+    )
+    ResponseEntity<?> existUnreadNotification(
+        @AuthenticationPrincipal UserDetailsImpl userDetails
     );
 }

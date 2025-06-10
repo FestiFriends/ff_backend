@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.notifications.dto.ExistUnreadNotificationResponse;
 import site.festifriends.domain.notifications.dto.GetNotificationsResponse;
 import site.festifriends.domain.notifications.service.NotificationService;
 
@@ -81,5 +82,20 @@ public class NotificationController implements NotificationApi {
         return ResponseEntity.ok(ResponseWrapper.success("알림을 삭제하였습니다."));
     }
 
+    @Override
+    @GetMapping("/unread-exists")
+    public ResponseEntity<?> existUnreadNotification(
+        @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        boolean exists = notificationService.existUnreadNotification(userDetails.getMemberId());
 
+        ExistUnreadNotificationResponse response = ExistUnreadNotificationResponse.builder()
+            .hasUnread(exists)
+            .build();
+
+        return ResponseEntity.ok(ResponseWrapper.success(
+            "알림 상태를 확인했습니다.",
+            response
+        ));
+    }
 }
