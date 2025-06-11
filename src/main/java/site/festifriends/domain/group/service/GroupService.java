@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.chat.service.ChatService;
 import site.festifriends.domain.group.dto.GroupCreateRequest;
 import site.festifriends.domain.group.dto.GroupDetailResponse;
 import site.festifriends.domain.group.dto.GroupMemberResponse;
@@ -52,6 +53,7 @@ public class GroupService {
     private final ReviewRepository reviewRepository;
     private final MemberRepository memberRepository;
     private final NotificationService notificationService;
+    private final ChatService chatService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
@@ -99,6 +101,8 @@ public class GroupService {
             .build();
 
         applicationRepository.save(hostMemberGroup);
+
+        chatService.createChatRoom(savedGroup);
     }
 
     private void validateGroupCreateRequest(GroupCreateRequest request) {
@@ -491,6 +495,8 @@ public class GroupService {
         // 일반 멤버 탈퇴 또는 조건을 만족하는 모임장 탈퇴
         applicationRepository.delete(memberGroup);
 
+        chatService.leaveChatRoom(memberGroup.getMember(), group);
+
         // 탈퇴 후 모임에 아무도 없으면 모임 삭제 (이론적으로는 위에서 처리되지만 안전장치)
         int remainingMemberCount = applicationRepository.countGroupMembers(groupId);
         if (remainingMemberCount == 0) {
@@ -534,6 +540,8 @@ public class GroupService {
             targetMemberId,
             event
         );
+
+        chatService.leaveChatRoom(targetMemberGroup.getMember(), group);
 
         // 멤버 퇴출 (hard delete)
         applicationRepository.delete(targetMemberGroup);

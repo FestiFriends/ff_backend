@@ -22,6 +22,7 @@ import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.dto.JoinedGroupResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.chat.service.ChatService;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.notifications.dto.NotificationEvent;
@@ -45,6 +46,7 @@ public class ApplicationService {
     private final MemberRepository memberRepository;
     private final GroupRepository groupRepository;
     private final NotificationService notificationService;
+    private final ChatService chatService;
 
     /**
      * 신청서 목록 조회
@@ -352,6 +354,8 @@ public class ApplicationService {
                 application.getMember().getId(),
                 event
             );
+
+            chatService.memberJoinChatRoom(application.getMember(), application.getGroup());
 
         } else if (status == ApplicationStatus.REJECTED) {
             application.reject();
