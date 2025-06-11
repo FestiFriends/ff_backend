@@ -1,0 +1,12 @@
+package site.festifriends.domain.chat.repository;
+
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import site.festifriends.entity.ChatRoom;
+import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberChatRoom;
+
+public interface MemberChatRoomRepository extends JpaRepository<MemberChatRoom, Long> {
+
+    Optional<MemberChatRoom> findByMemberAndChatRoom(Member member, ChatRoom chatRoom);
+}

@@ -60,6 +60,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/token").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/profiles/me").authenticated()
                     .requestMatchers(HttpMethod.GET, readOnlyUrl).permitAll()
+                    .requestMatchers("/chat/**").permitAll()
                     .anyRequest().authenticated())
             .exceptionHandling(exception ->
                 exception
