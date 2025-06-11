@@ -9,7 +9,7 @@ import site.festifriends.domain.image.dto.ImageDto;
 @Builder
 public class ChatMessageDto {
 
-    private Long messageId;
+    private Long chatId;
     private Long senderId;
     private String senderName;
     private ImageDto senderImage;

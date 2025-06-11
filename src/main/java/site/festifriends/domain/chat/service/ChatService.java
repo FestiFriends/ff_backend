@@ -98,7 +98,7 @@ public class ChatService {
                 .build() : null;
 
         ChatMessageResponse chatMessageResponse = ChatMessageResponse.builder()
-            .messageId(newMessage.getId())
+            .chatId(newMessage.getId())
             .senderId(member.getId())
             .senderName(member.getNickname())
             .senderImage(senderImageDto)
@@ -113,18 +113,22 @@ public class ChatService {
 
     @Transactional(readOnly = true)
     public CursorResponseWrapper<ChatMessageResponse> getChatMessages(Long chatRoomId, Long cursorId, int size) {
+        if (!chatRoomRepository.existsById(chatRoomId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "해당하는 채팅방이 없습니다.");
+        }
+        
         Pageable pageable = PageRequest.of(0, size);
         Slice<ChatMessageDto> slice = chatMessageRepository.getChatMessages(chatRoomId, cursorId, pageable);
 
         if (slice.isEmpty()) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "채팅 메시지가 없습니다.");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "채팅 메시지가 없습니다.");
         }
 
         List<ChatMessageResponse> response = new ArrayList<>();
 
         for (ChatMessageDto chatMessage : slice.getContent()) {
             response.add(ChatMessageResponse.builder()
-                .messageId(chatMessage.getMessageId())
+                .chatId(chatMessage.getChatId())
                 .senderId(chatMessage.getSenderId())
                 .senderName(chatMessage.getSenderName())
                 .senderImage(chatMessage.getSenderImage())
@@ -136,7 +140,7 @@ public class ChatService {
         Long nextCursorId = null;
         if (slice.hasNext()) {
             response.remove(response.size() - 1);
-            nextCursorId = slice.getContent().get(size).getMessageId();
+            nextCursorId = slice.getContent().get(size).getChatId();
         }
 
         return CursorResponseWrapper.success(
