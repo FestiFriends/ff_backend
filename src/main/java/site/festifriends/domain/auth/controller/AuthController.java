@@ -66,7 +66,7 @@ public class AuthController implements AuthApi {
     @Override
     @GetMapping("/dev/callback/kakao")
     public ResponseEntity<?> localHandleCallback(@RequestParam String code) {
-        AuthInfo info = authService.handleOAuthCallback(code);
+        AuthInfo info = authService.handleDevOAuthCallback(code);
 
         HttpHeaders headers = new HttpHeaders();
 
