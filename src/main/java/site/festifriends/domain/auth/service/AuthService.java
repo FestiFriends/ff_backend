@@ -44,6 +44,20 @@ public class AuthService {
         return new AuthInfo(accessToken, refreshToken, member.getGender() == Gender.ALL);
     }
 
+    public AuthInfo handleDevOAuthCallback(String code) {
+        JsonNode attributes = kakaoOAuthProvider.getDevUserInfo(code);
+        KakaoUserInfo kakaoUserInfo = new KakaoUserInfo(attributes);
+
+        Member member = memberService.loginOrSignUp(kakaoUserInfo);
+
+        String accessToken = accessTokenProvider.generateToken(member.getId());
+        String refreshToken = refreshTokenProvider.generateToken(member.getId());
+
+        memberService.saveRefreshToken(member.getId(), refreshToken);
+
+        return new AuthInfo(accessToken, refreshToken, member.getGender() == Gender.ALL);
+    }
+
     public AuthInfo reissueAccessToken(HttpServletRequest request) {
         String refreshToken = TokenResolver.extractRefreshToken(request);
 

@@ -56,8 +56,31 @@ public class KakaoOAuthProvider {
             .body(JsonNode.class);
     }
 
+    public JsonNode getDevToken(String code) {
+        final String uri =
+            UriComponentsBuilder
+                .fromUriString(TOKEN_URL)
+                .queryParam("grant_type", "authorization_code")
+                .queryParam("client_id", clientId)
+                .queryParam("redirect_uri", devRedirectUri)
+                .queryParam("code", code)
+                .build()
+                .toUriString();
+
+        return restClient
+            .post()
+            .uri(uri)
+            .retrieve()
+            .body(JsonNode.class);
+    }
+
     public JsonNode getUserInfo(String code) {
         JsonNode token = getToken(code);
+        return getUserInfoFromKakao(token.get("access_token").asText());
+    }
+
+    public JsonNode getDevUserInfo(String code) {
+        JsonNode token = getDevToken(code);
         return getUserInfoFromKakao(token.get("access_token").asText());
     }
 
