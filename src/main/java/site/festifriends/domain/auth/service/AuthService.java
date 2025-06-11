@@ -67,7 +67,7 @@ public class AuthService {
         if (!refreshTokenProvider.validateToken(refreshToken)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.");
         }
-        
+
         if (blackListTokenService.isBlackListed(refreshToken)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "금지된 리프레시 토큰입니다.");
         }
@@ -84,5 +84,9 @@ public class AuthService {
 
         blackListTokenService.addBlackListToken(accessToken);
         blackListTokenService.addBlackListToken(refreshToken);
+    }
+
+    public String getDevAuthorizationUrl() {
+        return kakaoOAuthProvider.getDevAuthorizationUrl();
     }
 }

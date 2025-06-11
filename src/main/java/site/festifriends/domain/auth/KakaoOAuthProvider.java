@@ -21,6 +21,9 @@ public class KakaoOAuthProvider {
     @Value("${oauth.kakao.redirect-uri}")
     private String redirectUri;
 
+    @Value("${oauth.kakao.dev.redirect-uri}")
+    private String devRedirectUri;
+
     private static final String AUTHORIZE_URL = "https://kauth.kakao.com/oauth/authorize";
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
@@ -67,4 +70,13 @@ public class KakaoOAuthProvider {
             .body(JsonNode.class);
     }
 
+    public String getDevAuthorizationUrl() {
+        return UriComponentsBuilder
+            .fromUriString(AUTHORIZE_URL)
+            .queryParam("response_type", "code")
+            .queryParam("client_id", clientId)
+            .queryParam("redirect_uri", devRedirectUri)
+            .build()
+            .toUriString();
+    }
 }

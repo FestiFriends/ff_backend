@@ -52,6 +52,35 @@ public class AuthController implements AuthApi {
             ));
     }
 
+    // 임시 개발용
+    @Override
+    @GetMapping("/dev/signup/kakao")
+    public ResponseEntity<?> localLogin() {
+        return ResponseEntity
+            .status(HttpStatus.FOUND)
+            .location(URI.create(authService.getDevAuthorizationUrl()))
+            .build();
+    }
+
+    // 임시 개발용
+    @Override
+    @GetMapping("/dev/callback/kakao")
+    public ResponseEntity<?> localHandleCallback(@RequestParam String code) {
+        AuthInfo info = authService.handleOAuthCallback(code);
+
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.add("Set-Cookie", RefreshTokenCookieFactory.createDevCookie(info.getRefreshToken()).toString());
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(ResponseWrapper.success(
+                HttpStatus.OK,
+                "로그인에 성공했습니다.",
+                new AuthResponse(info.getAccessToken(), info.getIsNewUser())
+            ));
+    }
+
     @Override
     @PostMapping("/logout")
     public ResponseEntity<?> logout(UserDetailsImpl userDetails, HttpServletRequest request) {
