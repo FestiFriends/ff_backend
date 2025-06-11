@@ -65,8 +65,6 @@ logging:
     root: INFO
     org.hibernate.SQL: OFF
     org.hibernate.type.descriptor.sql.BasicBinder: OFF
-  file:
-    name: /var/log/festi/server.log
 
 ---
 spring:
