@@ -46,7 +46,7 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
                 .type((String) result[2])
                 .createdAt(((Timestamp) result[3]).toLocalDateTime())
                 .isRead((Boolean) result[4])
-                .targetId(((Number) result[5]).longValue())
+                .targetId(result[5] != null ? ((Number) result[5]).longValue() : null)
                 .subTargetId(result[6] != null ? ((Number) result[6]).longValue() : null)
                 .build())
             .toList();
