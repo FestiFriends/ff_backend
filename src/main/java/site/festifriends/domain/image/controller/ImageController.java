@@ -1,5 +1,6 @@
 package site.festifriends.domain.image.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,7 @@ public class ImageController {
     private final ImageService imageService;
 
     @PostMapping("/presigned")
-    public ResponseEntity<?> getPreSignedUrl(@RequestBody UploadImageRequest request) {
+    public ResponseEntity<?> getPreSignedUrl(@Valid @RequestBody UploadImageRequest request) {
         return ResponseEntity.ok().body(ResponseWrapper.success(
             "url이 성공적으로 생성되었습니다.",
             new UploadImageResponse(imageService.getPreSignedUrl(request.getFileName())))

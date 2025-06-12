@@ -1,5 +1,6 @@
 package site.festifriends.domain.post.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -72,7 +73,7 @@ public class PostController implements PostApi {
     public ResponseEntity<ResponseWrapper<PostCreateResponse>> createPost(
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
-        @RequestBody PostCreateRequest request
+        @Valid @RequestBody PostCreateRequest request
     ) {
         PostCreateResponse response = postService.createPost(groupId, user.getMemberId(), request);
 
@@ -85,7 +86,7 @@ public class PostController implements PostApi {
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
         @PathVariable Long postId,
-        @RequestBody PostUpdateRequest request
+        @Valid @RequestBody PostUpdateRequest request
     ) {
         PostUpdateDeleteResponse response = postService.updatePost(groupId, postId, user.getMemberId(), request);
 
@@ -110,7 +111,7 @@ public class PostController implements PostApi {
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
         @PathVariable Long postId,
-        @RequestBody PostPinRequest request
+        @Valid @RequestBody PostPinRequest request
     ) {
         postService.pinPost(groupId, postId, user.getMemberId(), request);
 
@@ -126,7 +127,7 @@ public class PostController implements PostApi {
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
         @PathVariable Long postId,
-        @RequestBody PostReactionRequest request
+        @Valid @RequestBody PostReactionRequest request
     ) {
         postService.togglePostReaction(groupId, postId, user.getMemberId(), request);
 

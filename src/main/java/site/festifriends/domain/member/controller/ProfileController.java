@@ -1,5 +1,6 @@
 package site.festifriends.domain.member.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -59,7 +60,7 @@ public class ProfileController implements ProfileApi {
     @PatchMapping("/me")
     public ResponseEntity<ResponseWrapper<?>> updateMyProfile(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
-        @RequestBody UpdateProfileRequest request
+        @Valid @RequestBody UpdateProfileRequest request
     ) {
         profileService.updateMyProfile(userDetails.getMemberId(), request);
 

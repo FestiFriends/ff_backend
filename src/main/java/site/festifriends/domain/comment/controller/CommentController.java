@@ -1,5 +1,6 @@
 package site.festifriends.domain.comment.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -55,7 +56,7 @@ public class CommentController implements CommentApi {
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long groupId,
         @PathVariable Long postId,
-        @RequestBody CommentCreateRequest request
+        @Valid @RequestBody CommentCreateRequest request
     ) {
         commentService.createComment(groupId, postId, user.getMemberId(), request);
 
@@ -69,7 +70,7 @@ public class CommentController implements CommentApi {
         @PathVariable Long groupId,
         @PathVariable Long postId,
         @PathVariable Long commentId,
-        @RequestBody CommentUpdateRequest request
+        @Valid @RequestBody CommentUpdateRequest request
     ) {
         commentService.updateComment(groupId, postId, commentId, user.getMemberId(), request);
 

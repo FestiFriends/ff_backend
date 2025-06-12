@@ -1,5 +1,6 @@
 package site.festifriends.domain.application.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -72,7 +73,7 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ResponseWrapper<Void>> updateApplicationStatus(
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long applicationId,
-        @RequestBody ApplicationStatusRequest request
+        @Valid @RequestBody ApplicationStatusRequest request
     ) {
         ResponseWrapper<Void> response =
             applicationService.updateApplicationStatus(user.getMemberId(), applicationId, request);
@@ -85,7 +86,7 @@ public class ApplicationController implements ApplicationApi {
     public ResponseEntity<ResponseWrapper<Void>> confirmApplication(
         @AuthenticationPrincipal UserDetailsImpl user,
         @PathVariable Long applicationId,
-        @RequestBody ApplicationStatusRequest request
+        @Valid @RequestBody ApplicationStatusRequest request
     ) {
         ResponseWrapper<Void> response =
             applicationService.confirmApplication(user.getMemberId(), applicationId, request);
