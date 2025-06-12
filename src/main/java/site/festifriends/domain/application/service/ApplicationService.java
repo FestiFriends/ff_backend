@@ -410,18 +410,17 @@ public class ApplicationService {
     }
 
     /**
-     * 모임 신청 취소&확정안함
+     * 모임 신청 취소&확정안함 (하드 삭제)
      */
+    @Transactional
     public ResponseWrapper<ApplicationStatusResponse> cancelApplication(Long memberId, Long applicationId) {
         MemberGroup application = applicationRepository.findById(applicationId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "신청서를 찾을 수 없습니다."));
 
         validateApplicantPermission(memberId, application);
 
-        if (application.getStatus() == ApplicationStatus.PENDING) {
-            application.cancel();
-        } else if (application.getStatus() == ApplicationStatus.ACCEPTED) {
-            application.cancel();
+        if (application.getStatus() == ApplicationStatus.PENDING || application.getStatus() == ApplicationStatus.ACCEPTED) {
+            applicationRepository.delete(application);
         } else {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "취소할 수 없는 신청서 상태입니다.");
         }
