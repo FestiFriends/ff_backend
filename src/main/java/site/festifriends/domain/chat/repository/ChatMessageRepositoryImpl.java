@@ -43,7 +43,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
 
         List<ChatMessageDto> dtos = results.stream()
             .map(result -> ChatMessageDto.builder()
-                .messageId(((Number) result[0]).longValue())
+                .chatId(((Number) result[0]).longValue())
                 .senderId(((Number) result[1]).longValue())
                 .senderName((String) result[2])
                 .senderImage(result[3] != null ? ImageDto.builder()
