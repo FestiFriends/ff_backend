@@ -202,6 +202,8 @@ public class ReviewService {
 
     /**
      * 내가 작성한 리뷰 목록 조회 (커서 기반 페이지네이션)
+     * - size 파라미터는 조회할 모임의 개수를 의미
+     * - 각 모임에서는 해당 모임의 모든 리뷰를 조회
      */
     public CursorResponseWrapper<WrittenReviewResponse> getWrittenReviews(Long reviewerId,
         WrittenReviewRequest request) {
@@ -264,6 +266,8 @@ public class ReviewService {
 
     /**
      * 작성 가능한 리뷰 목록 조회 (커서 기반 페이지네이션)
+     * - size 파라미터는 조회할 모임의 개수를 의미
+     * - 각 모임에서는 리뷰 작성 가능한 모든 멤버를 조회
      */
     public CursorResponseWrapper<WritableReviewResponse> getWritableReviews(Long userId,
         WritableReviewRequest request) {

@@ -113,7 +113,7 @@ public interface ApplicationApi {
 
     @Operation(
         summary = "모임 가입 신청 취소&확정안함",
-        description = "신청자가 모임 신청을 취소합니다.",
+        description = "신청자가 모임 신청을 완전히 삭제합니다. 데이터베이스에서 영구적으로 제거됩니다.",
         responses = {
             @ApiResponse(responseCode = "200", description = "모임 신청서 취소 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청"),

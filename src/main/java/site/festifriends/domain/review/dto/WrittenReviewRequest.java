@@ -11,6 +11,6 @@ public class WrittenReviewRequest {
     @Parameter(description = "커서 ID (기본값: 첫번째 요소)")
     private Long cursorId;
 
-    @Parameter(description = "한 페이지당 항목 수 (기본값: 20)")
+    @Parameter(description = "한 페이지당 모임 수 (기본값: 20)")
     private Integer size = 20;
 }
