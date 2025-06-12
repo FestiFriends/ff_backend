@@ -1,5 +1,6 @@
 package site.festifriends.domain.performance.controller;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +55,7 @@ public class PerformanceController implements PerformanceApi {
     @PatchMapping("/{performanceId}/favorites")
     public ResponseEntity<ResponseWrapper<PerformanceFavoriteResponse>> togglePerformanceFavorite(
         @PathVariable Long performanceId,
-        @RequestBody PerformanceFavoriteRequest request,
+        @Valid @RequestBody PerformanceFavoriteRequest request,
         @AuthenticationPrincipal UserDetailsImpl user
     ) {
         PerformanceFavoriteResponse response = performanceService.togglePerformanceFavorite(

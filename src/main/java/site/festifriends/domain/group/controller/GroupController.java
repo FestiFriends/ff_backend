@@ -1,5 +1,6 @@
 package site.festifriends.domain.group.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,7 +34,7 @@ public class GroupController implements GroupApi {
     @Override
     @PostMapping("/api/v1/groups")
     public ResponseEntity<ResponseWrapper<Void>> createGroup(
-        @RequestBody GroupCreateRequest request,
+        @Valid @RequestBody GroupCreateRequest request,
         @AuthenticationPrincipal UserDetailsImpl user
     ) {
         groupService.createGroup(request, user.getMemberId());
@@ -74,7 +75,7 @@ public class GroupController implements GroupApi {
     @Override
     public ResponseEntity<ResponseWrapper<Void>> updateGroup(
         @PathVariable Long groupId,
-        GroupUpdateRequest request,
+        @Valid @RequestBody GroupUpdateRequest request,
         @AuthenticationPrincipal UserDetailsImpl user) {
 
         Long memberId = user.getMemberId();
@@ -87,7 +88,7 @@ public class GroupController implements GroupApi {
     @PostMapping("/api/v1/groups/{groupId}/join")
     public ResponseEntity<ResponseWrapper<Void>> joinGroup(
         @PathVariable Long groupId,
-        @RequestBody ApplicationRequest request,
+        @Valid @RequestBody ApplicationRequest request,
         @AuthenticationPrincipal UserDetailsImpl user) {
 
         Long memberId = user.getMemberId();
@@ -115,7 +116,7 @@ public class GroupController implements GroupApi {
     public ResponseEntity<ResponseWrapper<Void>> updateMemberRole(
         @PathVariable Long groupId,
         @PathVariable Long memberId,
-        @RequestBody UpdateMemberRoleRequest request,
+        @Valid @RequestBody UpdateMemberRoleRequest request,
         @AuthenticationPrincipal UserDetailsImpl user) {
 
         Long hostId = user.getMemberId();
@@ -149,4 +150,3 @@ public class GroupController implements GroupApi {
         return ResponseEntity.ok(ResponseWrapper.success("모임원이 성공적으로 퇴출되었습니다.", null));
     }
 }
-

@@ -1,6 +1,7 @@
 package site.festifriends.domain.member.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -75,7 +76,7 @@ public class MemberController implements MemberApi {
     public ResponseEntity<?> toggleLikeMember(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @PathVariable Long userId,
-        @RequestBody ToggleUserLikeRequest request
+        @Valid @RequestBody ToggleUserLikeRequest request
     ) {
         boolean like = request.getIsLiked();
         ToggleUserLikeResponse response = memberService.toggleLikeMember(userDetails.getMemberId(), userId, like);
