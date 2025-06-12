@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<ResponseWrapper<?>> handleBusinessException(BusinessException e) {
         log.warn("handleBusinessException : {}", e.getMessage());
         return ResponseEntity.status(e.getErrorCode().getStatus())
-                .body(ResponseWrapper.error(e.getErrorCode(), e.getMessage()));
+            .body(ResponseWrapper.error(e.getErrorCode(), e.getMessage()));
     }
 
     @ExceptionHandler({
@@ -34,10 +34,29 @@ public class GlobalExceptionHandler {
         TypeMismatchException.class,
         MethodArgumentTypeMismatchException.class
     })
-    protected ResponseEntity<ResponseWrapper<?>> handleValidException(
-        MethodArgumentNotValidException e) {
+    protected ResponseEntity<ResponseWrapper<?>> handleValidException(Exception e) {
         log.warn("handleValidException : {}", e.getMessage());
-        return ResponseEntity.status(e.getStatusCode()).body(ResponseWrapper.error(ErrorCode.BAD_REQUEST));
+
+        if (e instanceof MethodArgumentNotValidException validException) {
+            String errorMessage = validException.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getDefaultMessage())
+                .findFirst()
+                .orElse("잘못된 요청입니다.");
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ResponseWrapper.error(ErrorCode.BAD_REQUEST, errorMessage));
+        } else if (e instanceof BindException bindException) {
+            String errorMessage = bindException.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getDefaultMessage())
+                .findFirst()
+                .orElse("잘못된 요청입니다.");
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ResponseWrapper.error(ErrorCode.BAD_REQUEST, errorMessage));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ResponseWrapper.error(ErrorCode.BAD_REQUEST));
     }
 
     @ExceptionHandler({
