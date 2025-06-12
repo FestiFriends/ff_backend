@@ -37,7 +37,7 @@ public interface ReviewApi {
 
     @Operation(
         summary = "내가 작성한 리뷰 조회",
-        description = "본인이 작성한 리뷰 목록을 커서 기반 페이지네이션으로 조회합니다. 본인만 조회할 수 있습니다.",
+        description = "본인이 작성한 리뷰 목록을 모임별로 그룹화하여 커서 기반 페이지네이션으로 조회합니다. size 파라미터는 조회할 모임의 개수를 의미하며, 각 모임에서는 해당 모임의 모든 리뷰를 조회합니다.",
         responses = {
             @ApiResponse(responseCode = "200", description = "내가 작성한 리뷰 조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
@@ -66,7 +66,7 @@ public interface ReviewApi {
 
     @Operation(
         summary = "작성 가능한 리뷰 목록 조회",
-        description = "로그인한 사용자가 참가한 모임 중에서 아직 리뷰를 남기지 않은 사용자들의 목록을 조회합니다.",
+        description = "로그인한 사용자가 참가한 모임 중에서 아직 리뷰를 남기지 않은 사용자들의 목록을 모임별로 그룹화하여 조회합니다. size 파라미터는 조회할 모임의 개수를 의미하며, 각 모임에서는 리뷰 작성 가능한 모든 사용자를 조회합니다.",
         responses = {
             @ApiResponse(responseCode = "200", description = "작성 가능한 리뷰 목록 조회 성공"),
             @ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
