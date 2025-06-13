@@ -160,4 +160,9 @@ public class ChatService {
 
         memberChatRoomRepository.save(memberChatRoom);
     }
+
+    public ChatRoom getChatRoomByGroup(Group group) {
+        return chatRoomRepository.findByGroup(group)
+            .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "해당하는 채팅방이 없습니다."));
+    }
 }

@@ -249,7 +249,7 @@ public class GroupService {
     /**
      * 모임 기본 정보 조회
      */
-    public GroupDetailResponse getGroupDetail(Long groupId) {
+    public GroupDetailResponse getGroupDetail(Long memberId, Long groupId) {
         Group group = groupRepository.findById(groupId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
 
@@ -296,6 +296,8 @@ public class GroupService {
             .poster(performance.getPoster())
             .build();
 
+        ChatRoom chatRoom = chatService.getChatRoomByGroup(group);
+
         return GroupDetailResponse.builder()
             .id(group.getId().toString())
             .performance(performanceInfo)
@@ -312,6 +314,8 @@ public class GroupService {
             .description(group.getIntroduction())
             .hashtag(group.getHashTags())
             .host(host)
+            .chatRoomId(chatRoom != null ? chatRoom.getId() : null)
+            .isMember(applicationRepository.isGroupParticipant(groupId, memberId))
             .build();
     }
 
