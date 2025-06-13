@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.enums.Role;
@@ -13,13 +14,17 @@ public interface ApplicationRepositoryCustom {
 
     Slice<MemberGroup> findApplicationsWithSlice(Long hostId, Long cursorId, Pageable pageable);
 
+    Slice<Group> findUnstartedGroupsWithPendingApplicationsSlice(Long hostId, Long cursorId, Pageable pageable);
+
+    List<MemberGroup> findPendingApplicationsByGroupIds(List<Long> groupIds);
+
+    Map<Long, Long> findConfirmedMemberCountsByGroupIds(List<Long> groupIds);
+
     Slice<MemberGroup> findAppliedApplicationsWithSlice(Long memberId, Long cursorId, Pageable pageable);
 
     Slice<MemberGroup> findJoinedGroupsWithSlice(Long memberId, Long cursorId, Pageable pageable);
 
     Map<Long, MemberGroup> findHostsByGroupIds(List<Long> groupIds);
-
-    Map<Long, Long> findConfirmedMemberCountsByGroupIds(List<Long> groupIds);
 
     boolean existsByGroupIdAndMemberIdAndRole(Long groupId, Long memberId, Role role);
 
