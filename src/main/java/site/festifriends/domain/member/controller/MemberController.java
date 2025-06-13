@@ -100,7 +100,7 @@ public class MemberController implements MemberApi {
         return ResponseEntity.ok(ResponseWrapper.success(
             "회원 ID 조회 성공",
             GetMyIdResponse.builder()
-                .memberId(userDetails.getMemberId())
+                .userId(userDetails.getMemberId())
                 .build()
         ));
     }
