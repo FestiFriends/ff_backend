@@ -9,4 +9,6 @@ import site.festifriends.entity.MemberChatRoom;
 public interface MemberChatRoomRepository extends JpaRepository<MemberChatRoom, Long> {
 
     Optional<MemberChatRoom> findByMemberAndChatRoom(Member member, ChatRoom chatRoom);
+
+    void deleteAllByChatRoom(ChatRoom chatRoom);
 }

@@ -64,7 +64,7 @@ public class ChatService {
     }
 
     @Transactional
-    public void leaveChatRoom(Member member, Group group) {
+    public ChatRoom leaveChatRoom(Member member, Group group) {
         ChatRoom chatRoom = chatRoomRepository.findByGroup(group)
             .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "해당하는 채팅방이 없습니다."));
 
@@ -72,6 +72,8 @@ public class ChatService {
             .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "회원이 채팅방에 참여되어 있지 않습니다."));
 
         memberChatRoomRepository.delete(memberChatRoom);
+
+        return chatRoom;
     }
 
     @Transactional
@@ -164,5 +166,16 @@ public class ChatService {
     public ChatRoom getChatRoomByGroup(Group group) {
         return chatRoomRepository.findByGroup(group)
             .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "해당하는 채팅방이 없습니다."));
+    }
+
+    @Transactional
+    public void deleteChatRoom(ChatRoom chatRoom) {
+        if (!chatRoomRepository.existsById(chatRoom.getId())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "해당하는 채팅방이 없습니다.");
+        }
+
+        chatMessageRepository.deleteAllByChatRoom(chatRoom);
+        memberChatRoomRepository.deleteAllByChatRoom(chatRoom);
+        chatRoomRepository.delete(chatRoom);
     }
 }
