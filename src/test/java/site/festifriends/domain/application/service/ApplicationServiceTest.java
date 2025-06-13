@@ -19,6 +19,7 @@ import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
@@ -40,6 +41,9 @@ class ApplicationServiceTest {
     @InjectMocks
     private ApplicationService applicationService;
 
+    @Mock
+    private NotificationService notificationService;
+
     private Member host;
     private Member applicant;
     private Group group;
@@ -48,35 +52,35 @@ class ApplicationServiceTest {
     @BeforeEach
     void setUp() {
         host = Member.builder()
-                .socialId("host1")
-                .nickname("방장")
-                .email("host@test.com")
-                .age(25)
-                .gender(Gender.MALE)
-                .build();
+            .socialId("host1")
+            .nickname("방장")
+            .email("host@test.com")
+            .age(25)
+            .gender(Gender.MALE)
+            .build();
 
         applicant = Member.builder()
-                .socialId("applicant1")
-                .nickname("신청자")
-                .email("applicant@test.com")
-                .age(23)
-                .gender(Gender.FEMALE)
-                .build();
+            .socialId("applicant1")
+            .nickname("신청자")
+            .email("applicant@test.com")
+            .age(23)
+            .gender(Gender.FEMALE)
+            .build();
 
         Performance performance = Performance.builder()
-                .title("테스트 페스티벌")
-                .build();
+            .title("테스트 페스티벌")
+            .build();
 
         group = mock(Group.class);
         lenient().when(group.getId()).thenReturn(1L);
 
         application = MemberGroup.builder()
-                .member(applicant)
-                .group(group)
-                .role(Role.MEMBER)
-                .status(ApplicationStatus.PENDING)
-                .applicationText("참여하고 싶습니다!")
-                .build();
+            .member(applicant)
+            .group(group)
+            .role(Role.MEMBER)
+            .status(ApplicationStatus.PENDING)
+            .applicationText("참여하고 싶습니다!")
+            .build();
     }
 
     @Test
@@ -88,11 +92,11 @@ class ApplicationServiceTest {
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
-                .willReturn(true);
+            .willReturn(true);
 
         // when
-        ResponseWrapper<Void> response = 
-                applicationService.updateApplicationStatus(1L, 1L, request);
+        ResponseWrapper<Void> response =
+            applicationService.updateApplicationStatus(1L, 1L, request);
 
         // then
         assertThat(response.getMessage()).isEqualTo("모임 가입 신청을 수락하였습니다");
@@ -109,11 +113,11 @@ class ApplicationServiceTest {
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
-                .willReturn(true);
+            .willReturn(true);
 
         // when
-        ResponseWrapper<Void> response = 
-                applicationService.updateApplicationStatus(1L, 1L, request);
+        ResponseWrapper<Void> response =
+            applicationService.updateApplicationStatus(1L, 1L, request);
 
         // then
         assertThat(response.getMessage()).isEqualTo("모임 가입 신청을 거절하였습니다");
@@ -132,9 +136,9 @@ class ApplicationServiceTest {
 
         // when & then
         assertThatThrownBy(() -> applicationService.updateApplicationStatus(1L, 999L, request))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.NOT_FOUND);
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test
@@ -146,13 +150,13 @@ class ApplicationServiceTest {
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 2L, Role.HOST))
-                .willReturn(false);
+            .willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> applicationService.updateApplicationStatus(2L, 1L, request))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.FORBIDDEN);
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.FORBIDDEN);
     }
 
     @Test
@@ -160,25 +164,25 @@ class ApplicationServiceTest {
     void updateApplicationStatus_NotPendingStatus() {
         // given
         application = MemberGroup.builder()
-                .member(applicant)
-                .group(group)
-                .role(Role.MEMBER)
-                .status(ApplicationStatus.ACCEPTED) // 이미 승인된 상태
-                .applicationText("참여하고 싶습니다!")
-                .build();
+            .member(applicant)
+            .group(group)
+            .role(Role.MEMBER)
+            .status(ApplicationStatus.ACCEPTED) // 이미 승인된 상태
+            .applicationText("참여하고 싶습니다!")
+            .build();
 
         ApplicationStatusRequest request = new ApplicationStatusRequest();
         request.setStatus(ApplicationStatus.ACCEPTED);
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
-                .willReturn(true);
+            .willReturn(true);
 
         // when & then
         assertThatThrownBy(() -> applicationService.updateApplicationStatus(1L, 1L, request))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.BAD_REQUEST);
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.BAD_REQUEST);
     }
 
     @Test
@@ -190,12 +194,12 @@ class ApplicationServiceTest {
 
         given(applicationRepository.findById(1L)).willReturn(Optional.of(application));
         given(applicationRepository.existsByGroupIdAndMemberIdAndRole(1L, 1L, Role.HOST))
-                .willReturn(true);
+            .willReturn(true);
 
         // when & then
         assertThatThrownBy(() -> applicationService.updateApplicationStatus(1L, 1L, request))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.BAD_REQUEST);
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.BAD_REQUEST);
     }
 }

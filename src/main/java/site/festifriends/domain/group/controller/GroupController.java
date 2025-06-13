@@ -3,7 +3,9 @@ package site.festifriends.domain.group.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -68,7 +70,14 @@ public class GroupController implements GroupApi {
     @Override
     @GetMapping("/api/v1/groups/{groupId}")
     public ResponseEntity<ResponseWrapper<GroupDetailResponse>> getGroupDetail(@PathVariable Long groupId) {
-        GroupDetailResponse response = groupService.getGroupDetail(groupId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        Long memberId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
+            memberId = userDetails.getMemberId();
+        }
+
+        GroupDetailResponse response = groupService.getGroupDetail(memberId, groupId);
         return ResponseEntity.ok(ResponseWrapper.success("모임 기본 정보 조회 성공.", response));
     }
 

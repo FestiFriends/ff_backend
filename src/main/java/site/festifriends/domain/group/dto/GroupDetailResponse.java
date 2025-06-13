@@ -23,6 +23,8 @@ public class GroupDetailResponse {
     private String description;  // Group의 introduction
     private List<String> hashtag;
     private Host host;
+    private Boolean isMember;
+    private Long chatRoomId;
 
     @Getter
     @Builder

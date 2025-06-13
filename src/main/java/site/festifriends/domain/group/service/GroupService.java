@@ -32,6 +32,7 @@ import site.festifriends.domain.notifications.dto.NotificationEvent;
 import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
+import site.festifriends.entity.ChatRoom;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
@@ -102,7 +103,8 @@ public class GroupService {
 
         applicationRepository.save(hostMemberGroup);
 
-        chatService.createChatRoom(savedGroup);
+        ChatRoom chatRoom = chatService.createChatRoom(savedGroup);
+        chatService.joinChatRoom(member, chatRoom);
     }
 
     private void validateGroupCreateRequest(GroupCreateRequest request) {
@@ -247,7 +249,7 @@ public class GroupService {
     /**
      * 모임 기본 정보 조회
      */
-    public GroupDetailResponse getGroupDetail(Long groupId) {
+    public GroupDetailResponse getGroupDetail(Long memberId, Long groupId) {
         Group group = groupRepository.findById(groupId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 모임을 찾을 수 없습니다."));
 
@@ -294,6 +296,8 @@ public class GroupService {
             .poster(performance.getPoster())
             .build();
 
+        ChatRoom chatRoom = chatService.getChatRoomByGroup(group);
+
         return GroupDetailResponse.builder()
             .id(group.getId().toString())
             .performance(performanceInfo)
@@ -310,6 +314,8 @@ public class GroupService {
             .description(group.getIntroduction())
             .hashtag(group.getHashTags())
             .host(host)
+            .chatRoomId(chatRoom != null ? chatRoom.getId() : null)
+            .isMember(applicationRepository.isGroupParticipant(groupId, memberId))
             .build();
     }
 

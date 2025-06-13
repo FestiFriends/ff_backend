@@ -355,8 +355,6 @@ public class ApplicationService {
                 event
             );
 
-            chatService.memberJoinChatRoom(application.getMember(), application.getGroup());
-
         } else if (status == ApplicationStatus.REJECTED) {
             application.reject();
             message = "모임 가입 신청을 거절하였습니다";
@@ -406,6 +404,8 @@ public class ApplicationService {
 
         application.confirm();
 
+        chatService.memberJoinChatRoom(application.getMember(), application.getGroup());
+
         return ResponseWrapper.success("모임 가입을 확정하였습니다", null);
     }
 
@@ -419,7 +419,8 @@ public class ApplicationService {
 
         validateApplicantPermission(memberId, application);
 
-        if (application.getStatus() == ApplicationStatus.PENDING || application.getStatus() == ApplicationStatus.ACCEPTED) {
+        if (application.getStatus() == ApplicationStatus.PENDING
+            || application.getStatus() == ApplicationStatus.ACCEPTED) {
             applicationRepository.delete(application);
         } else {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "취소할 수 없는 신청서 상태입니다.");
