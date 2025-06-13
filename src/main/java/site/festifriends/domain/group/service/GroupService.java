@@ -492,6 +492,10 @@ public class GroupService {
                 // 멤버 그룹 삭제 (hard delete)
                 applicationRepository.delete(memberGroup);
 
+                ChatRoom chatRoom = chatService.leaveChatRoom(memberGroup.getMember(), group);
+
+                chatService.deleteChatRoom(chatRoom);
+
                 // 모임 삭제 (soft delete)
                 group.delete();
                 return;

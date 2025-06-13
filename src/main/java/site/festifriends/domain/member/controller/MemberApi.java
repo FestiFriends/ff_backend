@@ -9,7 +9,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.member.dto.CheckNicknameDuplicationResponse;
+import site.festifriends.domain.member.dto.GetMyIdResponse;
 import site.festifriends.domain.member.dto.ToggleUserLikeRequest;
 
 public interface MemberApi {
@@ -83,5 +86,27 @@ public interface MemberApi {
         @Parameter(description = "찜할 사용자 ID")
         @PathVariable Long memberId,
         @RequestBody ToggleUserLikeRequest request
+    );
+
+    @Operation(
+        summary = "내 ID 조회",
+        description = "내 회원 ID를 조회합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "회원 ID 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+        }
+    )
+    ResponseEntity<ResponseWrapper<GetMyIdResponse>> getMyId(@AuthenticationPrincipal UserDetailsImpl userDetails);
+
+    @Operation(
+        summary = "닉네임 중복검사",
+        description = "닉네임 중복검사를 진행합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "사용 가능한 닉네임입니다."),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+        }
+    )
+    ResponseEntity<ResponseWrapper<CheckNicknameDuplicationResponse>> checkNicknameDuplication(
+        @RequestParam String nickname
     );
 }
