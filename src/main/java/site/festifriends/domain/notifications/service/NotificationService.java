@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -239,4 +240,23 @@ public class NotificationService {
     public boolean existUnreadNotification(Long memberId) {
         return notificationRepository.existsByMemberIdAndIsReadFalseAndDeletedIsNull(memberId);
     }
+
+    @Scheduled(fixedRate = 90000)
+    public void heartbeat() {
+        log.info("SSE heartbeat at {}", LocalDateTime.now());
+        for (Map.Entry<Long, SseEmitter> entry : emitters.entrySet()) {
+            Long memberId = entry.getKey();
+            SseEmitter emitter = entry.getValue();
+            try {
+                emitter.send(SseEmitter.event()
+                    .name("keep-alive")
+                    .data(""));
+            } catch (IOException e) {
+                log.error("Failed to send heartbeat to member: {}", memberId, e);
+                emitters.remove(memberId);
+                emitter.completeWithError(e);
+            }
+        }
+    }
+
 }
