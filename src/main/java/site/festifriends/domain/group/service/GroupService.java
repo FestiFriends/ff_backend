@@ -32,6 +32,7 @@ import site.festifriends.domain.notifications.dto.NotificationEvent;
 import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.domain.review.repository.ReviewRepository;
+import site.festifriends.entity.ChatRoom;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
@@ -102,7 +103,8 @@ public class GroupService {
 
         applicationRepository.save(hostMemberGroup);
 
-        chatService.createChatRoom(savedGroup);
+        ChatRoom chatRoom = chatService.createChatRoom(savedGroup);
+        chatService.joinChatRoom(member, chatRoom);
     }
 
     private void validateGroupCreateRequest(GroupCreateRequest request) {
