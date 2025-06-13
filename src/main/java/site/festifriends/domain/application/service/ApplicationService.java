@@ -2,6 +2,7 @@ package site.festifriends.domain.application.service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import site.festifriends.domain.application.dto.ApplicationStatusRequest;
 import site.festifriends.domain.application.dto.ApplicationStatusResponse;
 import site.festifriends.domain.application.dto.AppliedListResponse;
 import site.festifriends.domain.application.dto.JoinedGroupResponse;
+import site.festifriends.domain.application.dto.ManagementApplicationResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.chat.service.ChatService;
 import site.festifriends.domain.group.repository.GroupRepository;
@@ -47,6 +49,100 @@ public class ApplicationService {
     private final GroupRepository groupRepository;
     private final NotificationService notificationService;
     private final ChatService chatService;
+
+    /**
+     * 관리용 신청서 목록 조회 - 내가 개설한 모임 중 시작하지 않은 모임들과 각 모임의 PENDING 상태 신청서들을 조회
+     */
+    public CursorResponseWrapper<ManagementApplicationResponse> getManagementApplicationsWithSlice(Long hostId,
+        Long cursorId, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        Slice<Group> groupSlice = applicationRepository.findUnstartedGroupsWithPendingApplicationsSlice(hostId,
+            cursorId, pageable);
+
+        List<Group> groups = groupSlice.getContent();
+
+        if (groups.isEmpty()) {
+            return CursorResponseWrapper.empty("신청서 목록이 정상적으로 조회되었습니다.");
+        }
+
+        List<Long> groupIds = groups.stream()
+            .map(Group::getId)
+            .collect(Collectors.toList());
+
+        List<MemberGroup> applications = applicationRepository.findPendingApplicationsByGroupIds(groupIds);
+
+        List<Long> memberIds = applications.stream()
+            .map(app -> app.getMember().getId())
+            .distinct()
+            .collect(Collectors.toList());
+
+        Map<Long, Double> ratingMap = memberIds.isEmpty() ?
+            Collections.emptyMap() :
+            reviewRepository.findAverageRatingsByMemberIds(memberIds)
+                .stream()
+                .collect(Collectors.toMap(
+                    result -> (Long) result.get("memberId"),
+                    result -> (Double) result.get("avgRating")
+                ));
+
+        Map<Long, Long> memberCountMap = applicationRepository.findConfirmedMemberCountsByGroupIds(groupIds);
+
+        Map<Long, List<MemberGroup>> applicationsByGroup = applications.stream()
+            .collect(Collectors.groupingBy(app -> app.getGroup().getId()));
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
+        List<ManagementApplicationResponse> responses = groups.stream()
+            .map(group -> {
+                List<MemberGroup> groupApplications = applicationsByGroup.getOrDefault(group.getId(),
+                    Collections.emptyList());
+
+                List<ManagementApplicationResponse.ApplicationInfo> applicationInfos = groupApplications.stream()
+                    .map(app -> ManagementApplicationResponse.ApplicationInfo.builder()
+                        .applicationId(app.getId().toString())
+                        .userId(app.getMember().getId().toString())
+                        .userName(app.getMember().getNickname())
+                        .rating(ratingMap.getOrDefault(app.getMember().getId(), 0.0))
+                        .gender(app.getMember().getGender())
+                        .age(app.getMember().getAge())
+                        .profileImage(app.getMember().getProfileImageUrl())
+                        .applicationText(app.getApplicationText())
+                        .createdAt(app.getCreatedAt().format(formatter))
+                        .status(app.getStatus())
+                        .build())
+                    .collect(Collectors.toList());
+
+                return ManagementApplicationResponse.builder()
+                    .groupId(group.getId().toString())
+                    .performance(ManagementApplicationResponse.Performance.builder()
+                        .id(group.getPerformance().getId().toString())
+                        .title(group.getPerformance().getTitle())
+                        .poster(group.getPerformance().getPoster())
+                        .build())
+                    .groupTitle(group.getTitle())
+                    .category(group.getGatherType())
+                    .memberCount(memberCountMap.getOrDefault(group.getId(), 0L).intValue())
+                    .maxMembers(group.getCount())
+                    .startDate(group.getStartDate().format(formatter))
+                    .endDate(group.getEndDate().format(formatter))
+                    .applications(applicationInfos)
+                    .build();
+            })
+            .collect(Collectors.toList());
+
+        Long nextCursorId = null;
+        if (groupSlice.hasNext() && !groups.isEmpty()) {
+            Group lastGroup = groups.get(groups.size() - 1);
+            nextCursorId = lastGroup.getId();
+        }
+
+        return CursorResponseWrapper.success(
+            "신청서 목록이 정상적으로 조회되었습니다.",
+            responses,
+            nextCursorId,
+            groupSlice.hasNext()
+        );
+    }
 
     /**
      * 신청서 목록 조회

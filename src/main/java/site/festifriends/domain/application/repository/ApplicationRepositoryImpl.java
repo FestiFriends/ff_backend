@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
+import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.QGroup;
@@ -444,6 +445,77 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
             .fetch();
 
         return members;
+    }
+
+    @Override
+    public Slice<Group> findUnstartedGroupsWithPendingApplicationsSlice(Long hostId, Long cursorId, Pageable pageable) {
+        QGroup g = QGroup.group;
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QPerformance p = QPerformance.performance;
+
+        if (hostId == null) {
+            return new SliceImpl<>(Collections.emptyList(), pageable, false);
+        }
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+        BooleanExpression hostCondition = g.id.in(
+            JPAExpressions.select(mg.group.id)
+                .from(mg)
+                .where(
+                    mg.member.id.eq(hostId),
+                    mg.role.eq(Role.HOST),
+                    mg.deleted.isNull()
+                )
+        );
+
+        BooleanExpression unstartedCondition = g.startDate.after(now);
+        BooleanExpression notDeletedCondition = g.deleted.isNull();
+        BooleanExpression cursorCondition = cursorId != null ? g.id.lt(cursorId) : g.id.isNotNull();
+
+        JPAQuery<Group> query = queryFactory
+            .selectFrom(g)
+            .join(g.performance, p).fetchJoin()
+            .where(
+                hostCondition,
+                unstartedCondition,
+                notDeletedCondition,
+                cursorCondition
+            )
+            .orderBy(g.startDate.desc(), g.id.desc());
+
+        int size = pageable.getPageSize();
+        List<Group> results = query
+            .limit(size + 1)
+            .fetch();
+
+        boolean hasNext = results.size() > size;
+        if (hasNext) {
+            results = results.subList(0, size);
+        }
+
+        return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
+    public List<MemberGroup> findPendingApplicationsByGroupIds(List<Long> groupIds) {
+        if (groupIds == null || groupIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        QMemberGroup mg = QMemberGroup.memberGroup;
+        QMember m = QMember.member;
+
+        return queryFactory
+            .selectFrom(mg)
+            .join(mg.member, m).fetchJoin()
+            .where(
+                mg.group.id.in(groupIds),
+                mg.status.eq(ApplicationStatus.PENDING),
+                mg.deleted.isNull()
+            )
+            .orderBy(mg.createdAt.desc())
+            .fetch();
     }
 
     private BooleanExpression cursorIdLt(Long cursorId, QMemberGroup memberGroup) {
