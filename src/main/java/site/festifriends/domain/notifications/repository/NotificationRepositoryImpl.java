@@ -25,8 +25,8 @@ public class NotificationRepositoryImpl implements NotificationRepositoryCustom 
             SELECT n.notification_id, n.message, n.type ,n.created_at, n.is_read, n.target_id, n.sub_target_id
             FROM notification n
             WHERE n.member_id = :memberId
-            AND n.is_read = false
             AND (:cursorId IS NULL OR n.notification_id <= :cursorId)
+            AND n.deleted IS NULL
             ORDER BY n.notification_id DESC
             LIMIT :size
             """;
