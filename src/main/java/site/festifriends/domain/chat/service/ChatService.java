@@ -84,6 +84,7 @@ public class ChatService {
         ChatMessage newMessage = ChatMessage.builder()
             .chatRoom(chatRoom)
             .member(member)
+            .content(message.getContent())
             .build();
 
         chatMessageRepository.save(newMessage);
@@ -116,7 +117,7 @@ public class ChatService {
         if (!chatRoomRepository.existsById(chatRoomId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "해당하는 채팅방이 없습니다.");
         }
-        
+
         Pageable pageable = PageRequest.of(0, size);
         Slice<ChatMessageDto> slice = chatMessageRepository.getChatMessages(chatRoomId, cursorId, pageable);
 
@@ -149,5 +150,14 @@ public class ChatService {
             nextCursorId,
             slice.hasNext()
         );
+    }
+
+    public void joinChatRoom(Member member, ChatRoom chatRoom) {
+        MemberChatRoom memberChatRoom = MemberChatRoom.builder()
+            .member(member)
+            .chatRoom(chatRoom)
+            .build();
+
+        memberChatRoomRepository.save(memberChatRoom);
     }
 }
