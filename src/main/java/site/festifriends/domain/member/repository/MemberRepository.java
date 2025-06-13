@@ -13,4 +13,7 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     @Modifying
     @Query("UPDATE Member m SET m.deleted = CURRENT_TIMESTAMP WHERE m = :member")
     void deleteMember(Member member);
+
+    boolean existsByNickname(String nickname);
+    
 }

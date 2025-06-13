@@ -251,4 +251,8 @@ public class MemberService {
         return memberRepository.findById(memberId)
             .orElseThrow(() -> new BusinessException(ErrorCode.BAD_REQUEST, "존재하지 않는 회원입니다."));
     }
+
+    public boolean checkNicknameDuplication(String nickname) {
+        return !memberRepository.existsByNickname(nickname);
+    }
 }

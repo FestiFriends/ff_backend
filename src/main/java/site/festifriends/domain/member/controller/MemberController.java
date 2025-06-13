@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import site.festifriends.common.jwt.AccessTokenProvider;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
+import site.festifriends.domain.member.dto.CheckNicknameDuplicationResponse;
+import site.festifriends.domain.member.dto.GetMyIdResponse;
 import site.festifriends.domain.member.dto.LikedMemberCountResponse;
 import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.dto.ToggleUserLikeRequest;
@@ -28,6 +31,7 @@ import site.festifriends.domain.member.service.MemberService;
 public class MemberController implements MemberApi {
 
     private final MemberService memberService;
+    private final AccessTokenProvider accessTokenProvider;
 
     @Override
     @DeleteMapping("/me")
@@ -85,6 +89,43 @@ public class MemberController implements MemberApi {
             return ResponseEntity.ok(ResponseWrapper.success("사용자를 찜했습니다", response));
         } else {
             return ResponseEntity.ok(ResponseWrapper.success("사용자를 찜 취소했습니다", response));
+        }
+    }
+
+    @Override
+    @GetMapping("/id")
+    public ResponseEntity<ResponseWrapper<GetMyIdResponse>> getMyId(
+        @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        return ResponseEntity.ok(ResponseWrapper.success(
+            "회원 ID 조회 성공",
+            GetMyIdResponse.builder()
+                .memberId(userDetails.getMemberId())
+                .build()
+        ));
+    }
+
+    @Override
+    @GetMapping("/check-nickname")
+    public ResponseEntity<ResponseWrapper<CheckNicknameDuplicationResponse>> checkNicknameDuplication(
+        @RequestParam String nickname
+    ) {
+        boolean isAvailable = memberService.checkNicknameDuplication(nickname);
+
+        if (isAvailable) {
+            return ResponseEntity.ok(ResponseWrapper.success(
+                "사용 가능한 닉네임입니다.",
+                CheckNicknameDuplicationResponse.builder()
+                    .isAvailable(true)
+                    .build()
+            ));
+        } else {
+            return ResponseEntity.ok(ResponseWrapper.success(
+                "이미 사용 중인 닉네임입니다.",
+                CheckNicknameDuplicationResponse.builder()
+                    .isAvailable(false)
+                    .build()
+            ));
         }
     }
 }
