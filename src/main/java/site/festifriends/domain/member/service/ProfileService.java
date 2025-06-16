@@ -148,7 +148,7 @@ public class ProfileService {
     @Transactional
     public void updateMyProfile(Long memberId, UpdateProfileRequest request) {
         memberService.updateMemberProfile(memberId, request.getName(), request.getAge(), request.getDescription(),
-            request.getHashtag(), request.getSns());
+            request.getProfileImage().getSrc(), request.getHashtag(), request.getSns());
 
         memberImageService.updateProfileImage(memberId, request.getProfileImage());
     }
