@@ -69,10 +69,8 @@ public class MemberController implements MemberApi {
         @RequestParam(defaultValue = "20") int size
     ) {
         return ResponseEntity.ok(
-            ResponseWrapper.success(
-                "요청이 성공적으로 처리되었습니다.",
-                memberService.getMyLikedPerformances(userDetails.getMemberId(), cursorId, size)
-            ));
+            memberService.getMyLikedPerformances(userDetails.getMemberId(), cursorId, size)
+        );
     }
 
     @Override

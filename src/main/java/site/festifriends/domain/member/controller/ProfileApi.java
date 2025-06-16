@@ -6,7 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
+import site.festifriends.domain.application.dto.JoinedGroupResponse;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.member.dto.GetMyProfileResponse;
 import site.festifriends.domain.member.dto.GetProfileResponse;
@@ -52,5 +55,19 @@ public interface ProfileApi {
     ResponseEntity<ResponseWrapper<?>> updateMyProfile(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestBody UpdateProfileRequest request
+    );
+
+    @Operation(
+        summary = "유저의 참여 모임 조회",
+        description = "특정 유저의 참여 모임을 조회합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "참여 그룹 목록 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "존재하지 않는 회원입니다."),
+        }
+    )
+    ResponseEntity<CursorResponseWrapper<JoinedGroupResponse>> getUserJoinedGroups(
+        @PathVariable Long memberId,
+        @RequestParam(required = false) Long cursorId,
+        @RequestParam(defaultValue = "20") int size
     );
 }

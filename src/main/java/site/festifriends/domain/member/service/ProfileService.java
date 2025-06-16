@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.dto.GroupSummaryDto;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.image.dto.ImageDto;
@@ -29,6 +30,7 @@ public class ProfileService {
     private final GroupRepository groupRepository;
     private final MemberService memberService;
     private final MemberImageService memberImageService;
+    private final ApplicationRepository applicationRepository;
 
     @Transactional(readOnly = true)
     public GetProfileResponse getMemberProfile(Long targetId, Long memberId) {
@@ -37,7 +39,7 @@ public class ProfileService {
         Object[] reviewData = reviewRepository.getMemberReviewCount(targetId);
         List<Object[]> reviewTagData = reviewRepository.countEachReviewTag(targetId);
         List<String> reviewContents = reviewRepository.getMemberReviewContent(targetId);
-        Object[] groupData = groupRepository.getMemberGroupCount(targetId);
+        Object[] groupCountData = groupRepository.getMemberGroupCount(targetId);
 
         Map<ReviewTag, Integer> countMap = new EnumMap<>(ReviewTag.class);
         for (Object[] row : reviewTagData) {
@@ -47,9 +49,12 @@ public class ProfileService {
         }
 
         GroupSummaryDto groupDto = GroupSummaryDto.builder()
-            .joinedCount(groupData != null && groupData[0] != null ? ((Number) groupData[0]).intValue() : 0)
-            .totalJoinedCount(groupData != null && groupData[1] != null ? ((Number) groupData[1]).intValue() : 0)
-            .createdCount(groupData != null && groupData[2] != null ? ((Number) groupData[2]).intValue() : 0)
+            .joinedCount(
+                groupCountData != null && groupCountData[0] != null ? ((Number) groupCountData[0]).intValue() : 0)
+            .totalJoinedCount(
+                groupCountData != null && groupCountData[1] != null ? ((Number) groupCountData[1]).intValue() : 0)
+            .createdCount(
+                groupCountData != null && groupCountData[2] != null ? ((Number) groupCountData[2]).intValue() : 0)
             .build();
 
         ReviewSummaryDto reviewSummaryDto = ReviewSummaryDto.builder()
