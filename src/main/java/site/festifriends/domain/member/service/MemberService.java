@@ -42,25 +42,31 @@ public class MemberService {
     private final BookmarkRepository bookmarkRepository;
     private final MemberImageRepository memberImageRepository;
 
+    private static final String DEFAULT_PROFILE_IMAGE_URL = "http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg";
+
     @Transactional
     public Member loginOrSignUp(KakaoUserInfo userInfo) {
 
         Member member = memberRepository.findBySocialId(userInfo.getSocialId()).orElse(null);
 
         if (member == null) {
+            String image = userInfo.getProfileImage();
+
+            image = image.equals(DEFAULT_PROFILE_IMAGE_URL) ? null : image;
+
             Member newMember = memberRepository.save(Member.builder()
                 .socialId(userInfo.getSocialId())
                 .nickname(userInfo.getName())
                 .email(userInfo.getEmail())
                 .age(0)
-                .profileImageUrl(userInfo.getProfileImage())
+                .profileImageUrl(image)
                 .gender(Gender.ALL)
                 .introduction("")
                 .build());
 
             MemberImage memberImage = MemberImage.builder()
                 .member(newMember)
-                .src(userInfo.getProfileImage())
+                .src(image)
                 .alt("멤버 이미지")
                 .build();
 
