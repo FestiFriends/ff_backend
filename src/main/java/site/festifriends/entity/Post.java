@@ -125,6 +125,10 @@ public class Post extends SoftDeleteEntity {
         }
     }
 
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
+    }
+
     /**
      * 반응 수 증가
      */

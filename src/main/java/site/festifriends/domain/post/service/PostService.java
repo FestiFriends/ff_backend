@@ -11,6 +11,7 @@ import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.comment.repository.CommentRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.notifications.dto.NotificationEvent;
@@ -44,6 +45,7 @@ public class PostService {
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
     private final PostImageRepository postImageRepository;
+    private final CommentRepository commentRepository;
     private final NotificationService notificationService;
 
     /**
@@ -69,6 +71,12 @@ public class PostService {
         List<PostResponse> postResponses = postSlice.getContent().stream()
             .map(post -> {
                 boolean hasReactioned = postReactionRepository.existsByPostIdAndMemberId(post.getId(), memberId);
+                
+                long actualCommentCount = commentRepository.countByPostIdAndDeletedIsNull(post.getId());
+                if (post.getCommentCount() != actualCommentCount) {
+                    post.setCommentCount((int) actualCommentCount);
+                }
+                
                 return PostResponse.from(post, memberId, hasReactioned);
             })
             .collect(Collectors.toList());
@@ -315,6 +323,11 @@ public class PostService {
         }
 
         boolean hasReactioned = postReactionRepository.existsByPostIdAndMemberId(postId, memberId);
+
+        long actualCommentCount = commentRepository.countByPostIdAndDeletedIsNull(postId);
+        if (post.getCommentCount() != actualCommentCount) {
+            post.setCommentCount((int) actualCommentCount);
+        }
 
         return PostResponse.from(post, memberId, hasReactioned);
     }

@@ -117,6 +117,8 @@ public class CommentService {
             .build();
 
         commentRepository.save(comment);
+        
+        post.incrementCommentCount();
     }
 
     /**
@@ -151,6 +153,9 @@ public class CommentService {
         }
 
         comment.delete();
+        
+        Post post = comment.getPost();
+        post.decrementCommentCount();
     }
 
     /**
