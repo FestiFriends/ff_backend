@@ -176,4 +176,16 @@ public class Performance extends SoftDeleteEntity {
             this.imgs = imgs;
         }
     }
+
+    public void updateState() {
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isBefore(this.startDate)) {
+            this.state = PerformanceState.UPCOMING;
+        } else if (now.isAfter(this.endDate)) {
+            this.state = PerformanceState.COMPLETED;
+        } else {
+            this.state = PerformanceState.ONGOING;
+        }
+    }
 }
