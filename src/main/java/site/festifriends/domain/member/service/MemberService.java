@@ -53,6 +53,7 @@ public class MemberService {
                 .nickname(userInfo.getName())
                 .email(userInfo.getEmail())
                 .age(0)
+                .profileImageUrl(userInfo.getProfileImage())
                 .gender(Gender.ALL)
                 .introduction("")
                 .build());

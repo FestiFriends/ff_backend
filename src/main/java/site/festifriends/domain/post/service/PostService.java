@@ -11,7 +11,9 @@ import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.application.repository.ApplicationRepository;
+import site.festifriends.domain.comment.repository.CommentRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
+import site.festifriends.domain.member.repository.MemberImageRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.notifications.dto.NotificationEvent;
 import site.festifriends.domain.notifications.service.NotificationService;
@@ -28,6 +30,7 @@ import site.festifriends.domain.post.repository.PostReactionRepository;
 import site.festifriends.domain.post.repository.PostRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberImage;
 import site.festifriends.entity.Post;
 import site.festifriends.entity.PostImage;
 import site.festifriends.entity.PostReaction;
@@ -43,7 +46,9 @@ public class PostService {
     private final ApplicationRepository applicationRepository;
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
+    private final MemberImageRepository memberImageRepository;
     private final PostImageRepository postImageRepository;
+    private final CommentRepository commentRepository;
     private final NotificationService notificationService;
 
     /**
@@ -69,7 +74,15 @@ public class PostService {
         List<PostResponse> postResponses = postSlice.getContent().stream()
             .map(post -> {
                 boolean hasReactioned = postReactionRepository.existsByPostIdAndMemberId(post.getId(), memberId);
-                return PostResponse.from(post, memberId, hasReactioned);
+
+                long actualCommentCount = commentRepository.countByPostIdAndDeletedIsNull(post.getId());
+                if (post.getCommentCount() != actualCommentCount) {
+                    post.setCommentCount((int) actualCommentCount);
+                }
+
+                MemberImage authorImage = memberImageRepository.findByMemberId(post.getAuthor().getId()).orElse(null);
+
+                return PostResponse.from(post, memberId, hasReactioned, authorImage);
             })
             .collect(Collectors.toList());
 
@@ -158,6 +171,14 @@ public class PostService {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
 
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
         }
@@ -207,6 +228,14 @@ public class PostService {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
 
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
         }
@@ -231,6 +260,14 @@ public class PostService {
 
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
 
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
@@ -261,6 +298,14 @@ public class PostService {
 
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
 
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
@@ -303,6 +348,14 @@ public class PostService {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
 
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
         }
@@ -316,6 +369,13 @@ public class PostService {
 
         boolean hasReactioned = postReactionRepository.existsByPostIdAndMemberId(postId, memberId);
 
-        return PostResponse.from(post, memberId, hasReactioned);
+        long actualCommentCount = commentRepository.countByPostIdAndDeletedIsNull(postId);
+        if (post.getCommentCount() != actualCommentCount) {
+            post.setCommentCount((int) actualCommentCount);
+        }
+
+        MemberImage authorImage = memberImageRepository.findByMemberId(post.getAuthor().getId()).orElse(null);
+
+        return PostResponse.from(post, memberId, hasReactioned, authorImage);
     }
 }

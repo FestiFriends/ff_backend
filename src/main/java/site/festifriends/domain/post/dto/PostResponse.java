@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
+import site.festifriends.entity.MemberImage;
 import site.festifriends.entity.Post;
 
 @Getter
@@ -45,6 +46,10 @@ public class PostResponse {
     }
 
     public static PostResponse from(Post post, Long currentUserId, boolean hasReactioned) {
+        return from(post, currentUserId, hasReactioned, null);
+    }
+
+    public static PostResponse from(Post post, Long currentUserId, boolean hasReactioned, MemberImage authorImage) {
         boolean isMine = currentUserId != null && post.isMine(currentUserId);
 
         return PostResponse.builder()
@@ -59,7 +64,7 @@ public class PostResponse {
             .images(post.getImages().stream()
                 .map(PostImageResponse::from)
                 .collect(Collectors.toList()))
-            .author(PostAuthorResponse.from(post.getAuthor()))
+            .author(PostAuthorResponse.from(post.getAuthor(), authorImage))
             .createdAt(post.getCreatedAt())
             .updatedAt(post.getUpdatedAt())
             .commentCount(post.getCommentCount())
