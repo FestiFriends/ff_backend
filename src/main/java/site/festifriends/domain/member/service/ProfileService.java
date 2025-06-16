@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.group.dto.GroupSummaryDto;
 import site.festifriends.domain.group.repository.GroupRepository;
 import site.festifriends.domain.image.dto.ImageDto;
@@ -29,6 +30,7 @@ public class ProfileService {
     private final GroupRepository groupRepository;
     private final MemberService memberService;
     private final MemberImageService memberImageService;
+    private final ApplicationRepository applicationRepository;
 
     @Transactional(readOnly = true)
     public GetProfileResponse getMemberProfile(Long targetId, Long memberId) {
