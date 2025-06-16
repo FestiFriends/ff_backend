@@ -2,22 +2,33 @@ package site.festifriends.domain.post.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import site.festifriends.domain.image.dto.ImageDto;
 import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberImage;
 
 @Getter
 @Builder
 public class PostAuthorResponse {
 
     private Long id;
-    private String alt;
-    private String src;
+    private String name;
+    private ImageDto profileImage;
 
-    // profile image 어떻게 처리할건지?
-    public static PostAuthorResponse from(Member member) {
+    public static PostAuthorResponse from(Member member, MemberImage memberImage) {
+        ImageDto profileImage = null;
+
+        if (memberImage != null) {
+            profileImage = ImageDto.builder()
+                .id(memberImage.getId().toString())
+                .src(memberImage.getSrc())
+                .alt(memberImage.getAlt())
+                .build();
+        }
+
         return PostAuthorResponse.builder()
             .id(member.getId())
-            .alt(member.getNickname())
-            .src(member.getProfileImageUrl())
+            .name(member.getNickname())
+            .profileImage(profileImage)
             .build();
     }
 }

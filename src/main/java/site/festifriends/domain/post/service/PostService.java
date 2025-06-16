@@ -13,6 +13,7 @@ import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.comment.repository.CommentRepository;
 import site.festifriends.domain.group.repository.GroupRepository;
+import site.festifriends.domain.member.repository.MemberImageRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.notifications.dto.NotificationEvent;
 import site.festifriends.domain.notifications.service.NotificationService;
@@ -29,6 +30,7 @@ import site.festifriends.domain.post.repository.PostReactionRepository;
 import site.festifriends.domain.post.repository.PostRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberImage;
 import site.festifriends.entity.Post;
 import site.festifriends.entity.PostImage;
 import site.festifriends.entity.PostReaction;
@@ -44,6 +46,7 @@ public class PostService {
     private final ApplicationRepository applicationRepository;
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
+    private final MemberImageRepository memberImageRepository;
     private final PostImageRepository postImageRepository;
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
@@ -71,13 +74,15 @@ public class PostService {
         List<PostResponse> postResponses = postSlice.getContent().stream()
             .map(post -> {
                 boolean hasReactioned = postReactionRepository.existsByPostIdAndMemberId(post.getId(), memberId);
-                
+
                 long actualCommentCount = commentRepository.countByPostIdAndDeletedIsNull(post.getId());
                 if (post.getCommentCount() != actualCommentCount) {
                     post.setCommentCount((int) actualCommentCount);
                 }
-                
-                return PostResponse.from(post, memberId, hasReactioned);
+
+                MemberImage authorImage = memberImageRepository.findByMemberId(post.getAuthor().getId()).orElse(null);
+
+                return PostResponse.from(post, memberId, hasReactioned, authorImage);
             })
             .collect(Collectors.toList());
 
@@ -369,6 +374,8 @@ public class PostService {
             post.setCommentCount((int) actualCommentCount);
         }
 
-        return PostResponse.from(post, memberId, hasReactioned);
+        MemberImage authorImage = memberImageRepository.findByMemberId(post.getAuthor().getId()).orElse(null);
+
+        return PostResponse.from(post, memberId, hasReactioned, authorImage);
     }
 }
