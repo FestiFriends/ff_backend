@@ -47,6 +47,10 @@ public class CommentService {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
 
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "해당 모임에 속한 게시글이 아닙니다.");
         }
@@ -96,6 +100,10 @@ public class CommentService {
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
 
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
+
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 요청입니다.");
         }
@@ -117,7 +125,7 @@ public class CommentService {
             .build();
 
         commentRepository.save(comment);
-        
+
         post.incrementCommentCount();
     }
 
@@ -153,7 +161,7 @@ public class CommentService {
         }
 
         comment.delete();
-        
+
         Post post = comment.getPost();
         post.decrementCommentCount();
     }
@@ -167,6 +175,10 @@ public class CommentService {
 
         Post post = postRepository.findById(postId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."));
+
+        if (post.isDeleted()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "삭제된 게시글입니다.");
+        }
 
         if (!post.getGroup().getId().equals(groupId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "잘못된 요청입니다.");
