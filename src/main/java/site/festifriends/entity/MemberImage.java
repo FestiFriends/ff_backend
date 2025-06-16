@@ -27,7 +27,7 @@ public class MemberImage extends BaseEntity {
     @Column(name = "member_image_id", nullable = false)
     private Long id;
 
-    @Column(name = "src", nullable = false)
+    @Column(name = "src")
     @Comment("소개 이미지 URL")
     private String src;
 
