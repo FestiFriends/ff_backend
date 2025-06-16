@@ -37,7 +37,7 @@ public class ProfileService {
         Object[] reviewData = reviewRepository.getMemberReviewCount(targetId);
         List<Object[]> reviewTagData = reviewRepository.countEachReviewTag(targetId);
         List<String> reviewContents = reviewRepository.getMemberReviewContent(targetId);
-        Object[] groupData = groupRepository.getMemberGroupCount(targetId);
+        Object[] groupCountData = groupRepository.getMemberGroupCount(targetId);
 
         Map<ReviewTag, Integer> countMap = new EnumMap<>(ReviewTag.class);
         for (Object[] row : reviewTagData) {
@@ -47,9 +47,12 @@ public class ProfileService {
         }
 
         GroupSummaryDto groupDto = GroupSummaryDto.builder()
-            .joinedCount(groupData != null && groupData[0] != null ? ((Number) groupData[0]).intValue() : 0)
-            .totalJoinedCount(groupData != null && groupData[1] != null ? ((Number) groupData[1]).intValue() : 0)
-            .createdCount(groupData != null && groupData[2] != null ? ((Number) groupData[2]).intValue() : 0)
+            .joinedCount(
+                groupCountData != null && groupCountData[0] != null ? ((Number) groupCountData[0]).intValue() : 0)
+            .totalJoinedCount(
+                groupCountData != null && groupCountData[1] != null ? ((Number) groupCountData[1]).intValue() : 0)
+            .createdCount(
+                groupCountData != null && groupCountData[2] != null ? ((Number) groupCountData[2]).intValue() : 0)
             .build();
 
         ReviewSummaryDto reviewSummaryDto = ReviewSummaryDto.builder()
