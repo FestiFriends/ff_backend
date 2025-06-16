@@ -86,10 +86,12 @@ public class Member extends SoftDeleteEntity {
         this.refreshToken = refreshToken;
     }
 
-    public void updateProfile(String name, Integer age, String description, List<String> hashtag, String sns) {
+    public void updateProfile(String name, Integer age, String description, String profileImageUrl,
+        List<String> hashtag, String sns) {
         this.nickname = name;
         this.age = age;
         this.introduction = description;
+        this.profileImageUrl = profileImageUrl;
         this.tags = hashtag != null ? hashtag : new ArrayList<>();
         this.sns = sns != null ? List.of(sns) : new ArrayList<>();
     }
