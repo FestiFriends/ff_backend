@@ -31,6 +31,7 @@ import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberImage;
 import site.festifriends.entity.enums.BookmarkType;
 import site.festifriends.entity.enums.Gender;
+import site.festifriends.entity.enums.MemberRole;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +63,8 @@ public class MemberService {
                 .profileImageUrl(image)
                 .gender(Gender.ALL)
                 .introduction("")
+                .memberRole(MemberRole.
+                    USER)
                 .build());
 
             MemberImage memberImage = MemberImage.builder()
@@ -75,6 +78,9 @@ public class MemberService {
             return newMember;
         }
 
+        if (member.getSuspendedAt() != null) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "정지된 회원입니다.");
+        }
         return member;
     }
 
