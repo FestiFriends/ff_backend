@@ -20,7 +20,7 @@ public class ImageService {
     }
 
     private boolean validateExtension(String fileName) {
-        String[] validExtensions = {".jpg", "jpeg", ".png", ".gif", ".webp"};
+        String[] validExtensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"};
 
         if (fileName == null || !fileName.contains(".")) {
             return false;
