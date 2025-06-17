@@ -70,10 +70,12 @@ public class Schedule extends BaseEntity {
     }
 
     public void updateSchedule(String description,
-        String location, LocalDateTime startDate, LocalDateTime endDate) {
+        String location, LocalDateTime startDate, LocalDateTime endDate,
+        String eventColor) {
         this.description = description;
         this.location = location;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.eventColor = eventColor;
     }
 }

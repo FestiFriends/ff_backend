@@ -86,7 +86,8 @@ public class ScheduleService {
             request.getDescription(),
             request.getLocation(),
             request.getStartAt().toLocalDateTime(),
-            request.getEndAt().toLocalDateTime()
+            request.getEndAt().toLocalDateTime(),
+            request.getEventColor()
         );
 
         scheduleRepository.save(schedule);
