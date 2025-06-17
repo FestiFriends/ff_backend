@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
 import site.festifriends.common.model.SoftDeleteEntity;
+import site.festifriends.entity.enums.ReportReasonType;
 import site.festifriends.entity.enums.ReportStatus;
 import site.festifriends.entity.enums.ReportType;
 
@@ -46,9 +47,10 @@ public class Report extends SoftDeleteEntity {
     @Comment("신고 타입(게시물, 채팅, 모임, 유저, 리뷰)")
     private ReportType type;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "reason", nullable = false)
     @Comment("신고 사유")
-    private String reason;
+    private ReportReasonType reason;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -60,7 +62,7 @@ public class Report extends SoftDeleteEntity {
     private LocalDateTime processedAt;
 
     @Builder
-    public Report(Member member, Long targetId, ReportType type, String reason) {
+    public Report(Member member, Long targetId, ReportType type, ReportReasonType reason) {
         this.member = member;
         this.targetId = targetId;
         this.type = type;
@@ -70,6 +72,7 @@ public class Report extends SoftDeleteEntity {
 
     /**
      * 신고 처리
+     *
      * @param status 처리 상태
      */
     public void process(ReportStatus status) {
