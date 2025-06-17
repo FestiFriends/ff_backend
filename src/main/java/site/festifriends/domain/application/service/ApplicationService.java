@@ -26,6 +26,8 @@ import site.festifriends.domain.application.dto.ManagementApplicationResponse;
 import site.festifriends.domain.application.repository.ApplicationRepository;
 import site.festifriends.domain.chat.service.ChatService;
 import site.festifriends.domain.group.repository.GroupRepository;
+import site.festifriends.domain.image.dto.ImageDto;
+import site.festifriends.domain.member.repository.MemberImageRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.notifications.dto.NotificationEvent;
 import site.festifriends.domain.notifications.service.NotificationService;
@@ -33,6 +35,7 @@ import site.festifriends.domain.review.repository.ReviewRepository;
 import site.festifriends.entity.Group;
 import site.festifriends.entity.Member;
 import site.festifriends.entity.MemberGroup;
+import site.festifriends.entity.MemberImage;
 import site.festifriends.entity.enums.AgeRange;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.NotificationType;
@@ -46,6 +49,7 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final ReviewRepository reviewRepository;
     private final MemberRepository memberRepository;
+    private final MemberImageRepository memberImageRepository;
     private final GroupRepository groupRepository;
     private final NotificationService notificationService;
     private final ChatService chatService;
@@ -98,18 +102,32 @@ public class ApplicationService {
                     Collections.emptyList());
 
                 List<ManagementApplicationResponse.ApplicationInfo> applicationInfos = groupApplications.stream()
-                    .map(app -> ManagementApplicationResponse.ApplicationInfo.builder()
-                        .applicationId(app.getId().toString())
-                        .userId(app.getMember().getId().toString())
-                        .userName(app.getMember().getNickname())
-                        .rating(ratingMap.getOrDefault(app.getMember().getId(), 0.0))
-                        .gender(app.getMember().getGender())
-                        .age(app.getMember().getAge())
-                        .profileImage(app.getMember().getProfileImageUrl())
-                        .applicationText(app.getApplicationText())
-                        .createdAt(app.getCreatedAt().format(formatter))
-                        .status(app.getStatus())
-                        .build())
+                    .map(app -> {
+                        MemberImage memberImage = memberImageRepository.findByMemberId(app.getMember().getId())
+                            .orElse(null);
+                        ImageDto profileImage = null;
+
+                        if (memberImage != null) {
+                            profileImage = ImageDto.builder()
+                                .id(memberImage.getId().toString())
+                                .src(memberImage.getSrc())
+                                .alt(memberImage.getAlt())
+                                .build();
+                        }
+
+                        return ManagementApplicationResponse.ApplicationInfo.builder()
+                            .applicationId(app.getId().toString())
+                            .userId(app.getMember().getId().toString())
+                            .userName(app.getMember().getNickname())
+                            .rating(ratingMap.getOrDefault(app.getMember().getId(), 0.0))
+                            .gender(app.getMember().getGender())
+                            .age(app.getMember().getAge())
+                            .profileImage(profileImage)
+                            .applicationText(app.getApplicationText())
+                            .createdAt(app.getCreatedAt().format(formatter))
+                            .status(app.getStatus())
+                            .build();
+                    })
                     .collect(Collectors.toList());
 
                 return ManagementApplicationResponse.builder()

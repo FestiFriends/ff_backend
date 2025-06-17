@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import site.festifriends.domain.image.dto.ImageDto;
 import site.festifriends.entity.enums.ApplicationStatus;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.GroupCategory;
@@ -27,6 +28,7 @@ public class ManagementApplicationResponse {
     @Builder
     @AllArgsConstructor
     public static class Performance {
+
         private String id;
         private String title;
         private String poster;
@@ -36,13 +38,14 @@ public class ManagementApplicationResponse {
     @Builder
     @AllArgsConstructor
     public static class ApplicationInfo {
+
         private String applicationId;
         private String userId;
         private String userName;
         private Double rating;
         private Gender gender;
         private Integer age;
-        private String profileImage;
+        private ImageDto profileImage;
         private String applicationText;
         private String createdAt;
         private ApplicationStatus status;
