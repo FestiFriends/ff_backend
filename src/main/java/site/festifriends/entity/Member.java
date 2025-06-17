@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
 import site.festifriends.common.model.SoftDeleteEntity;
 import site.festifriends.entity.enums.Gender;
+import site.festifriends.entity.enums.MemberRole;
 
 @Entity
 @Getter
@@ -81,6 +83,15 @@ public class Member extends SoftDeleteEntity {
     @Column(name = "refresh_token")
     @Comment("리프레시 토큰")
     private String refreshToken;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "member_role", nullable = false)
+    @Comment("회원 역할")
+    private MemberRole memberRole;
+
+    @Column(name = "suspended_at")
+    @Comment("정지 일시")
+    private LocalDateTime suspendedAt;
 
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;

@@ -5,8 +5,8 @@ package site.festifriends.entity.enums;
  */
 public enum ReportStatus {
     PENDING("접수"),
-    PROCESSING("처리 중"),
-    COMPLETED("완료");
+    APPROVED("미처리"),
+    REJECTED("반려");
 
     private final String description;
 
