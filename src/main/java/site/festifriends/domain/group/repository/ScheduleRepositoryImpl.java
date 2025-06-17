@@ -26,6 +26,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
                 s.end_date,
                 s.location,
                 s.created_at,
+                s.event_color,
                 m.member_id,
                 m.nickname,
                 mi.src
@@ -49,9 +50,9 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
 
         for (Object[] row : data) {
             ScheduleDto.Author author = ScheduleDto.Author.builder()
-                .id((Long) row[6])
-                .name((String) row[7])
-                .profileImage((String) row[8])
+                .id((Long) row[7])
+                .name((String) row[8])
+                .profileImage((String) row[9])
                 .build();
 
             result.add(ScheduleDto.builder()
@@ -61,6 +62,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
                 .endAt(((Timestamp) row[3]).toLocalDateTime())
                 .location((String) row[4])
                 .createdAt(((Timestamp) row[5]).toLocalDateTime())
+                .eventColor((String) row[6])
                 .author(author)
                 .isMine(memberId.equals(author.getId()))
                 .build());

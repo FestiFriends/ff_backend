@@ -22,6 +22,7 @@ public class ScheduleDto {
     private Author author;
     @JsonProperty("isMine")
     private Boolean isMine;
+    private String eventColor;
 
     @Getter
     @Builder

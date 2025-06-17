@@ -44,6 +44,10 @@ public class Schedule extends BaseEntity {
     @Comment("마감 일시")
     private LocalDateTime endDate;
 
+    @Column(name = "event_color", nullable = false)
+    @Comment("일정 색상")
+    private String eventColor;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
     private Group group;
@@ -53,21 +57,25 @@ public class Schedule extends BaseEntity {
     private Member member;
 
     @Builder
-    public Schedule(String description, String location, LocalDateTime startDate, LocalDateTime endDate, Group group,
+    public Schedule(String description, String location, LocalDateTime startDate, LocalDateTime endDate,
+        String eventColor, Group group,
         Member member) {
         this.description = description;
         this.location = location;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.eventColor = eventColor;
         this.group = group;
         this.member = member;
     }
 
     public void updateSchedule(String description,
-        String location, LocalDateTime startDate, LocalDateTime endDate) {
+        String location, LocalDateTime startDate, LocalDateTime endDate,
+        String eventColor) {
         this.description = description;
         this.location = location;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.eventColor = eventColor;
     }
 }
