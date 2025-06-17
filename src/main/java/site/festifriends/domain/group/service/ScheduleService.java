@@ -53,6 +53,7 @@ public class ScheduleService {
             .location(request.getLocation())
             .startDate(request.getStartAt().toLocalDateTime())
             .endDate(request.getEndAt().toLocalDateTime())
+            .eventColor(request.getEventColor())
             .group(group)
             .member(memberGroup.getMember())
             .build();

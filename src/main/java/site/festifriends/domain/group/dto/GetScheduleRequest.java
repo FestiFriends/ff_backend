@@ -17,4 +17,6 @@ public class GetScheduleRequest {
     private OffsetDateTime endAt;
     @NotNull(message = "장소는 필수입니다.")
     private String location;
+    @NotNull(message = "일정 색상은 필수입니다.")
+    private String eventColor;
 }
