@@ -47,7 +47,7 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepositoryCustom {
                 .senderId(((Number) result[1]).longValue())
                 .senderName((String) result[2])
                 .senderImage(result[3] != null ? ImageDto.builder()
-                    .id(((String) result[3]))
+                    .id(((Long) result[3]).toString())
                     .src((String) result[4])
                     .alt((String) result[5])
                     .build() : null)
