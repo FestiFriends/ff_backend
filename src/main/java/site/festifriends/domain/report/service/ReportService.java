@@ -22,6 +22,7 @@ import site.festifriends.entity.Report;
 import site.festifriends.entity.ReportImage;
 import site.festifriends.entity.enums.MemberRole;
 import site.festifriends.entity.enums.ReportStatus;
+import site.festifriends.entity.enums.ReportType;
 
 @Service
 @RequiredArgsConstructor
@@ -135,6 +136,11 @@ public class ReportService {
         if (report.getStatus() == ReportStatus.PENDING) {
             if (request.getReportStatus() == ReportStatus.APPROVED) {
                 report.process(ReportStatus.APPROVED);
+
+                if (report.getType() == ReportType.USER) {
+                    Member targetMember = memberService.getMemberById(report.getTargetId());
+                    targetMember.ban();
+                }
                 return "해당 신고가 승인되었습니다";
             } else if (request.getReportStatus() == ReportStatus.REJECTED) {
                 report.process(ReportStatus.REJECTED);
