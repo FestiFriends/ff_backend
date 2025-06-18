@@ -29,6 +29,12 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
 
     @Override
     public Page<Performance> searchPerformancesWithPaging(PerformanceSearchRequest request, Pageable pageable) {
+        String sort = request.getSort();
+
+        if ("group_count_desc".equals(sort) || "group_count_asc".equals(sort)) {
+            return searchPerformancesWithGroupCountSorting(request, pageable);
+        }
+
         QPerformance p = QPerformance.performance;
         QPerformanceImage pi = QPerformanceImage.performanceImage;
 
@@ -57,6 +63,65 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
             .fetch();
 
         return new PageImpl<>(performances, pageable, total);
+    }
+
+    private Page<Performance> searchPerformancesWithGroupCountSorting(PerformanceSearchRequest request,
+        Pageable pageable) {
+        QPerformance p = QPerformance.performance;
+        QGroup g = QGroup.group;
+        QPerformanceImage pi = QPerformanceImage.performanceImage;
+
+        JPAQuery<Tuple> countQuery = queryFactory
+            .select(p.id, g.count().as("groupCount"))
+            .from(p)
+            .leftJoin(g).on(g.performance.id.eq(p.id).and(g.deleted.isNull()))
+            .where(
+                titleContains(request.getTitle()),
+                locationContains(request.getLocation()),
+                visitEquals(request.getVisit()),
+                dateRangeFilter(request.getStartDate(), request.getEndDate()),
+                notDeleted()
+            )
+            .groupBy(p.id);
+
+        boolean isDesc = "group_count_desc".equals(request.getSort());
+        if (isDesc) {
+            countQuery = countQuery.orderBy(g.count().desc(), p.title.asc());
+        } else {
+            countQuery = countQuery.orderBy(g.count().asc(), p.title.asc());
+        }
+
+        long total = countQuery.fetchCount();
+
+        List<Tuple> results = countQuery
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        if (results.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, total);
+        }
+
+        List<Long> performanceIds = results.stream()
+            .map(tuple -> tuple.get(p.id))
+            .collect(Collectors.toList());
+
+        List<Performance> performances = queryFactory
+            .selectFrom(p)
+            .leftJoin(p.imgs, pi).fetchJoin()
+            .where(p.id.in(performanceIds))
+            .distinct()
+            .fetch();
+
+        Map<Long, Performance> performanceMap = performances.stream()
+            .collect(Collectors.toMap(Performance::getId, performance -> performance));
+
+        List<Performance> sortedPerformances = performanceIds.stream()
+            .map(performanceMap::get)
+            .filter(performance -> performance != null)
+            .collect(Collectors.toList());
+
+        return new PageImpl<>(sortedPerformances, pageable, total);
     }
 
     @Override
@@ -196,7 +261,6 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
 
     private JPAQuery<Performance> applySorting(JPAQuery<Performance> query, String sort) {
         QPerformance p = QPerformance.performance;
-        QGroup g = QGroup.group;
 
         if (sort == null || sort.trim().isEmpty()) {
             sort = "title_asc";
@@ -210,15 +274,8 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
             case "date_desc":
                 return query.orderBy(p.startDate.desc());
             case "group_count_desc":
-                return query
-                    .leftJoin(g).on(g.performance.id.eq(p.id).and(g.deleted.isNull()))
-                    .groupBy(p.id, p.title, p.startDate, p.endDate, p.location, p.visit, p.deleted)
-                    .orderBy(g.count().desc(), p.title.asc());
             case "group_count_asc":
-                return query
-                    .leftJoin(g).on(g.performance.id.eq(p.id).and(g.deleted.isNull()))
-                    .groupBy(p.id, p.title, p.startDate, p.endDate, p.location, p.visit, p.deleted)
-                    .orderBy(g.count().asc(), p.title.asc());
+                return query.orderBy(p.title.asc()); // 기본 정렬 적용
             case "title_asc":
             default:
                 return query.orderBy(p.title.asc());
