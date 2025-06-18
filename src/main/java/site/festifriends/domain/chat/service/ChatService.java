@@ -124,7 +124,12 @@ public class ChatService {
         Slice<ChatMessageDto> slice = chatMessageRepository.getChatMessages(chatRoomId, cursorId, pageable);
 
         if (slice.isEmpty()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "채팅 메시지가 없습니다.");
+            return CursorResponseWrapper.success(
+                "채팅 메시지를 성공적으로 조회했습니다.",
+                new ArrayList<>(),
+                null,
+                false
+            );
         }
 
         List<ChatMessageResponse> response = new ArrayList<>();
