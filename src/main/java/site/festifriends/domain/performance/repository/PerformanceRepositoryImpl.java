@@ -196,6 +196,7 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
 
     private JPAQuery<Performance> applySorting(JPAQuery<Performance> query, String sort) {
         QPerformance p = QPerformance.performance;
+        QGroup g = QGroup.group;
 
         if (sort == null || sort.trim().isEmpty()) {
             sort = "title_asc";
@@ -209,8 +210,15 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
             case "date_desc":
                 return query.orderBy(p.startDate.desc());
             case "group_count_desc":
+                return query
+                    .leftJoin(g).on(g.performance.id.eq(p.id).and(g.deleted.isNull()))
+                    .groupBy(p.id, p.title, p.startDate, p.endDate, p.location, p.visit, p.deleted)
+                    .orderBy(g.count().desc(), p.title.asc());
             case "group_count_asc":
-                return query.orderBy(p.title.asc());
+                return query
+                    .leftJoin(g).on(g.performance.id.eq(p.id).and(g.deleted.isNull()))
+                    .groupBy(p.id, p.title, p.startDate, p.endDate, p.location, p.visit, p.deleted)
+                    .orderBy(g.count().asc(), p.title.asc());
             case "title_asc":
             default:
                 return query.orderBy(p.title.asc());
