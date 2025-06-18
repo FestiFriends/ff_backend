@@ -317,7 +317,7 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
                 notDeletedCondition,
                 cursorCondition
             )
-            .orderBy(mg.role.desc(), mg.id.desc()); // HOST 먼저, 그 다음 최신순
+            .orderBy(mg.role.asc(), mg.id.desc()); // HOST 먼저, 그 다음 최신순
 
         // Slice는 size + 1 개를 조회해서 hasNext를 판단
         int size = pageable.getPageSize();
