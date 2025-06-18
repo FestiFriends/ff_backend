@@ -106,4 +106,8 @@ public class Member extends SoftDeleteEntity {
         this.tags = hashtag != null ? hashtag : new ArrayList<>();
         this.sns = sns != null ? List.of(sns) : new ArrayList<>();
     }
+
+    public void ban() {
+        this.suspendedAt = LocalDateTime.now();
+    }
 }
