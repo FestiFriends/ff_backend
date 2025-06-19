@@ -15,6 +15,7 @@ import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.common.response.ResponseWrapper;
 import site.festifriends.domain.auth.UserDetailsImpl;
 import site.festifriends.domain.review.dto.CreateReviewRequest;
+import site.festifriends.domain.review.dto.UserReviewRequest;
 import site.festifriends.domain.review.dto.UserReviewResponse;
 import site.festifriends.domain.review.dto.WritableReviewRequest;
 import site.festifriends.domain.review.dto.WritableReviewResponse;
@@ -31,12 +32,13 @@ public class ReviewController implements ReviewApi {
 
     @Override
     @GetMapping("/{userId}")
-    public ResponseEntity<ResponseWrapper<List<UserReviewResponse>>> getUserReviews(@PathVariable Long userId) {
-        List<UserReviewResponse> reviews = reviewService.getUserReviews(userId);
+    public ResponseEntity<CursorResponseWrapper<UserReviewResponse>> getUserReviews(
+        @PathVariable Long userId,
+        UserReviewRequest request
+    ) {
+        CursorResponseWrapper<UserReviewResponse> response = reviewService.getUserReviews(userId, request);
 
-        return ResponseEntity.ok(
-            ResponseWrapper.success("성공적으로 데이터를 불러왔습니다.", reviews)
-        );
+        return ResponseEntity.ok(response);
     }
 
     @Override

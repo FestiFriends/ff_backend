@@ -50,6 +50,32 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
     }
 
     @Override
+    public List<Review> findUserReviewsByRevieweeIdWithCursor(Long revieweeId, Long cursorId, int size) {
+        String jpql = """
+            SELECT r FROM Review r
+            JOIN FETCH r.group g
+            JOIN FETCH r.reviewer rv
+            LEFT JOIN FETCH g.performance p
+            LEFT JOIN FETCH r.tags
+            WHERE r.reviewee.id = :revieweeId
+            AND r.deleted IS NULL
+            AND g.deleted IS NULL
+            """ + (cursorId != null ? "AND g.id < :cursorId " : "") + """
+            ORDER BY g.id DESC, r.createdAt DESC
+            """;
+
+        var query = entityManager.createQuery(jpql, Review.class)
+            .setParameter("revieweeId", revieweeId)
+            .setMaxResults(size + 1); // hasNext 판단을 위해 1개 추가 조회
+
+        if (cursorId != null) {
+            query.setParameter("cursorId", cursorId);
+        }
+
+        return query.getResultList();
+    }
+
+    @Override
     public List<Review> findWrittenReviewsByReviewerId(Long reviewerId, Long cursorId, int size) {
         String jpql = """
             SELECT r FROM Review r

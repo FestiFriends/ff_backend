@@ -17,6 +17,11 @@ public interface ReviewRepositoryCustom {
     List<Review> findUserReviewsByRevieweeId(Long revieweeId);
 
     /**
+     * 특정 사용자가 받은 리뷰들을 커서 기반 페이지네이션으로 조회
+     */
+    List<Review> findUserReviewsByRevieweeIdWithCursor(Long revieweeId, Long cursorId, int size);
+
+    /**
      * 특정 사용자가 작성한 리뷰들을 커서 기반 페이지네이션으로 조회
      */
     List<Review> findWrittenReviewsByReviewerId(Long reviewerId, Long cursorId, int size);

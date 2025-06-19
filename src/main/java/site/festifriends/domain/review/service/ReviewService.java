@@ -18,6 +18,7 @@ import site.festifriends.domain.notifications.dto.NotificationEvent;
 import site.festifriends.domain.notifications.service.NotificationService;
 import site.festifriends.domain.review.dto.CreateReviewRequest;
 import site.festifriends.domain.review.dto.RecentReviewResponse;
+import site.festifriends.domain.review.dto.UserReviewRequest;
 import site.festifriends.domain.review.dto.UserReviewResponse;
 import site.festifriends.domain.review.dto.WritableReviewRequest;
 import site.festifriends.domain.review.dto.WritableReviewResponse;
@@ -83,15 +84,23 @@ public class ReviewService {
     }
 
     /**
-     * 사용자가 받은 리뷰 목록 조회
+     * 사용자가 받은 리뷰 목록 조회 (커서 기반 페이지네이션)
      */
-    public List<UserReviewResponse> getUserReviews(Long userId) {
-        List<Review> reviews = reviewRepository.findUserReviewsByRevieweeId(userId);
+    public CursorResponseWrapper<UserReviewResponse> getUserReviews(Long userId, UserReviewRequest request) {
+        int size = request.getSize() != null ? request.getSize() : 20;
+        List<Review> reviews = reviewRepository.findUserReviewsByRevieweeIdWithCursor(
+            userId, request.getCursorId(), size);
+
+        boolean hasNext = reviews.size() > size;
+        if (hasNext) {
+            reviews = reviews.subList(0, size);
+        }
 
         Map<Long, List<Review>> groupedByGroup = reviews.stream()
             .collect(Collectors.groupingBy(review -> review.getGroup().getId()));
 
         List<UserReviewResponse> responses = new ArrayList<>();
+        Long lastCursorId = null;
 
         for (Map.Entry<Long, List<Review>> entry : groupedByGroup.entrySet()) {
             List<Review> groupReviews = entry.getValue();
@@ -124,9 +133,15 @@ public class ReviewService {
                 .build();
 
             responses.add(response);
+            lastCursorId = group.getId();
         }
 
-        return responses;
+        return CursorResponseWrapper.success(
+            "성공적으로 데이터를 불러왔습니다.",
+            responses,
+            lastCursorId,
+            hasNext
+        );
     }
 
     /**
@@ -366,6 +381,7 @@ public class ReviewService {
 
         return UserReviewResponse.ReviewInfo.builder()
             .reviewId(review.getId().toString())
+            .reviewerId(review.getReviewer().getId().toString())
             .rating(rating)
             .content(review.getContent())
             .defaultTag(tags)
