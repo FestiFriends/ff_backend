@@ -32,6 +32,7 @@ public interface PerformanceApi {
             - title: 공연명 검색
             - location: 지역 검색
             - visit: 국내/내한 여부 (국내, 내한)
+            - isExpired: 종료된 공연 포함 여부 (true: 모든 상태 포함, false: 종료된 공연 제외, 기본값: true)
             - startDate: 검색 시작 날짜 (yyyy-MM-dd)
             - endDate: 검색 종료 날짜 (yyyy-MM-dd)
             
