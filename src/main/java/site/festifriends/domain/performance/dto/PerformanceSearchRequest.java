@@ -14,6 +14,7 @@ public class PerformanceSearchRequest {
     private String title;          // 공연명 검색
     private String location;       // 지역 검색  
     private String visit;          // 국내/내한 (국내, 내한)
+    private Boolean isExpired = true;  // 종료된 공연 포함 여부 (기본값: true - 모든 상태 포함)
     
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;   // 검색 시작 날짜

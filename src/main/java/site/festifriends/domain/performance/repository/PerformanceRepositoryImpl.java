@@ -47,6 +47,7 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
                 titleContains(request.getTitle()),
                 locationContains(request.getLocation()),
                 visitEquals(request.getVisit()),
+                isExpiredFilter(request.getIsExpired()),
                 dateRangeFilter(request.getStartDate(), request.getEndDate()),
                 notDeleted()
             )
@@ -81,6 +82,7 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
                 titleContains(request.getTitle()),
                 locationContains(request.getLocation()),
                 visitEquals(request.getVisit()),
+                isExpiredFilter(request.getIsExpired()),
                 dateRangeFilter(request.getStartDate(), request.getEndDate()),
                 notDeleted()
             )
@@ -140,6 +142,7 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
                 titleContains(request.getTitle()),
                 locationContains(request.getLocation()),
                 visitEquals(request.getVisit()),
+                isExpiredFilter(request.getIsExpired()),
                 dateRangeFilter(request.getStartDate(), request.getEndDate()),
                 notDeleted()
             )
@@ -318,6 +321,16 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
 
     private BooleanExpression notDeleted() {
         return QPerformance.performance.deleted.isNull();
+    }
+
+    private BooleanExpression isExpiredFilter(Boolean isExpired) {
+        if (isExpired == null || isExpired) {
+            // null이거나 true인 경우 모든 상태 포함
+            return null;
+        } else {
+            // false인 경우 COMPLETED 상태 제외
+            return QPerformance.performance.state.ne(site.festifriends.entity.enums.PerformanceState.COMPLETED);
+        }
     }
 
     private JPAQuery<Performance> applySorting(JPAQuery<Performance> query, String sort) {
