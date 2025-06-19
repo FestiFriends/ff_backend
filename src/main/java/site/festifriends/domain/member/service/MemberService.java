@@ -209,12 +209,13 @@ public class MemberService {
     }
 
     @Transactional
-    public void updateMemberProfile(Long memberId, String name, Integer age, String description, String profileImageUrl,
+    public void updateMemberProfile(Long memberId, String name, Integer age, String description, Gender gender,
+        String profileImageUrl,
         List<String> hashtag,
         String sns) {
         Member member = getMemberById(memberId);
 
-        member.updateProfile(name, age, description, profileImageUrl, hashtag, sns);
+        member.updateProfile(name, age, description, gender, profileImageUrl, hashtag, sns);
     }
 
     @Transactional
