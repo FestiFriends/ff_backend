@@ -23,7 +23,7 @@ public class PerformanceSearchRequest {
     
     // 정렬
     private String sort = "title_asc";  // 기본값: 이름 가나다순
-    // 가능한 값: title_asc, title_desc, date_asc, date_desc, group_count_desc, group_count_asc
+    // 가능한 값: title_asc, title_desc, date_asc, date_desc, group_count_desc, group_count_asc, favorite_count_desc, favorite_count_asc
     
     // 페이징
     private Integer page = 1;      // 페이지 번호 (기본값: 1)

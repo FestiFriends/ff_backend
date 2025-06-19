@@ -42,6 +42,8 @@ public interface PerformanceApi {
             - date_desc: 일자 먼순
             - group_count_desc: 모임개수 많은 순
             - group_count_asc: 모임개수 적은 순
+            - favorite_count_desc: 찜개수 많은 순
+            - favorite_count_asc: 찜개수 적은 순
             """
     )
     @GetMapping

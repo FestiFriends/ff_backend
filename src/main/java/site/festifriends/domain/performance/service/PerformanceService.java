@@ -96,6 +96,22 @@ public class PerformanceService {
                 }
                 return countCompare;
             });
+        } else if ("favorite_count_desc".equals(request.getSort())) {
+            performanceResponses.sort((a, b) -> {
+                int countCompare = Integer.compare(b.getFavoriteCount(), a.getFavoriteCount());
+                if (countCompare == 0) {
+                    return a.getTitle().compareTo(b.getTitle());
+                }
+                return countCompare;
+            });
+        } else if ("favorite_count_asc".equals(request.getSort())) {
+            performanceResponses.sort((a, b) -> {
+                int countCompare = Integer.compare(a.getFavoriteCount(), b.getFavoriteCount());
+                if (countCompare == 0) {
+                    return a.getTitle().compareTo(b.getTitle());
+                }
+                return countCompare;
+            });
         }
 
         return PerformanceSearchResponse.builder()
