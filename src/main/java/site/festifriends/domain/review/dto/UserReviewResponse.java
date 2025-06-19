@@ -40,6 +40,7 @@ public class UserReviewResponse {
     public static class ReviewInfo {
 
         private String reviewId;
+        private String reviewerId;
         private Integer rating;
         private String content;
         private List<String> defaultTag;
