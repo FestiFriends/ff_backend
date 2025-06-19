@@ -33,6 +33,8 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
 
         if ("group_count_desc".equals(sort) || "group_count_asc".equals(sort)) {
             return searchPerformancesWithGroupCountSorting(request, pageable);
+        } else if ("favorite_count_desc".equals(sort) || "favorite_count_asc".equals(sort)) {
+            return searchPerformancesWithFavoriteCountSorting(request, pageable);
         }
 
         QPerformance p = QPerformance.performance;
@@ -89,6 +91,65 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
             countQuery = countQuery.orderBy(g.count().desc(), p.title.asc());
         } else {
             countQuery = countQuery.orderBy(g.count().asc(), p.title.asc());
+        }
+
+        long total = countQuery.fetchCount();
+
+        List<Tuple> results = countQuery
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        if (results.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, total);
+        }
+
+        List<Long> performanceIds = results.stream()
+            .map(tuple -> tuple.get(p.id))
+            .collect(Collectors.toList());
+
+        List<Performance> performances = queryFactory
+            .selectFrom(p)
+            .leftJoin(p.imgs, pi).fetchJoin()
+            .where(p.id.in(performanceIds))
+            .distinct()
+            .fetch();
+
+        Map<Long, Performance> performanceMap = performances.stream()
+            .collect(Collectors.toMap(Performance::getId, performance -> performance));
+
+        List<Performance> sortedPerformances = performanceIds.stream()
+            .map(performanceMap::get)
+            .filter(performance -> performance != null)
+            .collect(Collectors.toList());
+
+        return new PageImpl<>(sortedPerformances, pageable, total);
+    }
+
+    private Page<Performance> searchPerformancesWithFavoriteCountSorting(PerformanceSearchRequest request,
+        Pageable pageable) {
+        QPerformance p = QPerformance.performance;
+        QBookmark b = QBookmark.bookmark;
+        QPerformanceImage pi = QPerformanceImage.performanceImage;
+
+        JPAQuery<Tuple> countQuery = queryFactory
+            .select(p.id, b.count().as("favoriteCount"))
+            .from(p)
+            .leftJoin(b).on(b.type.eq(BookmarkType.PERFORMANCE).and(b.targetId.eq(p.id)))
+            .where(
+                titleContains(request.getTitle()),
+                locationContains(request.getLocation()),
+                visitEquals(request.getVisit()),
+                dateRangeFilter(request.getStartDate(), request.getEndDate()),
+                notDeleted()
+            )
+            .groupBy(p.id);
+
+        boolean isDesc = "favorite_count_desc".equals(request.getSort());
+        if (isDesc) {
+            countQuery = countQuery.orderBy(b.count().desc(), p.title.asc());
+        } else {
+            countQuery = countQuery.orderBy(b.count().asc(), p.title.asc());
         }
 
         long total = countQuery.fetchCount();
@@ -275,7 +336,9 @@ public class PerformanceRepositoryImpl implements PerformanceRepositoryCustom {
                 return query.orderBy(p.startDate.desc());
             case "group_count_desc":
             case "group_count_asc":
-                return query.orderBy(p.title.asc()); // 기본 정렬 적용
+            case "favorite_count_desc":
+            case "favorite_count_asc":
+                return query.orderBy(p.title.asc()); // 기본 정렬 적용 (별도 메서드에서 처리)
             case "title_asc":
             default:
                 return query.orderBy(p.title.asc());
