@@ -25,7 +25,7 @@ public interface ReviewApi {
 
     @Operation(
         summary = "사용자 리뷰 조회",
-        description = "특정 사용자가 받은 리뷰와 평가를 커서 기반 페이지네이션으로 조회합니다. 회원이면 누구나 조회할 수 있습니다.",
+        description = "특정 사용자가 받은 리뷰와 평가를 커서 기반 페이지네이션으로 조회합니다. size 파라미터는 조회할 모임의 개수를 의미하며, 각 모임에서는 해당 모임의 모든 리뷰를 조회합니다. 회원이면 누구나 조회할 수 있습니다.",
         responses = {
             @ApiResponse(responseCode = "200", description = "성공적으로 데이터를 불러왔습니다."),
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없습니다.")

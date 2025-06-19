@@ -51,7 +51,33 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
 
     @Override
     public List<Review> findUserReviewsByRevieweeIdWithCursor(Long revieweeId, Long cursorId, int size) {
-        String jpql = """
+        // 1. 먼저 모임 ID들을 size+1 개만큼 조회 (hasNext 판단용)
+        String groupQuery = """
+            SELECT DISTINCT g.id FROM Review r
+            JOIN r.group g
+            WHERE r.reviewee.id = :revieweeId
+            AND r.deleted IS NULL
+            AND g.deleted IS NULL
+            """ + (cursorId != null ? "AND g.id < :cursorId " : "") + """
+            ORDER BY g.id DESC
+            """;
+
+        var groupIdQuery = entityManager.createQuery(groupQuery, Long.class)
+            .setParameter("revieweeId", revieweeId)
+            .setMaxResults(size + 1); // hasNext 판단을 위해 1개 추가 조회
+
+        if (cursorId != null) {
+            groupIdQuery.setParameter("cursorId", cursorId);
+        }
+
+        List<Long> groupIds = groupIdQuery.getResultList();
+
+        if (groupIds.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. 해당 모임들의 모든 리뷰를 조회
+        String reviewQuery = """
             SELECT r FROM Review r
             JOIN FETCH r.group g
             JOIN FETCH r.reviewer rv
@@ -60,19 +86,14 @@ public class ReviewRepositoryImpl implements ReviewRepositoryCustom {
             WHERE r.reviewee.id = :revieweeId
             AND r.deleted IS NULL
             AND g.deleted IS NULL
-            """ + (cursorId != null ? "AND g.id < :cursorId " : "") + """
+            AND g.id IN :groupIds
             ORDER BY g.id DESC, r.createdAt DESC
             """;
 
-        var query = entityManager.createQuery(jpql, Review.class)
+        return entityManager.createQuery(reviewQuery, Review.class)
             .setParameter("revieweeId", revieweeId)
-            .setMaxResults(size + 1); // hasNext 판단을 위해 1개 추가 조회
-
-        if (cursorId != null) {
-            query.setParameter("cursorId", cursorId);
-        }
-
-        return query.getResultList();
+            .setParameter("groupIds", groupIds)
+            .getResultList();
     }
 
     @Override
