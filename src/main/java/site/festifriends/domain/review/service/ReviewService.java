@@ -3,6 +3,7 @@ package site.festifriends.domain.review.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -91,19 +92,24 @@ public class ReviewService {
         List<Review> reviews = reviewRepository.findUserReviewsByRevieweeIdWithCursor(
             userId, request.getCursorId(), size);
 
-        boolean hasNext = reviews.size() > size;
-        if (hasNext) {
-            reviews = reviews.subList(0, size);
-        }
-
+        // 모임별로 그룹화
         Map<Long, List<Review>> groupedByGroup = reviews.stream()
             .collect(Collectors.groupingBy(review -> review.getGroup().getId()));
+
+        // hasNext 판단: 모임 개수가 size+1개면 hasNext = true
+        boolean hasNext = groupedByGroup.size() > size;
+        
+        // size 개의 모임만 사용 (hasNext 판단용으로 가져온 추가 모임 제거)
+        List<Long> groupIds = groupedByGroup.keySet().stream()
+            .sorted(Collections.reverseOrder()) // 내림차순 정렬
+            .limit(size) // size 개만 선택
+            .collect(Collectors.toList());
 
         List<UserReviewResponse> responses = new ArrayList<>();
         Long lastCursorId = null;
 
-        for (Map.Entry<Long, List<Review>> entry : groupedByGroup.entrySet()) {
-            List<Review> groupReviews = entry.getValue();
+        for (Long groupId : groupIds) {
+            List<Review> groupReviews = groupedByGroup.get(groupId);
             Review firstReview = groupReviews.get(0);
             Group group = firstReview.getGroup();
 

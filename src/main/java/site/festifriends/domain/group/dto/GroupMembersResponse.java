@@ -1,6 +1,7 @@
 package site.festifriends.domain.group.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;
@@ -20,6 +21,10 @@ public class GroupMembersResponse {
 
     @Schema(description = "모임원 수", example = "42")
     private Integer memberCount;
+
+    @Schema(description = "내가 모임장인지 여부", example = "true")
+    @JsonProperty("isHost")
+    private Boolean isHost;
 
     @Schema(description = "모임원 목록")
     private List<GroupMemberResponse> members;

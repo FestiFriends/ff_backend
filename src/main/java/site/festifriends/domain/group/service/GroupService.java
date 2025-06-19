@@ -382,6 +382,8 @@ public class GroupService {
             throw new BusinessException(ErrorCode.FORBIDDEN, "모임에 참가한 사용자만 모임원 목록을 조회할 수 있습니다.");
         }
 
+        boolean isHost = applicationRepository.isGroupHost(groupId, memberId);
+
         Pageable pageable = PageRequest.of(0, size);
         var memberSlice = applicationRepository.findGroupMembersWithSlice(groupId, cursorId, pageable);
 
@@ -409,6 +411,7 @@ public class GroupService {
             .groupId(group.getId().toString())
             .performanceId(group.getPerformance().getId().toString())
             .memberCount(totalMemberCount)
+            .isHost(isHost) // 요청자가 모임장인지 여부 추가
             .members(memberResponses)
             .cursorId(nextCursorId)
             .hasNext(memberSlice.hasNext())
