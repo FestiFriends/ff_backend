@@ -199,7 +199,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     }
 
     @Override
-    public Object[] getMemberExtraData(Long memberId, Long targetId) {
+    public Object[] getMemberExtraData(Long targetId, Long memberId) {
         if (memberId == null) {
             return new Object[]{0, 0, 0};
         }
