@@ -99,7 +99,8 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
 
         BooleanExpression memberCondition = mg.member.id.eq(memberId);
         BooleanExpression notHostCondition = mg.role.ne(Role.HOST);
-        BooleanExpression notDeletedCondition = mg.deleted.isNull();
+        BooleanExpression notMemberGroupDeletedCondition = mg.deleted.isNull();
+        BooleanExpression notGroupDeletedCondition = g.deleted.isNull();
         BooleanExpression notConfirmedCondition = mg.status.ne(ApplicationStatus.CONFIRMED);
         BooleanExpression cursorCondition = cursorIdLt(cursorId, mg);
 
@@ -111,7 +112,8 @@ public class ApplicationRepositoryImpl implements ApplicationRepositoryCustom {
             .where(
                 memberCondition,
                 notHostCondition,
-                notDeletedCondition,
+                notMemberGroupDeletedCondition,
+                notGroupDeletedCondition,
                 notConfirmedCondition,
                 cursorCondition
             )
