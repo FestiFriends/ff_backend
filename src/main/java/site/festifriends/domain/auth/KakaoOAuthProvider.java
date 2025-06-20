@@ -2,13 +2,19 @@ package site.festifriends.domain.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class KakaoOAuthProvider {
 
@@ -20,6 +26,9 @@ public class KakaoOAuthProvider {
 
     @Value("${oauth.kakao.redirect-uri}")
     private String redirectUri;
+
+    @Value("${oauth.kakao.admin-key}")
+    private String adminKey;
 
     @Value("${oauth.kakao.dev.redirect-uri}")
     private String devRedirectUri;
@@ -101,5 +110,28 @@ public class KakaoOAuthProvider {
             .queryParam("redirect_uri", devRedirectUri)
             .build()
             .toUriString();
+    }
+
+    public boolean unlinkKakaoAccount(String socialId) {
+        String uri = "https://kapi.kakao.com/v1/user/unlink";
+
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("target_id_type", "user_id");
+        formData.add("target_id", socialId);
+
+        try {
+            restClient
+                .post()
+                .uri(uri)
+                .header(HttpHeaders.AUTHORIZATION, "KakaoAK " + adminKey)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .body(String.class);
+            return true;
+        } catch (Exception e) {
+            log.info("Failed to unlink Kakao account: {}", e.getMessage());
+            return false;
+        }
     }
 }

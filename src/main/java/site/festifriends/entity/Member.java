@@ -111,4 +111,11 @@ public class Member extends SoftDeleteEntity {
     public void ban() {
         this.suspendedAt = LocalDateTime.now();
     }
+
+    public void withdrawal() {
+        this.email = "d:" + this.email;
+        this.socialId = "d:" + this.socialId;
+        this.profileImageUrl = null;
+        this.nickname = "탈퇴한 회원";
+    }
 }
