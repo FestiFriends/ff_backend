@@ -15,6 +15,7 @@ import site.festifriends.common.exception.BusinessException;
 import site.festifriends.common.exception.ErrorCode;
 import site.festifriends.common.jwt.TokenResolver;
 import site.festifriends.common.response.CursorResponseWrapper;
+import site.festifriends.domain.auth.KakaoOAuthProvider;
 import site.festifriends.domain.auth.KakaoUserInfo;
 import site.festifriends.domain.auth.service.BlackListTokenService;
 import site.festifriends.domain.member.dto.LikedMemberDto;
@@ -42,6 +43,7 @@ public class MemberService {
     private final PerformanceRepository performanceRepository;
     private final BookmarkRepository bookmarkRepository;
     private final MemberImageRepository memberImageRepository;
+    private final KakaoOAuthProvider kakaoOAuthProvider;
 
     private static final String DEFAULT_PROFILE_IMAGE_URL = "http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg";
 
@@ -95,6 +97,11 @@ public class MemberService {
     public void deleteMember(Long memberId, HttpServletRequest request) {
         Member member = getMemberById(memberId);
 
+        if (!kakaoOAuthProvider.unlinkKakaoAccount(member.getSocialId())) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "카카오 계정 연결 해제에 실패했습니다.");
+        }
+
+        member.withdrawal();
         memberRepository.deleteMember(member);
 
         String accessToken = TokenResolver.extractAccessToken(request);
