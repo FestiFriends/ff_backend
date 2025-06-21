@@ -18,21 +18,26 @@ import site.festifriends.common.response.CursorResponseWrapper;
 import site.festifriends.domain.auth.KakaoOAuthProvider;
 import site.festifriends.domain.auth.KakaoUserInfo;
 import site.festifriends.domain.auth.service.BlackListTokenService;
+import site.festifriends.domain.chat.repository.MemberChatRoomRepository;
+import site.festifriends.domain.comment.repository.CommentRepository;
 import site.festifriends.domain.member.dto.LikedMemberDto;
 import site.festifriends.domain.member.dto.LikedMemberResponse;
 import site.festifriends.domain.member.dto.LikedPerformanceDto;
 import site.festifriends.domain.member.dto.LikedPerformanceResponse;
 import site.festifriends.domain.member.dto.ToggleUserLikeResponse;
 import site.festifriends.domain.member.repository.BookmarkRepository;
+import site.festifriends.domain.member.repository.MemberGroupRepository;
 import site.festifriends.domain.member.repository.MemberImageRepository;
 import site.festifriends.domain.member.repository.MemberRepository;
 import site.festifriends.domain.performance.repository.PerformanceRepository;
 import site.festifriends.entity.Bookmark;
 import site.festifriends.entity.Member;
+import site.festifriends.entity.MemberGroup;
 import site.festifriends.entity.MemberImage;
 import site.festifriends.entity.enums.BookmarkType;
 import site.festifriends.entity.enums.Gender;
 import site.festifriends.entity.enums.MemberRole;
+import site.festifriends.entity.enums.Role;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +51,9 @@ public class MemberService {
     private final KakaoOAuthProvider kakaoOAuthProvider;
 
     private static final String DEFAULT_PROFILE_IMAGE_URL = "http://img1.kakaocdn.net/thumb/R640x640.q70/?fname=http://t1.kakaocdn.net/account_images/default_profile.jpeg";
+    private final MemberChatRoomRepository memberChatRoomRepository;
+    private final MemberGroupRepository memberGroupRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public Member loginOrSignUp(KakaoUserInfo userInfo) {
@@ -100,6 +108,17 @@ public class MemberService {
         if (!kakaoOAuthProvider.unlinkKakaoAccount(member.getSocialId())) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "카카오 계정 연결 해제에 실패했습니다.");
         }
+
+        List<MemberGroup> memberGroups = memberGroupRepository.findAllByMember(member);
+
+        for (MemberGroup memberGroup : memberGroups) {
+            if (memberGroup.getRole().equals(Role.HOST)) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "방장인 모임이 있어 탈퇴할 수 없습니다.");
+            }
+            memberGroup.delete();
+        }
+
+        memberChatRoomRepository.deleteAllByMember(member);
 
         member.withdrawal();
         memberRepository.deleteMember(member);
