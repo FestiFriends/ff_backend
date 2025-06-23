@@ -193,7 +193,7 @@ public class PostService {
 
         if (request.getIsPinned() != null) {
             if (Boolean.TRUE.equals(request.getIsPinned())) {
-                postRepository.unpinAllPostsInGroup(groupId);
+                postRepository.unpinAllPostsInGroupExcept(groupId, postId);
                 post.setPinned(true);
             } else {
                 post.setPinned(false);
