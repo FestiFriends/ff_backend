@@ -42,5 +42,6 @@ public class GroupDetailResponse {
         private String id;
         private String name;
         private Double rating;
+        private String profileImageUrl;
     }
 }

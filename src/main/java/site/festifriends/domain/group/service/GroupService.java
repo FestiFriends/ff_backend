@@ -286,6 +286,7 @@ public class GroupService {
                 .id(hostId.toString())
                 .name(hostMemberGroup.getMember().getNickname())
                 .rating(hostRating)
+                .profileImageUrl(hostMemberGroup.getMember().getProfileImageUrl())
                 .build();
         }
 
