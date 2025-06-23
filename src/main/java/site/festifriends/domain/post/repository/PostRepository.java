@@ -25,4 +25,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     @Modifying
     @Query("UPDATE Post p SET p.isPinned = false WHERE p.group.id = :groupId AND p.isPinned = true AND p.deleted IS NULL")
     int unpinAllPostsInGroup(@Param("groupId") Long groupId);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.isPinned = false WHERE p.group.id = :groupId AND p.id != :postId AND p.isPinned = true AND p.deleted IS NULL")
+    int unpinAllPostsInGroupExcept(@Param("groupId") Long groupId, @Param("postId") Long postId);
 }
