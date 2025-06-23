@@ -38,6 +38,11 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         BooleanExpression groupCondition = post.group.id.eq(groupId);
         BooleanExpression notDeletedCondition = post.deleted.isNull();
         BooleanExpression cursorCondition = cursorIdLt(cursorId, post);
+        
+        BooleanExpression pinnedCondition = null;
+        if (cursorId != null) {
+            pinnedCondition = post.isPinned.eq(false);
+        }
 
         JPAQuery<Post> query = queryFactory
                 .selectFrom(post)
@@ -47,7 +52,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .where(
                         groupCondition,
                         notDeletedCondition,
-                        cursorCondition
+                        cursorCondition,
+                        pinnedCondition
                 )
                 .orderBy(post.isPinned.desc(), post.id.desc());
 
