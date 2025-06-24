@@ -22,7 +22,7 @@ public class BlackListToken extends BaseEntity {
     @Column(name = "blacklist_token_id", nullable = false)
     private Long id;
 
-    @Column(name = "token")
+    @Column(name = "token", nullable = false)
     private String token;
 
     public BlackListToken(String token) {
